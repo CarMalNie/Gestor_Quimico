@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+
+{% block title %}Bienvenido | Gestor Químico{% endblock %}
+
+{% block content %}
+
+<div class="p-5 mb-4 bg-light rounded-3 text-center border">
+    <div class="container-fluid py-5">
+        
+        <h1 class="display-3 fw-bold text-primary">Sistema de Gestión de Información Química</h1>
+        
+        <p class="fs-4 mt-4">
+            Tu plataforma integral para el manejo de la Tabla Periódica, la trazabilidad de compuestos y la administración de usos industriales.
+        </p>
+        <hr class="my-4">
+        
+        <a href="{% url 'elemento_lista' %}" class="btn btn-success btn-lg me-3">
+            Ver Tabla Periódica
+        </a>
+        
+        {% if user.is_authenticated %}
+            <a href="{% url 'compuesto_lista' %}" class="btn btn-info text-white btn-lg">
+                Ir a Mis Compuestos
+            </a>
+        {% else %}
+            <a href="{% url 'registro' %}" class="btn btn-warning btn-lg">
+                Quiero Registrarme
+            </a>
+        {% endif %}
+    </div>
+</div>
+
+<div class="container my-5">
+    <h2 class="text-center mb-5">Motivos para Usar el Gestor Químico</h2>
+    <div class="row g-4">
+        
+        <div class="col-md-4">
+            <div class="card shadow-sm h-100 border-success">
+                <div class="card-body">
+                    <h5 class="card-title text-success">🎯 <strong>Tu Asistente de Laboratorio Personal</strong></h5>
+                    <p class="card-text">
+                        Esta herramienta te acompaña en tus labores diarias, ofreciendo <strong>exactitud científica</strong> en cada cálculo de Peso Molecular. Olvídate de los errores manuales en fórmulas complejas como Ca(OH)<sub>2</sub> o [Co(NH<sub>3</sub>)<sub>6</sub>]Cl<sub>3</sub>.
+                    </p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card shadow-sm h-100 border-info">
+                <div class="card-body">
+                    <h5 class="card-title text-info">🗃️ <strong>Trazabilidad y Control Total</strong></h5>
+                    <p class="card-text">
+                        Mantén tu catálogo de compuestos y sus usos industriales en un solo lugar. El sistema garantiza la <strong>trazabilidad de tu trabajo</strong>, sabiendo quién creó y modificó cada dato esencial.
+                    </p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card shadow-sm h-100 border-warning">
+                <div class="card-body">
+                    <h5 class="card-title text-warning">✨ <strong>Enfócate en la Química, no en la Gestión</strong></h5>
+                    <p class="card-text">
+                        Ahorra tiempo valioso de gestión. La interfaz es <strong>intuitiva y segura</strong> (con permisos por grupos), permitiéndote dedicarte a la investigación sin preocuparte por la integridad de tu base de datos.
+                    </p>
+                </div>
+            </div>
+        </div>
+        
+    </div>
+</div>
+
+<div class="container my-5">
+    <h2 class="text-center mb-5">Acceso Rápido a la Gestión</h2>
+    <div class="row justify-content-center g-4">
+        <div class="col-md-4">
+            <div class="card shadow h-100">
+                <div class="card-body">
+                    <h5 class="card-title text-success">⚛️ Tabla Periódica</h5>
+                    <p class="card-text">Agrega y modifica la información esencial de los elementos y sus detalles de posición.</p>
+                    <a href="{% url 'elemento_lista' %}" class="btn btn-success mt-2">Gestionar Elementos</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card shadow h-100">
+                <div class="card-body">
+                    <h5 class="card-title text-info">🧪 Compuestos y Cálculo</h5>
+                    <p class="card-text">Registra compuestos, calcula el Peso Molecular automáticamente e ingresa sus aplicaciones.</p>
+                    <a href="{% url 'compuesto_lista' %}" class="btn btn-info text-white mt-2">Ver Compuestos</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

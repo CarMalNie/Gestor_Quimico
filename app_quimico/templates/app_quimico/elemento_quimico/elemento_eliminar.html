@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block title %}Confirmar Eliminación de Elemento{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card border-danger shadow-lg">
+            <div class="card-header bg-danger text-white">
+                <h4 class="mb-0">⚠️ <strong>Advertencia</strong>: Eliminación de Elemento Químico!</h4>
+            </div>
+            <div class="card-body">
+                <p class="lead">Estás a punto de eliminar el siguiente elemento y <strong>todos sus detalles asociados</strong>:</p>
+                <div class="text-center my-4 p-3 border rounded bg-light">
+                    <h1 class="display-3 fw-bold text-danger">{{ object.simbolo_elemento }}</h1>
+                    <h2 class="mb-0">{{ object.nombre_elemento }} (Nº Atómico: {{ object.numero_atomico_elemento }})</h2>
+                </div>
+                <hr>
+                <p class="mb-4">¿Estás absolutamente seguro de que deseas eliminar este registro? Esta acción es <strong>permanente</strong> y no se puede deshacer.</p>
+            </div>
+            <div class="card-footer d-flex justify-content-end">
+                <form method="post">
+                    {% csrf_token %}
+                    <a href="{% url 'elemento_lista' %}" class="btn btn-secondary btn-lg me-3">Cancelar</a>
+                    <button type="submit" class="btn btn-danger btn-lg">Sí, Eliminar Elemento</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

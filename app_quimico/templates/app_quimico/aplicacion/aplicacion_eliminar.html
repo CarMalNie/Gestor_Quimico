@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block title %}Confirmar Eliminación de Aplicación{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card border-danger shadow-lg">
+            <div class="card-header bg-danger text-white">
+                <h4 class="mb-0">⚠️ <strong>Advertencia</strong>: Eliminación de Aplicación</h4>
+            </div>
+            <div class="card-body">
+                <p class="lead">Estás a punto de eliminar la siguiente aplicación:</p>
+                
+                <div class="text-center my-4 p-3 border rounded bg-light">
+                    <h2 class="mb-0">{{ object.nombre_uso }}</h2>
+                    <p class="text-muted mt-2">Industria: <strong>{{ object.id_industria.nombre_industria }}</strong></p>
+                </div>
+                <hr>
+                <p class="text-danger">
+                    <strong>¡Atención!</strong> Si existen compuestos o elementos asociados a esta aplicación, su eliminación podría fallar debido a las restricciones de integridad de la base de datos.
+                </p>
+                <p class="mb-4">¿Estás absolutamente seguro de que deseas eliminar este registro?</p>
+            </div>
+            <div class="card-footer d-flex justify-content-end">
+                <form method="post">
+                    {% csrf_token %}
+                    <a href="{% url 'aplicacion_lista' %}" class="btn btn-secondary btn-lg me-3">Cancelar</a>
+                    <button type="submit" class="btn btn-danger btn-lg">Sí, Eliminar Aplicación</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

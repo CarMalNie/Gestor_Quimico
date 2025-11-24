@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+
+{% block title %}Lista de Industrias{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>🏭 Industrias Registradas</h1>
+    <a href="{% url 'industria_crear' %}" class="btn btn-success">
+        ➕ Registrar Nueva Industria
+    </a>
+</div>
+
+{% if industrias %}
+    <div class="card shadow">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-striped table-hover mb-0">
+                    <thead class="table-dark">
+                        <tr>
+                            <th class="text-center">Nombre de la Industria</th>
+                            <th class="text-center">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for industria in industrias %}
+                            <tr>
+                                <td class="text-center align-middle"><strong>{{ industria.nombre_industria }}</strong></td>
+                                <td class="text-center align-middle">
+                                    
+                                    {% if 'app_quimico.change_industria' in perms %}
+                                        <a href="{% url 'industria_actualizar' pk=industria.pk %}" class="btn btn-sm btn-warning me-2" title="Modificar">
+                                            Modificar
+                                        </a>
+                                    {% endif %}
+                                    
+                                    {% if 'app_quimico.delete_industria' in perms %}
+                                        <a href="{% url 'industria_eliminar' pk=industria.pk %}" class="btn btn-sm btn-danger" title="Eliminar">
+                                            Eliminar
+                                        </a>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+{% else %}
+    <div class="alert alert-info" role="alert">
+        Aún no hay industrias registradas. ¡Sé el primero en <a href="{% url 'industria_crear' %}">registrar una</a>!
+    </div>
+{% endif %}
+
+{% endblock %}

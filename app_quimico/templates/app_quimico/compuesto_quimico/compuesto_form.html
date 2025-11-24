@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+
+{% block title %}
+    {% if compuesto_form.instance.pk %}Modificar Compuesto{% else %}Crear Compuesto{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="mb-4">🔬 {% if compuesto_form.instance.pk %}Modificar Compuesto{% else %}Registrar Nuevo Compuesto{% endif %} Químico</h1>
+        
+        <form method="post">
+            {% csrf_token %}
+            
+            <p class="text-danger small mb-4">
+                Los campos marcados con un asterisco (<span class="asteriskField text-danger">*</span>) son obligatorios.
+            </p>
+            <div class="card mb-4 border-success">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">Datos del Compuesto (Fórmula y Cálculo)</h5>
+                </div>
+                <div class="card-body">
+                    
+                    {{ compuesto_form.nombre_compuesto|as_crispy_field }}
+
+                    <div class="mb-3">
+                        <label for="{{ compuesto_form.formula_compuesto.id_for_label }}" class="form-label requiredField">
+                            Fórmula Química<span class="asteriskField">*</span>
+                        </label>
+                        {{ compuesto_form.formula_compuesto }}
+                        
+                        <small class="form-text text-danger">
+                            ⚠️ <strong>Precaución</strong>: El cálculo requiere la fórmula ingresada estrictamente bajo la nomenclatura <strong>IUPAC</strong>. Use mayúsculas/minúsculas correctas y corchetes/paréntesis para agrupar.
+                        </small>
+                        
+                        {% if compuesto_form.formula_compuesto.errors %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in compuesto_form.formula_compuesto.errors %}{{ error }}{% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    {{ compuesto_form.peso_molecular_compuesto }} 
+
+                </div>
+            </div>
+
+            <div class="card mb-4 border-primary">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Uso Industrial</h5>
+                </div>
+                <div class="card-body">
+                    
+                                        <div class="row">
+                        
+                                                <div class="col-md-6">
+                            {{ relacion_form.tipo_industria|as_crispy_field }}
+                        </div>
+                        
+                                                <div class="col-md-6">
+                            {{ relacion_form.id_aplicacion|as_crispy_field }}
+                        </div>
+                    </div>
+
+                                        <div class="row">
+                                                <div class="col-md-6">
+                            {{ relacion_form.concentracion_minima|as_crispy_field }}
+                        </div>
+                                                <div class="col-md-6">
+                            {{ relacion_form.tipo_concentracion|as_crispy_field }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <button type="submit" class="btn btn-success btn-lg mt-3">
+                Registrar/Actualizar Compuesto
+            </button>
+            
+            <a href="{% url 'compuesto_lista' %}" class="btn btn-secondary btn-lg mt-3">Cancelar</a>
+        </form>
+    </div>
+</div>
+{% endblock %}

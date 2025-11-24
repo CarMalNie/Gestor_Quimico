@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+{% load static %} 
+{% load crispy_forms_tags %} 
+
+{% block title %}Lista de Compuestos Químicos{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-9">
+        <h1 class="mb-0">🧪 Compuestos Químicos Registrados</h1>
+    </div>
+    <div class="col-md-3 text-right">
+        {% if user.is_authenticated %} 
+        <a href="{% url 'compuesto_crear' %}" class="btn btn-success">
+            ➕ Registrar Nuevo Compuesto
+        </a>
+        {% endif %}
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card card-body bg-light shadow-sm">
+            <form method="get" class="mb-0">
+                {% csrf_token %}
+                
+                <div class="row">
+                    <div class="col-md-9">
+                        <div class="row">
+                            <div class="col-md-4">
+                                {{ filter_form.busqueda_compuesto|as_crispy_field }}
+                            </div>
+                            <div class="col-md-4">
+                                {{ filter_form.min_peso_molecular|as_crispy_field }}
+                            </div>
+                            <div class="col-md-4">
+                                {{ filter_form.industria|as_crispy_field }}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-3 d-flex align-items-end">
+                        <button type="submit" class="btn btn-primary me-2 w-100">
+                            <i class="fas fa-search"></i> Buscar
+                        </button>
+                        <a href="{% url 'compuesto_lista' %}" class="btn btn-secondary w-100">Limpiar</a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<hr>
+
+<div class="row">
+    {% for compuesto in compuestos %}
+    {% with relacion=compuesto.compuestoaplicacion_set.first %}
+    <div class="col-lg-4 col-md-6 mb-4">
+        <div class="card h-100 shadow-sm border-primary">
+            <div class="card-header bg-light">
+                <h5 class="card-title mb-0 font-weight-bold">
+                    {{ compuesto.nombre_compuesto }}
+                </h5>
+            </div>
+            
+            <div class="card-body">
+                <div class="mb-3">
+                    <span class="badge bg-secondary p-2">Fórmula:</span> 
+                    <span class="h4 text-primary ml-2">{{ compuesto.formula_compuesto }}</span>
+                </div>
+                
+                <h6 class="text-muted">Detalles Químicos:</h6>
+                <p class="card-text">
+                    <strong>Peso Molecular (PM):</strong> 
+                    <span class="text-success">{{ compuesto.peso_molecular_compuesto|floatformat:4 }} g/mol</span>
+                </p>
+                <p class="card-text">
+                    <strong>Fecha de Registro:</strong> 
+                    {{ compuesto.fecha_registro_compuesto|date:"d M, Y H:i" }} 
+                </p>
+                
+                <h6 class="text-muted mt-3">Uso Industrial:</h6>
+                {% if relacion and relacion.id_aplicacion %}
+                    <p class="card-text small">
+                        <strong>Industria:</strong> {{ relacion.id_aplicacion.id_industria.nombre_industria }}
+                    </p>
+                    <p class="card-text small">
+                        <strong>Uso Específico:</strong> {{ relacion.id_aplicacion.nombre_uso }}
+                    </p>
+                    <p class="card-text small">
+                        <strong>Concentración Uso Industrial:</strong> 
+                        <span class="font-weight-bold">
+                            {{ relacion.concentracion_minima|floatformat:2 }} 
+                            {% if relacion.tipo_concentracion == '%p/p' or relacion.tipo_concentracion == '%p/v' %}
+                                % ({{ relacion.tipo_concentracion|slice:"1:4" }})
+                            {% elif relacion.tipo_concentracion == 'ppm' %}
+                                ppm
+                            {% elif relacion.tipo_concentracion == '[M]' or relacion.tipo_concentracion == '[N]' %}
+                                {{ relacion.tipo_concentracion }}
+                            {% else %}
+                                ({{ relacion.get_tipo_concentracion_display }})
+                            {% endif %}
+                        </span>
+                    </p>
+                {% else %}
+                    <p class="card-text small text-warning">Aún no tiene aplicación asignada.</p>
+                {% endif %}
+            </div>
+            
+            <div class="card-footer d-flex justify-content-between bg-white border-0">
+                <a href="{% url 'compuesto_detalle' pk=compuesto.pk %}" class="btn btn-outline-info btn-sm">
+                    🔎 Ver Detalle
+                </a>
+                
+                <div>
+                    {% if compuesto.usuario == user or 'app_quimico.change_compuestoquimico' in perms %}
+                        <a href="{% url 'compuesto_actualizar' pk=compuesto.pk %}" class="btn btn-sm btn-outline-warning me-2">
+                            <i class="fas fa-edit"></i> Modificar
+                        </a>
+                    {% endif %}
+                    
+                    {% if compuesto.usuario == user or 'app_quimico.delete_compuestoquimico' in perms %}
+                        <a href="{% url 'compuesto_eliminar' pk=compuesto.pk %}" class="btn btn-sm btn-outline-danger">
+                            <i class="fas fa-trash-alt"></i> Eliminar
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endwith %}
+    {% empty %}
+    <div class="col-12">
+        {% if request.GET %}
+            <div class="alert alert-warning text-center" role="alert">
+                <i class="fas fa-filter"></i> <strong>No se encontraron compuestos</strong> con los criterios de búsqueda o filtros especificados.
+                <br>
+                <a href="{% url 'compuesto_lista' %}" class="btn btn-sm btn-outline-warning mt-2">Limpiar Filtros</a>
+            </div>
+        {% else %}
+            <div class="alert alert-info text-center" role="alert">
+                <i class="fas fa-info-circle"></i> Aún no se han registrado compuestos químicos aún. ¡<a href="{% url 'compuesto_crear' %}">Crea el primero aquí</a>!
+            </div>
+        {% endif %}
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

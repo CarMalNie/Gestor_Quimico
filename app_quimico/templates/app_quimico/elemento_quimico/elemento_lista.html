@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+{% load static %}
+{% load crispy_forms_tags %}
+
+{% block title %}Tabla Periódica: Listado de Elementos{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12 d-flex justify-content-between align-items-center mb-4">
+        <h1>⚛️ Tabla Periódica: Listado de Elementos</h1>
+        {% if 'app_quimico.add_elementoquimico' in perms %}
+        <a href="{% url 'elemento_crear' %}" class="btn btn-success">
+            ➕ Registrar Nuevo Elemento
+        </a>
+        {% endif %}
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card card-body bg-light shadow-sm">
+            <form method="get" class="mb-0">
+                {% csrf_token %}
+                <div class="row">
+                    <div class="col-md-9">
+                        <div class="row">
+                            <div class="col-md-4">
+                                {{ filter_form.busqueda_nombre|as_crispy_field }}
+                            </div>
+                            <div class="col-md-4">
+                                {{ filter_form.categoria|as_crispy_field }}
+                            </div>
+                            <div class="col-md-4">
+                                {{ filter_form.min_peso_atomico|as_crispy_field }}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-3 d-flex align-items-end">
+                        <button type="submit" class="btn btn-primary me-2 w-100">
+                            <i class="fas fa-search"></i> Buscar
+                        </button>
+                        <a href="{% url 'elemento_lista' %}" class="btn btn-secondary w-100">Limpiar</a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<hr>
+
+<div class="row">
+        {% for elemento in elementos %}
+        <div class="col-md-6 col-lg-4 mb-4">
+                        {% with detalle=elemento.detalleelemento %}
+            <div class="card h-100 shadow-sm border-primary"> 
+                
+                <div class="card-header bg-light">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h6 class="mb-0 text-muted">Número Atómico (Z) = {{ elemento.numero_atomico_elemento }}</h6>
+                        <div class="btn-group btn-sm">
+                            {% if 'app_quimico.change_elementoquimico' in perms %}
+                            <a href="{% url 'elemento_actualizar' pk=elemento.pk %}" class="btn btn-outline-warning p-1" title="Modificar"><small>Mod</small></a>
+                            {% endif %}
+                            {% if 'app_quimico.delete_elementoquimico' in perms %}
+                            <a href="{% url 'elemento_eliminar' pk=elemento.pk %}" class="btn btn-outline-danger p-1" title="Eliminar"><small>Elim</small></a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card-body text-center">
+                    <h1 class="card-title display-4 fw-bold text-primary">{{ elemento.simbolo_elemento }}</h1>
+                    <h5 class="mt-2">{{ elemento.nombre_elemento }}</h5>
+                    <p class="mb-0">Peso Atómico: <strong>{{ elemento.peso_atomico_elemento|floatformat:4 }} g/mol</strong></p>
+                </div>
+
+                <div class="card-footer bg-white d-flex justify-content-between align-items-center">
+                    
+                    <ul class="list-unstyled small mb-0">
+                        <li><strong>Grupo/Periodo:</strong> {{ detalle.grupo_elemento }}/{{ detalle.periodo_elemento }}</li>
+                        <li><strong>Categoría:</strong> <span class="badge bg-secondary">{{ detalle.get_categoria_elemento_display|default:"N/A" }}</span></li>
+                    </ul>
+                    
+                    <a href="{% url 'elemento_detalle' pk=elemento.pk %}" class="btn btn-outline-info btn-sm">
+                        🔎 Detalle
+                    </a>
+                </div>
+            </div>
+            {% endwith %}         </div>
+    {% empty %} 
+    <div class="col-12">
+        {% if request.GET %}
+            <div class="alert alert-warning text-center" role="alert">
+                <i class="fas fa-filter"></i> <strong>No se encontraron elementos</strong> con los criterios de búsqueda o filtros especificados.
+                <br>
+                <a href="{% url 'elemento_lista' %}" class="btn btn-sm btn-outline-warning mt-2">Limpiar Filtros</a>
+            </div>
+        {% else %}
+            <div class="alert alert-info text-center" role="alert">
+                <i class="fas fa-info-circle"></i> Aún no se ha registrado ningún elemento químico. ¡<a href="{% url 'elemento_crear' %}">Crea el primero aquí</a>!
+            </div>
+        {% endif %}
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

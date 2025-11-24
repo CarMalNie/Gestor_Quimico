@@ -1,0 +1,64 @@
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary fixed-top">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="{% url 'home' %}">🧪 Gestor Químico</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'elemento_lista' %}">Tabla Periódica</a>
+                </li>
+                
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'compuesto_lista' %}">Lista Compuestos</a>
+                </li>
+                
+                                {% if user.is_authenticated and 'app_quimico.view_aplicacion' in perms %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'aplicacion_lista' %}">Gestión Aplicaciones</a>
+                    </li>
+                {% endif %}
+                
+                                {% if user.is_authenticated and 'app_quimico.view_industria' in perms %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'industria_lista' %}">Gestión Industrias</a>
+                    </li>
+                {% endif %}
+            </ul>
+
+                        <ul class="navbar-nav">
+                {% if user.is_authenticated %}
+                    <li class="nav-item me-3">
+                        <a class="nav-link text-warning" href="{% url 'perfil_personal' %}">
+                            <strong>{{ user.username }}</strong>
+                            {% if user.groups.all %}
+                                ({{ user.groups.all.0.name }})
+                            {% endif %}
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <form method="post" action="{% url 'logout' %}" class="d-inline">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-sm btn-outline-danger">
+                                Cerrar Sesión
+                            </button>
+                        </form>
+                    </li>
+                {% else %}
+                    <li class="nav-item me-2">
+                        <a class="btn btn-sm btn-outline-light" href="{% url 'login' %}">
+                            Iniciar Sesión
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="btn btn-sm btn-warning" href="{% url 'registro' %}">
+                            Registrarse
+                        </a>
+                    </li>
+                {% endif %}
+            </ul>
+        </div>
+    </div>
+</nav>

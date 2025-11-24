@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+{% load static %} 
+
+{% block title %}Detalle de Elemento: {{ elemento.simbolo_elemento }}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        
+        <h1 class="mb-3">⚛️ Detalle del Elemento: {{ elemento.nombre_elemento }} ({{ elemento.simbolo_elemento }})</h1>
+        <hr>
+
+        <div class="card mb-4 shadow">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    
+                    <div class="col-md-4 text-center border-end">
+                        <h1 class="display-1 fw-bold text-primary">{{ elemento.simbolo_elemento }}</h1>
+                        <p class="lead"><strong>N° Atómico (Z):</strong> {{ elemento.numero_atomico_elemento }}</p>
+                        <p class="mb-0"><strong>Peso Atómico:</strong> {{ elemento.peso_atomico_elemento|floatformat:4 }} g/mol</p>
+                    </div>
+
+                    {% with detalle=elemento.detalleelemento %}
+                    <div class="col-md-8">
+                        <h4 class="mb-3">Posición y Propiedades</h4>
+                        <ul class="list-unstyled">
+                            <li><strong>Categoría:</strong> <span class="badge bg-secondary">{{ detalle.get_categoria_elemento_display }}</span></li>
+                            <li><strong>Grupo / Período:</strong> {{ detalle.grupo_elemento }} / {{ detalle.periodo_elemento }}</li>
+                            <hr class="my-2">
+                            <li><strong>Electronegatividad:</strong> {{ detalle.electronegatividad|default:"N/D" }} (Escala Pauling)</li>
+                            <li><strong>Afinidad Electrónica:</strong> {{ detalle.afinidad_electronica|default:"N/D" }} kJ/mol</li>
+                            <li><strong>Energía de Ionización:</strong> {{ detalle.energia_de_ionizacion|default:"N/D" }} kJ/mol</li>
+                            <li><strong>Radio Covalente:</strong> {{ detalle.radio_covalente|default:"N/D" }} Å</li>
+                        </ul>
+                    </div>
+                    {% endwith %}
+                </div>
+            </div>
+            
+            <div class="card-footer bg-light">
+                <p class="mb-0 small text-muted">
+                    <strong>Descripción:</strong> {{ elemento.detalleelemento.descripcion_elemento|default:"Sin descripción detallada." }}
+                </p>
+            </div>
+        </div>
+
+        <div class="text-end mb-4">
+            {% if 'app_quimico.change_elementoquimico' in perms %}
+                <a href="{% url 'elemento_actualizar' pk=elemento.pk %}" class="btn btn-warning me-2">
+                    Modificar
+                </a>
+            {% endif %}
+            {% if 'app_quimico.delete_elementoquimico' in perms %}
+                <a href="{% url 'elemento_eliminar' pk=elemento.pk %}" class="btn btn-danger">
+                    Eliminar
+                </a>
+            {% endif %}
+        </div>
+        
+
+        {% if user.is_authenticated %}
+            
+            {% with user_group=user.groups.all.0.name|default:"" %}
+            
+            <h3 class="mt-5 mb-3">Compuestos Relacionados</h3>
+            
+            <ul class="nav nav-tabs" id="myTab" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="compounds-tab" data-bs-toggle="tab" data-bs-target="#compounds" type="button" role="tab">
+                        Compuestos donde participa
+                    </button>
+                </li>
+            </ul>
+            
+            <div class="tab-content border border-top-0 p-3 bg-white" id="myTabContent">
+                
+                <div class="tab-pane fade show active" id="compounds" role="tabpanel">
+                    <ul class="list-group">
+                        
+                        {% for elem_comp in elemento.elementocompuesto_set.all %}
+                            
+                            {% with compuesto=elem_comp.id_compuesto %}
+                            
+                            {% if user_group == 'Administradores' or user_group == 'Colaboradores' or compuesto.usuario == user %}
+
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <div>
+                                    <a href="{% url 'compuesto_detalle' pk=compuesto.pk %}">
+                                        <strong>{{ compuesto.formula_compuesto }}</strong>
+                                    </a> 
+                                    ({{ compuesto.nombre_compuesto }})
+                                </div>
+                                <span class="badge bg-secondary rounded-pill">
+                                    Cantidad de Átomos: {{ elem_comp.cantidad_elem_en_comp }}
+                                </span>
+                            </li>
+                            
+                            {% endif %}
+                            
+                            {% endwith %}
+                        {% empty %}
+                            <p class="alert alert-info mb-0">No se encontraron compuestos asociados a tu catálogo.</p>
+                        {% endfor %}
+                    </ul>
+                </div>
+                
+            </div>
+            
+            {% endwith %}
+        
+        {% else %}
+            <div class="alert alert-info mt-5">
+                <i class="fas fa-lock"></i> Inicie sesión para ver los compuestos relacionados.
+            </div>
+        {% endif %}
+        <a href="{% url 'elemento_lista' %}" class="btn btn-secondary mt-4">Volver al Listado</a>
+        
+    </div>
+</div>
+{% endblock %}
