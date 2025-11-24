@@ -23,7 +23,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = '***REMOVED***'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True # Si se necesita simular un entorno de producción se debe modificar a DEBUG=False
+DEBUG = True # Si se necesita simular un entorno de producción se debe modificar a DEBUG=False ( se debe usar py manage.py collectstatic para generar la carpeta STATIC para llevar el proyecto al entorno de producción)
 
 ALLOWED_HOSTS = ['127.0.0.1', 'localhost']
 

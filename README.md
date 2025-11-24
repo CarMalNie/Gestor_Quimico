@@ -50,7 +50,7 @@ El diseño utiliza un tema con alto contraste y sigue la siguiente paleta de col
 
 -----
 
-## 🔑 Configuración Inicial y Notas CRÍTICAS (Lectura Obligatoria)
+## Configuración Inicial y Notas CRÍTICAS (Lectura Obligatoria)
 
 ### 1\. Configuración de Grupos de Permisos (Obligatorio)
 
@@ -71,7 +71,7 @@ Es **OBLIGATORIO** que un superusuario cree los siguientes grupos de permisos a 
 
 -----
 
-## 🛠️ Pasos para la Implementación (Desde GitHub)
+## Pasos para la Implementación (Desde GitHub)
 
 ### Prerrequisitos
 
