@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+
+{% block title %}
+    {% if form.instance.pk %}Modificar Aplicación{% else %}Crear Aplicación{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <h1 class="mb-4">
+            🛠️ {% if form.instance.pk %}Modificar Aplicación{% else %}Registrar Nueva Aplicación{% endif %}
+        </h1>
+        <p class="lead">Defina el uso específico y seleccione la industria a la que pertenece.</p>
+
+        <form method="post">
+            {% csrf_token %}
+            
+            <p class="text-danger small mb-4">
+                Los campos marcados con un asterisco (<span class="asteriskField text-danger">*</span>) son obligatorios.
+            </p>
+
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    {{ form|crispy }}
+                </div>
+            </div>
+            
+            <div class="mt-4">
+                <button type="submit" class="btn btn-success btn-lg me-2">
+                    {% if form.instance.pk %}Guardar Cambios{% else %}Crear Aplicación{% endif %}
+                </button>
+                <a href="{% url 'aplicacion_lista' %}" class="btn btn-secondary btn-lg">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

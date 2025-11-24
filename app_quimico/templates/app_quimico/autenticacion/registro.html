@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+
+{% block title %}Registro de Usuario{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center mt-5">
+    <div class="col-md-6">
+        <h1 class="mb-4">➕ Registrar Nuevo Usuario</h1>
+        <p class="text-danger small mb-3">
+            Al registrarte, serás asignado automáticamente al grupo "Químicos".
+        </p>
+        
+        <div class="card shadow">
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    {{ form|crispy }}
+                    
+                    <button type="submit" class="btn btn-success mt-3">
+                        Registrar
+                    </button>
+                    <a href="{% url 'login' %}" class="btn btn-outline-secondary mt-3">
+                        Ya tengo cuenta
+                    </a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

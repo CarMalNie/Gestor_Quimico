@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block title %}Perfil de Usuario{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center mt-5">
+    <div class="col-md-8">
+        <h1 class="display-4 mb-4">¡Bienvenido(a), {{ user.username }}!</h1>
+        <p class="lead">Este es tu centro de control personal.</p>
+        <hr>
+
+        <div class="card shadow">
+            <div class="card-body">
+                <h5 class="card-title mb-3">Información de Acceso</h5>
+                <ul class="list-unstyled">
+                    <li><strong>Nombre Completo:</strong> 
+                        {{ user.first_name }} {{ user.last_name }}
+                    </li>
+                    <hr class="my-2">
+                    
+                    <li><strong>Email:</strong> {{ user.email|default:"No registrado" }}</li>
+                    <li><strong>Último Acceso:</strong> {{ user.last_login|date:"d M, Y H:i" }}</li>
+                    <li>
+                        <strong>Grupos de Permisos:</strong>
+                        {% if user.groups.all %}
+                            {% for group in user.groups.all %}
+                                <span class="badge bg-primary me-1">{{ group.name }}</span>
+                            {% endfor %}
+                        {% else %}
+                            <span class="badge bg-secondary">Sin grupos asignados.</span>
+                        {% endif %}
+                    </li>
+                </ul>
+            </div>
+            <div class="card-footer text-end">
+                <a href="{% url 'logout' %}" class="btn btn-danger">Cerrar Sesión</a>
+            </div>
+        </div>
+        
+        <div class="mt-4">
+            <h5 class="mt-4">Tareas de Gestión Rápida</h5>
+            <a href="{% url 'elemento_lista' %}" class="btn btn-outline-success me-2">Ver Tabla Periódica</a>
+            <a href="{% url 'compuesto_lista' %}" class="btn btn-outline-info me-2">Gestionar Compuestos</a>
+            </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,64 @@
+
+/* ======================================= */
+/*  PALETA DE COLORES PERSONALIZADA        */
+/* ======================================= */
+:root {
+    /* Paleta de Colores Definidos */
+    --sky-blue-light: #8ecae6;
+    --blue-green: #219ebc;
+    --deep-space-blue: #023047; /* Color de Fondo/Headers */
+    --amber-flame: #ffb703;
+    --princeton-orange: #fb8500;
+
+    /* Sobrescribir Colores Base de Bootstrap para Acentos */
+    --bs-primary: var(--blue-green); 
+    --bs-success: var(--amber-flame); 
+    --bs-warning: var(--princeton-orange);
+    --bs-info: var(--sky-blue-light); 
+
+    /* Fondo y Texto General de la Página: Volvemos a CLARO/Blanco */
+    --bs-body-bg: #ffffff; 
+    --bs-body-color: #212529; /* Texto Oscuro */
+}
+
+/* ================================================= */
+/* REGLAS DE APLICACIÓN ESPECÍFICA (NAVBAR & FOOTER) */
+/* ================================================= */
+
+/* 1. Navbar y Footer (Fondo Uniforme Oscuro) */
+/* Forzamos el bg-primary (usado en navbar/footer) a ser Deep Space Blue */
+.navbar, .bg-primary, .footer {
+    background-color: var(--deep-space-blue) !important;
+}
+
+/* 2. Contraste de Texto en Navbar y Footer (Texto Claro) */
+.navbar-brand,
+.navbar-nav .nav-link,
+.footer span {
+    color: var(--sky-blue-light) !important; 
+}
+.navbar-brand:hover,
+.navbar-nav .nav-link:hover {
+    color: var(--amber-flame) !important;
+}
+
+/* ========================================== */
+/* AJUSTES DE CONTENIDO (Tarjetas y Tablas)   */
+/* ========================================== */
+
+/* Fondo de Tarjetas: Mantenemos el fondo CLARO para legibilidad */
+.card, .card-body, .card-header, .card-footer {
+    background-color: #f8f8f8 !important; 
+    color: var(--deep-space-blue) !important; 
+}
+
+/* Botones y Badges (para contraste) */
+.btn-success, .btn-warning {
+    color: var(--deep-space-blue) !important; /* Texto Oscuro */
+}
+.badge.bg-dark {
+    background-color: var(--deep-space-blue) !important;
+}
+.text-primary {
+    color: var(--blue-green) !important;
+}

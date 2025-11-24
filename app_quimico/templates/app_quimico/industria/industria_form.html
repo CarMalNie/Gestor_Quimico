@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+
+{% block title %}
+    {% if form.instance.pk %}Modificar Industria{% else %}Crear Nueva Industria{% endif %}
+{% endblock %}
+
+{% block content %}
+    {% if form.instance.pk %}
+        <h1>🛠️ Modificar Industria: {{ form.instance.nombre_industria }}</h1>
+    {% else %}
+        <h1>➕ Crear Nueva Industria</h1>
+    {% endif %}
+
+    <form method="post">
+        {% csrf_token %}
+        {{ form|crispy }}
+        <button type="submit" class="btn btn-primary mt-3">
+            {% if form.instance.pk %}Guardar Cambios{% else %}Crear Industria{% endif %}
+        </button>
+        <a href="{% url 'industria_lista' %}" class="btn btn-secondary mt-3">Cancelar</a>
+    </form>
+
+{% endblock %}

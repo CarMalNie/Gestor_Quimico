@@ -1,0 +1,55 @@
+# ===============================================
+# 1. ENTORNO VIRTUAL Y DEPENDENCIAS (CRÍTICO)
+# ===============================================
+# Ignorar la carpeta del entorno virtual (venv/env)
+/venv/
+/env/
+/ENV/
+.venv/
+
+# Paquetes instalados / cache
+*.egg-info/
+.installed.cfg
+pip-log.txt
+pip-delete-this-file.txt
+.Python
+
+# ===============================================
+# 2. ARCHIVOS GENERADOS POR PYTHON / BUILD
+# ===============================================
+__pycache__/
+*.py[cod]
+*$py.class
+*.pot
+*.log
+*.bak
+*.orig
+*.swp
+
+# Archivos de pruebas
+.coverage
+.pytest_cache/
+htmlcov/
+
+# ===============================================
+# 3. ARCHIVOS GENERADOS POR DJANGO (CRÍTICO)
+# ===============================================
+# Ignorar archivos de migración .pyc y carpetas de cache
+*/migrations/*.pyc
+*.mo
+*.po
+*.log
+
+# Archivos de la base de datos local (aunque uses MySQL, mejor ignorarlos)
+*.sqlite3
+
+# Archivos generados por collectstatic (Producción)
+/staticfiles/
+/static_root/
+
+# Media files subidos por usuarios (en desarrollo)
+/media/
+
+# Archivos de configuración sensibles
+*.env
+.env.*

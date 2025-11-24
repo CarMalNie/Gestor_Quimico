@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+
+{% block title %}
+    {% if elemento_form.instance.pk %}Modificar Elemento{% else %}Crear Elemento{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="mb-4">⚛️ {% if elemento_form.instance.pk %}Modificar Elemento{% else %}Crear Nuevo Elemento{% endif %} Químico</h1>
+        <p class="lead">Complete la información básica y los detalles de posición del elemento.</p>
+
+        <form method="post">
+            {% csrf_token %}
+            
+                        <p class="text-danger small mb-4">
+                Los campos marcados con un asterisco (<span class="asteriskField text-danger">*</span>) son obligatorios.
+            </p>
+                        <div class="card mb-4 border-primary">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">1. Datos Base del Elemento</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3">
+                            {{ elemento_form.simbolo_elemento|as_crispy_field }}
+                        </div>
+                        <div class="col-md-5">
+                            {{ elemento_form.nombre_elemento|as_crispy_field }}
+                        </div>
+                        <div class="col-md-2">
+                            {{ elemento_form.numero_atomico_elemento|as_crispy_field }}
+                        </div>
+                        <div class="col-md-2">
+                            {{ elemento_form.peso_atomico_elemento|as_crispy_field }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+                        <div class="card mb-4 border-info">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">2. Detalles en la Tabla Periódica</h5>
+                </div>
+                <div class="card-body">
+                                        <div class="row">
+                        <div class="col-md-3">
+                            {{ detalle_form.grupo_elemento|as_crispy_field }}
+                        </div>
+                        <div class="col-md-3">
+                            {{ detalle_form.periodo_elemento|as_crispy_field }}
+                        </div>
+                        <div class="col-md-6">
+                            {{ detalle_form.categoria_elemento|as_crispy_field }}
+                        </div>
+                    </div>
+                    
+                                        <div class="row">
+                        <div class="col-md-3">
+                            {{ detalle_form.electronegatividad|as_crispy_field }}
+                        </div>
+                        <div class="col-md-3">
+                            {{ detalle_form.afinidad_electronica|as_crispy_field }}
+                        </div>
+                        <div class="col-md-3">
+                            {{ detalle_form.energia_de_ionizacion|as_crispy_field }}
+                        </div>
+                        <div class="col-md-3">
+                            {{ detalle_form.radio_covalente|as_crispy_field }}
+                        </div>
+                    </div>
+                    
+                                        <div class="row">
+                        <div class="col-md-6">
+                            {{ detalle_form.descripcion_elemento|as_crispy_field }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <button type="submit" class="btn btn-success btn-lg mt-3">
+                {% if elemento_form.instance.pk %}Guardar Cambios{% else %}Crear Elemento{% endif %}
+            </button>
+            
+            <a href="{% url 'elemento_lista' %}" class="btn btn-secondary btn-lg mt-3">Cancelar</a>
+        </form>
+    </div>
+</div>
+{% endblock %}
