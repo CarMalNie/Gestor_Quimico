@@ -145,7 +145,8 @@ def test_compound_list_paginates_by_twelve(client, owner, industria):
 
 
 def test_colaborador_can_access_industria_create(client):
-    group = Group.objects.create(name="Colaboradores")
+    # The data migration already creates the group; reuse it if present.
+    group, _ = Group.objects.get_or_create(name="Colaboradores")
     add_perm = Permission.objects.get(
         codename="add_industria", content_type__app_label="app_quimico"
     )
