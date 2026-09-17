@@ -2,14 +2,19 @@ from django.urls import reverse_lazy
 from django.shortcuts import redirect, render, get_object_or_404
 from django.contrib import messages
 from django.db import transaction 
-from decimal import Decimal 
+from .services import calcular_pm, registrar_elementos_compuesto
 from django.contrib.auth.views import LoginView, LogoutView
 from django.contrib.auth import logout
 from django.db.models import Prefetch, Q, Count
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin, PermissionRequiredMixin
 from django.contrib.auth.models import Group
 from django.contrib.auth.models import User
-from .utils import CalculadoraPM # Clase de utilidad para el cálculo
+from django.views.decorators.http import require_POST
+from .services import calcular_pm, registrar_elementos_compuesto
+
+import logging
+
+logger = logging.getLogger(__name__)
 
 from django.views.generic import (
     ListView, CreateView, UpdateView, DeleteView, TemplateView, DetailView
@@ -97,6 +102,7 @@ class CustomLoginView(LoginView):
         return response
 
 # 2. VISTA DE LOGOUT PERSONALIZADA (Añade mensaje al cerrar sesión)
+@require_POST
 def custom_logout_view(request):
     # 1. Agregar el mensaje de éxito ANTES de cerrar sesión (para que el mensaje se conserve)
     messages.info(request, "Has cerrado sesión con éxito. ¡Vuelve pronto!")
@@ -194,7 +200,8 @@ class ElementoCreateView(LoginRequiredMixin, PermissionRequiredMixin, TemplateVi
                 return redirect(self.success_url)
 
             except Exception as e:
-                messages.error(request, f"Ocurrió un error al guardar los datos: {e}")
+                logger.exception("Error al guardar elemento químico")
+                messages.error(request, "Ocurrió un error al guardar los datos. Verificá los valores e intentá nuevamente.")
                 
         return self.render_to_response(context)
         
@@ -285,7 +292,8 @@ class ElementoUpdateView(LoginRequiredMixin, PermissionRequiredMixin, TemplateVi
                 return redirect(self.success_url)
 
             except Exception as e:
-                messages.error(request, f"Ocurrió un error al guardar los datos: {e}")
+                logger.exception("Error al actualizar elemento químico")
+                messages.error(request, "Ocurrió un error al guardar los datos. Verificá los valores e intentá nuevamente.")
                 
         return self.render_to_response(context)
 
@@ -344,10 +352,8 @@ class CompuestoCreateView(LoginRequiredMixin, TemplateView):
                     # ASIGNACIÓN DE DUEÑO
                     compuesto_obj.usuario = self.request.user 
                     
-                    # Recalculo y asignación del PM
-                    calculadora = CalculadoraPM()
-                    pm_float, elementos_conteo = calculadora.analizar_formula(formula)
-                    peso_calculado = Decimal(str(pm_float)).quantize(Decimal('0.0001'))
+                    # Recalculo y asignación del PM (servicio de dominio)
+                    peso_calculado, elementos_conteo = calcular_pm(formula)
                     compuesto_obj.peso_molecular_compuesto = peso_calculado
                     
                     # Asignar Industria obligatoria
@@ -355,27 +361,12 @@ class CompuestoCreateView(LoginRequiredMixin, TemplateView):
                     compuesto_obj.id_industria = aplicacion_seleccionada.id_industria
                     
                     compuesto_obj.save() 
+                    registrar_elementos_compuesto(compuesto_obj, elementos_conteo)
 
                     # Lógica para Aplicacion y Relación M:N
                     relacion_obj = relacion_form.save(commit=False)
                     relacion_obj.id_compuesto = compuesto_obj
                     relacion_obj.save()
-
-                    # Guardado de ElementoCompuesto
-                    simbolos = elementos_conteo.keys()
-                    elementos_bd = ElementoQuimico.objects.filter(simbolo_elemento__in=simbolos)
-                    elementos_map = {e.simbolo_elemento: e for e in elementos_bd}
-                    
-                    elementos_a_crear = [
-                        ElementoCompuesto(
-                            id_compuesto=compuesto_obj,
-                            id_elemento=elementos_map.get(simbolo),
-                            cantidad_elem_en_comp=cantidad
-                        )
-                        for simbolo, cantidad in elementos_conteo.items()
-                        if elementos_map.get(simbolo) is not None
-                    ]
-                    ElementoCompuesto.objects.bulk_create(elementos_a_crear)
 
                 messages.success(request, f"Compuesto '{formula}' registrado con éxito y aplicación asignada.")
                 return redirect(self.success_url)
@@ -384,7 +375,8 @@ class CompuestoCreateView(LoginRequiredMixin, TemplateView):
                 messages.error(request, f"Error Ingreso Fórmula Compuesto Químico: {e}")
                 return self.render_to_response(context) 
             except Exception as e:
-                messages.error(request, f"Error interno: {e}")
+                logger.exception("Error interno al registrar compuesto")
+                messages.error(request, "Error interno al registrar el compuesto. Intentá nuevamente.")
                 return self.render_to_response(context)
         
         # Manejo de fallo de validación
@@ -399,6 +391,7 @@ class CompuestoListView(LoginRequiredMixin, ListView):
     model = CompuestoQuimico
     template_name = 'app_quimico/compuesto_quimico/compuesto_lista.html' 
     context_object_name = 'compuestos'
+    paginate_by = 12
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -533,28 +526,11 @@ class CompuestoUpdateView(LoginRequiredMixin, UserPassesTestMixin, TemplateView)
                     if debe_recalcular:
                         compuesto_obj.formula_compuesto = formula_post_data 
                         
-                        calculadora = CalculadoraPM()
-                        pm_float, elementos_conteo = calculadora.analizar_formula(formula_post_data)
-                        peso_calculado = Decimal(str(pm_float)).quantize(Decimal('0.0001'))
-                        
+                        peso_calculado, elementos_conteo = calcular_pm(formula_post_data)
                         compuesto_obj.peso_molecular_compuesto = peso_calculado
                         
-                        ElementoCompuesto.objects.filter(id_compuesto=compuesto_obj).delete()
-                        
-                        simbolos = elementos_conteo.keys()
-                        elementos_bd = ElementoQuimico.objects.filter(simbolo_elemento__in=simbolos)
-                        elementos_map = {e.simbolo_elemento: e for e in elementos_bd}
-                        
-                        elementos_a_crear = [
-                            ElementoCompuesto(
-                                id_compuesto=compuesto_obj,
-                                id_elemento=elementos_map.get(simbolo),
-                                cantidad_elem_en_comp=cantidad
-                            )
-                            for simbolo, cantidad in elementos_conteo.items()
-                            if elementos_map.get(simbolo) is not None
-                        ]
-                        ElementoCompuesto.objects.bulk_create(elementos_a_crear)
+                        compuesto_obj.save()
+                        registrar_elementos_compuesto(compuesto_obj, elementos_conteo)
 
                     aplicacion_seleccionada = relacion_form.cleaned_data['id_aplicacion']
                     compuesto_obj.id_industria = aplicacion_seleccionada.id_industria
@@ -570,7 +546,8 @@ class CompuestoUpdateView(LoginRequiredMixin, UserPassesTestMixin, TemplateView)
                 messages.error(request, f"Error Ingreso Fórmula Compuesto Químico: {e}")
                 return self.render_to_response(context) 
             except Exception as e:
-                messages.error(request, f"Error interno: {e}")
+                logger.exception("Error interno al actualizar compuesto")
+                messages.error(request, "Error interno al actualizar el compuesto. Intentá nuevamente.")
                 return self.render_to_response(context)
         
         return self.render_to_response(context)

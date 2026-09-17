@@ -278,6 +278,10 @@ class CompuestoFilterForm(forms.Form):
 class RegistroForm(UserCreationForm):
     """Formulario customizado para el registro de nuevos usuarios."""
     
+    # Django's User.email is not unique at the DB level; the registration flow
+    # enforces it here (case-insensitive) to prevent ambiguous accounts.
+    email = forms.EmailField(required=True)
+
     class Meta:
         model = User
         # Exponemos solo los campos necesarios para crear la cuenta
@@ -285,6 +289,7 @@ class RegistroForm(UserCreationForm):
         
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.fields['email'].widget.attrs['placeholder'] = 'tu@correo.com'
         self.helper = FormHelper()
         self.helper.layout = Layout(
             Fieldset(
@@ -298,3 +303,11 @@ class RegistroForm(UserCreationForm):
             ),
             Submit('submit', 'Crear Cuenta', css_class='btn-success') 
         )
+
+    def clean_email(self):
+        email = self.cleaned_data.get('email', '').strip().lower()
+        if email and User.objects.filter(email__iexact=email).exists():
+            raise forms.ValidationError(
+                "Ya existe una cuenta registrada con este correo electrónico."
+            )
+        return email

@@ -117,6 +117,30 @@ def test_owner_can_delete_own_compound(client, owner, own_compound):
     assert response.status_code == 200
 
 
+# --- Pagination ---
+
+
+def test_compound_list_paginates_by_twelve(client, owner, industria):
+    for i in range(13):
+        CompuestoQuimico.objects.create(
+            nombre_compuesto=f"Compuesto {i:02d}",
+            formula_compuesto=f"H{i}",
+            id_industria=industria,
+            usuario=owner,
+            peso_molecular_compuesto="18.0150",
+        )
+    client.force_login(owner)
+
+    page_one = client.get(reverse("compuesto_lista"))
+    assert page_one.context["is_paginated"] is True
+    assert len(page_one.context["compuestos"]) == 12
+    assert "Compuesto 12" not in page_one.content.decode()
+
+    page_two = client.get(reverse("compuesto_lista"), {"page": 2})
+    assert len(page_two.context["compuestos"]) == 1
+    assert "Compuesto 12" in page_two.content.decode()
+
+
 # --- Master-data permission split ---
 
 
