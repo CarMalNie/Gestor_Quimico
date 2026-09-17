@@ -26,6 +26,17 @@ def _cargar_pesos_atomicos():
     return _cache_pesos
 
 
+def invalidar_cache_pesos():
+    """Drops the per-process weight cache so the next load re-reads the DB.
+
+    Wired to ElementoQuimico post_save/post_delete signals so an updated
+    atomic weight is picked up by the next calculation instead of serving
+    stale values until process restart.
+    """
+    global _cache_pesos
+    _cache_pesos = None
+
+
 class CalculadoraPM:
     """Calculates molecular weight and element counts using the stack algorithm."""
 
@@ -88,7 +99,13 @@ class CalculadoraPM:
                 j = i
                 while j < n and formula[j].isdigit():
                     j += 1
-                tokens.append(formula[i:j])
+                token = formula[i:j]
+                if token.strip('0') == '':
+                    raise ValueError(
+                        "Subíndice inválido: el subíndice '0' no tiene sentido químico. "
+                        "Los subíndices deben ser enteros positivos (ej. 'H2O', no 'H0')."
+                    )
+                tokens.append(token)
                 i = j
             elif caracter in _PARES_APERTURA or caracter in _PARES_CIERRE:
                 tokens.append(caracter)
@@ -143,8 +160,10 @@ class CalculadoraPM:
                 if not self._es_simbolo_valido(simbolo):
                     raise ValueError(f"Símbolo no reconocido: '{simbolo}'. Verificá la nomenclatura IUPAC.")
                 cantidad_total = ultimo_subindice * factor_actual
-                if cantidad_total == 0:
-                    continue
+                if cantidad_total <= 0:
+                    # Unreachable since zero subscripts are rejected by the tokenizer;
+                    # kept as a defensive invariant against silent zero counts.
+                    raise ValueError("Subíndice inválido: se produjo un conteo de cero átomos.")
                 conteo[simbolo] = conteo.get(simbolo, 0) + cantidad_total
                 ultimo_subindice = 1
 

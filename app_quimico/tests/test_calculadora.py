@@ -91,3 +91,25 @@ def test_parentesis_extra():
 def test_elemento_desconocido_Xx():
     with pytest.raises(ValueError, match="Xx"):
         _calc("Xx")
+
+
+def test_subindice_cero_rechazado():
+    with pytest.raises(ValueError, match="Subíndice inválido"):
+        _calc("H0")
+
+
+def test_subindice_ceros_multiples_rechazado():
+    with pytest.raises(ValueError, match="Subíndice inválido"):
+        _calc("Fe00")
+
+
+def test_subindice_cero_en_grupo_rechazado():
+    with pytest.raises(ValueError, match="Subíndice inválido"):
+        _calc("Ca(OH)0")
+
+
+def test_subindice_con_cero_interior_valido():
+    # '10' is a valid subscript whose digits include a zero.
+    pm, conteo = _calc("H10")
+    assert conteo == {"H": 10}
+    assert pm == pytest.approx(10.08, rel=1e-3)

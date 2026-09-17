@@ -9,17 +9,27 @@
       return;
     }
 
-    var appToIndustry = {};
+    var appToIndustry = null;
     var dataEl = document.getElementById("compuesto-cascade-data");
     if (dataEl) {
       try {
-        appToIndustry = JSON.parse(dataEl.textContent);
+        var parsed = JSON.parse(dataEl.textContent);
+        if (parsed && typeof parsed === "object" && Object.keys(parsed).length > 0) {
+          appToIndustry = parsed;
+        }
       } catch (e) {
-        appToIndustry = {};
+        appToIndustry = null;
       }
     }
 
     function filterApplications() {
+      // Fail-open: without a populated industry map we cannot filter safely,
+      // so every option stays visible and the server-side clean() validation
+      // remains the guard against cross-industry mismatches.
+      if (!appToIndustry) {
+        return;
+      }
+
       var selectedIndustry = industrySelect.value;
 
       for (var i = 0; i < appSelect.options.length; i++) {
