@@ -1,7 +1,6 @@
 from django.db import models
 from django.db.models import UniqueConstraint
 from django.core.validators import MinValueValidator, MaxValueValidator
-from django.utils import timezone
 from decimal import Decimal
 from django.contrib.auth import get_user_model
 
@@ -142,7 +141,7 @@ class CompuestoQuimico(models.Model):
         verbose_name="Peso Molecular"
     )
     fecha_registro_compuesto = models.DateTimeField(
-        default=timezone.now, 
+        auto_now_add=True,
         verbose_name="Fecha de Registro"
     )
 
@@ -297,7 +296,12 @@ class ElementoCompuesto(models.Model):
     class Meta:
         verbose_name = "Elemento en Compuesto"
         verbose_name_plural = "Elementos en Compuestos"
-        unique_together = ('id_elemento', 'id_compuesto')
+        constraints = [
+            UniqueConstraint(
+                fields=['id_elemento', 'id_compuesto'],
+                name='unique_elemento_por_compuesto',
+            ),
+        ]
 
     def __str__(self):
         return f"{self.id_elemento.simbolo_elemento} en {self.id_compuesto.formula_compuesto}"
@@ -323,7 +327,12 @@ class ElementoAplicacion(models.Model):
     class Meta:
         verbose_name = "Elemento en Aplicación"
         verbose_name_plural = "Elementos en Aplicaciones"
-        unique_together = ('id_elemento', 'id_aplicacion')
+        constraints = [
+            UniqueConstraint(
+                fields=['id_elemento', 'id_aplicacion'],
+                name='unique_elemento_por_aplicacion',
+            ),
+        ]
 
     def __str__(self):
         return f"{self.id_elemento.simbolo_elemento} - {self.id_aplicacion.nombre_uso}"
@@ -360,7 +369,12 @@ class CompuestoAplicacion(models.Model):
     class Meta:
         verbose_name = "Compuesto en Aplicación"
         verbose_name_plural = "Compuestos en Aplicaciones"
-        unique_together = ('id_compuesto', 'id_aplicacion')
+        constraints = [
+            UniqueConstraint(
+                fields=['id_compuesto', 'id_aplicacion'],
+                name='unique_compuesto_por_aplicacion',
+            ),
+        ]
 
     def __str__(self):
         return f"{self.id_compuesto.formula_compuesto} en Concentración"
