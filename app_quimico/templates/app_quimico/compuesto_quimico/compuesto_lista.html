@@ -9,7 +9,7 @@
     <div class="col-md-9">
         <h1 class="mb-0">🧪 Compuestos Químicos Registrados</h1>
     </div>
-    <div class="col-md-3 text-right">
+    <div class="col-md-3 text-md-end">
         {% if user.is_authenticated %} 
         <a href="{% url 'compuesto_crear' %}" class="btn btn-success">
             ➕ Registrar Nuevo Compuesto
@@ -58,7 +58,7 @@
     <div class="col-lg-4 col-md-6 mb-4">
         <div class="card h-100 shadow-sm border-primary">
             <div class="card-header bg-light">
-                <h5 class="card-title mb-0 font-weight-bold">
+                <h5 class="card-title mb-0 fw-bold">
                     {{ compuesto.nombre_compuesto }}
                 </h5>
             </div>
@@ -66,7 +66,7 @@
             <div class="card-body">
                 <div class="mb-3">
                     <span class="badge bg-secondary p-2">Fórmula:</span> 
-                    <span class="h4 text-primary ml-2">{{ compuesto.formula_compuesto }}</span>
+                    <span class="h4 text-primary ms-2">{{ compuesto.formula_compuesto }}</span>
                 </div>
                 
                 <h6 class="text-muted">Detalles Químicos:</h6>
@@ -89,7 +89,7 @@
                     </p>
                     <p class="card-text small">
                         <strong>Concentración Uso Industrial:</strong> 
-                        <span class="font-weight-bold">
+                        <span class="fw-bold">
                             {{ relacion.concentracion_minima|floatformat:2 }} 
                             {% if relacion.tipo_concentracion == '%p/p' or relacion.tipo_concentracion == '%p/v' %}
                                 % ({{ relacion.tipo_concentracion|slice:"1:4" }})
@@ -145,4 +145,32 @@
     </div>
     {% endfor %}
 </div>
+
+{% if is_paginated %}
+<nav aria-label="Paginación de compuestos" class="mt-4">
+    <ul class="pagination justify-content-center">
+        <li class="page-item {% if not page_obj.has_previous %}disabled{% endif %}">
+            <a class="page-link" {% if page_obj.has_previous %}href="{% querystring page=page_obj.previous_page_number %}"{% endif %}>
+                &laquo; Anterior
+            </a>
+        </li>
+        {% for num in page_obj.paginator.page_range %}
+            {% if num == page_obj.number %}
+                <li class="page-item active" aria-current="page">
+                    <span class="page-link">{{ num }}</span>
+                </li>
+            {% else %}
+                <li class="page-item">
+                    <a class="page-link" href="{% querystring page=num %}">{{ num }}</a>
+                </li>
+            {% endif %}
+        {% endfor %}
+        <li class="page-item {% if not page_obj.has_next %}disabled{% endif %}">
+            <a class="page-link" {% if page_obj.has_next %}href="{% querystring page=page_obj.next_page_number %}"{% endif %}>
+                Siguiente &raquo;
+            </a>
+        </li>
+    </ul>
+</nav>
+{% endif %}
 {% endblock %}
