@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% load crispy_forms_tags %}
+{% load static %}
 
 {% block title %}
     {% if compuesto_form.instance.pk %}Modificar Compuesto{% else %}Crear Compuesto{% endif %}
@@ -82,4 +83,11 @@
         </form>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script type="application/json" id="compuesto-cascade-data">{
+{% for a in relacion_form.fields.id_aplicacion.queryset %}"{{ a.pk }}": {{ a.id_industria_id }}{% if not forloop.last %},{% endif %}
+{% endfor %}}</script>
+<script src="{% static 'js/compuesto_cascade.js' %}"></script>
 {% endblock %}

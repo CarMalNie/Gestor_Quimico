@@ -180,6 +180,14 @@ class CompuestoAplicacionForm(forms.ModelForm):
         self.helper = FormHelper()
         self.fields['concentracion_minima'].label = "Concentración Mínima Uso" 
 
+    def clean(self):
+        cleaned_data = super().clean()
+        industria = cleaned_data.get('tipo_industria')
+        aplicacion = cleaned_data.get('id_aplicacion')
+        if industria and aplicacion and aplicacion.id_industria_id != industria.pk:
+            raise forms.ValidationError("La aplicación seleccionada no pertenece a la industria indicada")
+        return cleaned_data
+
 
 # ==================================== #
 # FORMULARIO DE FILTROS PARA ELEMENTOS #
