@@ -53,3 +53,6 @@ htmlcov/
 # Archivos de configuración sensibles
 *.env
 .env.*
+!.env.example
+# Local Pi runtime state
+.atl/
