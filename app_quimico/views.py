@@ -414,15 +414,8 @@ class CompuestoListView(LoginRequiredMixin, ListView):
             total_aplicaciones=Count('compuestoaplicacion')
         )
         
-        # FIX: Lógica de permisos corregida para incluir a Colaboradores en la vista global.
-        is_global_manager = self.request.user.groups.filter(
-            name__in=['Administradores', 'Colaboradores']
-        ).exists()
-        
-        # 2. Filtro por Dueño (Solo aplicamos el filtro personal si NO es un gestor global)
-        if self.request.user.is_authenticated and not is_global_manager:
-            # Resultado: Químicos (usuario estándar) son los únicos que llegan aquí.
-            queryset = queryset.filter(usuario=self.request.user)
+        # 2. Filtro por Dueño: solo los compuestos del usuario autenticado.
+        queryset = queryset.filter(usuario=self.request.user)
             
         # 3. Aplicación de Filtros GET (Búsqueda y Rango)
         form = CompuestoFilterForm(self.request.GET)
@@ -459,7 +452,9 @@ class CompuestoDetailView(LoginRequiredMixin, DetailView):
     context_object_name = 'compuesto'
 
     def get_queryset(self):
-        return CompuestoQuimico.objects.prefetch_related(
+        return CompuestoQuimico.objects.filter(
+            usuario=self.request.user
+        ).prefetch_related(
             Prefetch('elementocompuesto_set', 
                     queryset=ElementoCompuesto.objects.select_related('id_elemento').order_by('id_elemento__numero_atomico_elemento')),
             Prefetch('compuestoaplicacion_set', 
@@ -480,8 +475,7 @@ class CompuestoUpdateView(LoginRequiredMixin, UserPassesTestMixin, TemplateView)
     
     def test_func(self):
         compuesto = self.get_object()
-        # CRÍTICO: Permitir si es dueño O si pertenece al grupo Administradores
-        return compuesto.usuario == self.request.user or self.request.user.groups.filter(name='Administradores').exists()
+        return compuesto.usuario == self.request.user
 
     def get_compuesto_data(self):
         """Obtiene el compuesto principal y sus relaciones asociadas."""
@@ -593,8 +587,7 @@ class CompuestoDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
 
     def test_func(self):
         compuesto = self.get_object()
-        # CRÍTICO: Permitir si es dueño O si pertenece al grupo Administradores
-        return compuesto.usuario == self.request.user or self.request.user.groups.filter(name='Administradores').exists()
+        return compuesto.usuario == self.request.user
 
     def post(self, request, *args, **kwargs):
         obj = self.get_object()

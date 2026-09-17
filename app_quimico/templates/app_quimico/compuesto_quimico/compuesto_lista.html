@@ -113,13 +113,13 @@
                 </a>
                 
                 <div>
-                    {% if compuesto.usuario == user or 'app_quimico.change_compuestoquimico' in perms %}
+                    {% if compuesto.usuario == user %}
                         <a href="{% url 'compuesto_actualizar' pk=compuesto.pk %}" class="btn btn-sm btn-outline-warning me-2">
                             <i class="fas fa-edit"></i> Modificar
                         </a>
                     {% endif %}
                     
-                    {% if compuesto.usuario == user or 'app_quimico.delete_compuestoquimico' in perms %}
+                    {% if compuesto.usuario == user %}
                         <a href="{% url 'compuesto_eliminar' pk=compuesto.pk %}" class="btn btn-sm btn-outline-danger">
                             <i class="fas fa-trash-alt"></i> Eliminar
                         </a>
