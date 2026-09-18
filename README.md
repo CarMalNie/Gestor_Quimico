@@ -96,6 +96,16 @@ pytest app_quimico -q
   (`python-decouple`); ver `.env.example`. Ningún secreto se versiona.
 - `STATIC_ROOT` configurado para `collectstatic` en despliegue.
 - CSRF, sesiones y validadores de contraseña con la configuración estándar de Django.
+- Headers de seguridad: `X-Content-Type-Options: nosniff`, `Referrer-Policy:
+  same-origin`, `X-Frame-Options: DENY`.
+- Hardening HTTPS por variables de entorno para producción: `SECURE_HSTS_SECONDS`,
+  `SECURE_SSL_REDIRECT`, `SESSION_COOKIE_SECURE`, `CSRF_COOKIE_SECURE` (en desarrollo
+  quedan desactivados; ver `.env.example`).
+- Rate limiting del login con `django-axes`: bloqueo tras 5 intentos fallidos por
+  usuario e IP, con cool-off de 1 hora.
+- Ownership estricto: los compuestos web son privados de su dueño para todos los
+  roles, verificado por tests de permisos.
+- Suite de 41 tests cubre permisos, parser, servicios, forms, paginación y seguridad.
 
 ## Roadmap
 
