@@ -1,0 +1,63 @@
+name: CI
+
+# Trigger: every push to main and every pull request against it.
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    # Fresh, disposable Ubuntu runner per execution.
+    runs-on: ubuntu-latest
+
+    # Ephemeral MySQL service container next to the runner: the suite runs
+    # against a clean, reproducible database on every execution.
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: test
+          MYSQL_DATABASE: test_gestor
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+
+    steps:
+      # Pulls the repository into the runner.
+      - uses: actions/checkout@v4
+
+      # Python with pip dependency caching keyed by requirements files.
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: |
+            requirements.txt
+            requirements-dev.txt
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt -r requirements-dev.txt
+
+      # System check + full test suite against the disposable MySQL service.
+      # Secrets are test-only values passed as environment variables, matching
+      # the env-driven settings (python-decouple).
+      - name: Run system checks and tests
+        env:
+          DJANGO_SETTINGS_MODULE: core.settings
+          SECRET_KEY: ci-test-secret-key
+          DEBUG: "False"
+          DB_NAME: test_gestor
+          DB_USER: root
+          DB_PASSWORD: test
+          DB_HOST: 127.0.0.1
+          DB_PORT: "3306"
+        run: |
+          python manage.py check
+          pytest -q

@@ -1,5 +1,7 @@
 # ⚗️ Gestor Químico
 
+[![CI](https://github.com/CarMalNie/Gestor_Quimico/actions/workflows/ci.yml/badge.svg)](https://github.com/CarMalNie/Gestor_Quimico/actions/workflows/ci.yml)
+
 Sistema web de gestión de información química construido con **Django 5.2** (patrón MVT) y **MySQL**.
 Centraliza la tabla periódica, el cálculo automático de pesos moleculares y la asociación de
 compuestos con sus usos industriales, con control de propiedad por usuario y roles de curación.
