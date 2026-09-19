@@ -1,0 +1,78 @@
+{% comment %}
+Reusable Bootstrap 5.3 color-mode toggle: a single button plus one small
+vanilla script.
+
+Context:
+  with_script Pass True on exactly one include per page so the vanilla JS that
+              powers the toggle is emitted only once. The script is also
+              idempotent, so an extra include stays harmless.
+
+The caller supplies the layout wrapper (for example a <li class="nav-item"> in
+the navbar). The button only needs to carry the data-theme-toggle hook.
+{% endcomment %}
+<button type="button" id="themeToggle" class="btn btn-sm btn-outline-light"
+        data-theme-toggle aria-label="Cambiar tema" title="Cambiar tema" aria-pressed="false">
+    <i class="fas fa-moon" aria-hidden="true"></i>
+</button>
+{% if with_script %}
+<script>
+    // Theme toggle: persists the choice in localStorage and keeps the
+    // data-bs-theme attribute, the icon and the aria state in sync.
+    // The initial theme is already applied pre-paint by base.html.
+    (function () {
+        "use strict";
+        // Idempotent guard: a repeated include must not double-bind clicks.
+        if (window.gestorQuimicoThemeToggle) {
+            return;
+        }
+        window.gestorQuimicoThemeToggle = true;
+
+        var STORAGE_KEY = "gestorQuimicoTheme";
+        var DEFAULT_THEME = "light";
+
+        function readStoredTheme() {
+            try {
+                var stored = window.localStorage.getItem(STORAGE_KEY);
+                if (stored === "light" || stored === "dark") {
+                    return stored;
+                }
+            } catch (error) {
+                // Storage unavailable (e.g. private mode): keep the default.
+            }
+            return DEFAULT_THEME;
+        }
+
+        function applyTheme(theme) {
+            var isDark = theme === "dark";
+            document.documentElement.setAttribute("data-bs-theme", theme);
+
+            var buttons = document.querySelectorAll("[data-theme-toggle]");
+            for (var i = 0; i < buttons.length; i++) {
+                buttons[i].setAttribute("aria-pressed", isDark ? "true" : "false");
+                var icon = buttons[i].querySelector("i");
+                if (icon) {
+                    icon.classList.toggle("fa-moon", !isDark);
+                    icon.classList.toggle("fa-sun", isDark);
+                }
+            }
+        }
+
+        applyTheme(readStoredTheme());
+
+        document.addEventListener("click", function (event) {
+            var button = event.target.closest("[data-theme-toggle]");
+            if (!button) {
+                return;
+            }
+            var isDark = document.documentElement.getAttribute("data-bs-theme") === "dark";
+            var nextTheme = isDark ? "light" : "dark";
+            try {
+                window.localStorage.setItem(STORAGE_KEY, nextTheme);
+            } catch (error) {
+                // Storage unavailable: the theme still applies for this page view.
+            }
+            applyTheme(nextTheme);
+        });
+    })();
+</script>
+{% endif %}

@@ -37,7 +37,7 @@
                 </div>
             </div>
             
-            <div class="card-footer bg-light">
+            <div class="card-footer bg-body-tertiary">
                 <p class="mb-0 small text-muted">
                     <strong>Usuario Creador:</strong> {{ compuesto.usuario.username|default:"Sistema/Migración" }}
                 </p>
@@ -68,7 +68,7 @@
             </li>
         </ul>
         
-        <div class="tab-content border border-top-0 p-3 bg-white" id="compuestoTabsContent">
+        <div class="tab-content border border-top-0 p-3 bg-body" id="compuestoTabsContent">
             
             <div class="tab-pane fade show active" id="composition" role="tabpanel">
                 {% if compuesto.elementocompuesto_set.all %}

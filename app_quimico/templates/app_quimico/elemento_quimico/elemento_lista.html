@@ -18,7 +18,7 @@
 
 <div class="row mb-4">
     <div class="col-12">
-        <div class="card card-body bg-light shadow-sm">
+        <div class="card card-body bg-body-tertiary shadow-sm">
             <form method="get" class="mb-0">
                 {% csrf_token %}
                 <div class="row">
@@ -55,7 +55,7 @@
                         {% with detalle=elemento.detalleelemento %}
             <div class="card h-100 shadow-sm border-primary"> 
                 
-                <div class="card-header bg-light">
+                <div class="card-header bg-body-tertiary">
                     <div class="d-flex justify-content-between align-items-center">
                         <h6 class="mb-0 text-muted">Número Atómico (Z) = {{ elemento.numero_atomico_elemento }}</h6>
                         <div class="btn-group btn-sm">
@@ -75,7 +75,7 @@
                     <p class="mb-0">Peso Atómico: <strong>{{ elemento.peso_atomico_elemento|floatformat:4 }} g/mol</strong></p>
                 </div>
 
-                <div class="card-footer bg-white d-flex justify-content-between align-items-center">
+                <div class="card-footer bg-body d-flex justify-content-between align-items-center">
                     
                     <ul class="list-unstyled small mb-0">
                         <li><strong>Grupo/Periodo:</strong> {{ detalle.grupo_elemento }}/{{ detalle.periodo_elemento }}</li>

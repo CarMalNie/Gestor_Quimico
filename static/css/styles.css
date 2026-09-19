@@ -1,64 +1,109 @@
 
 /* ======================================= */
-/*  PALETA DE COLORES PERSONALIZADA        */
+/*  CUSTOM COLOR PALETTE (BOTH THEMES)     */
 /* ======================================= */
 :root {
-    /* Paleta de Colores Definidos */
+    /* Brand palette */
     --sky-blue-light: #8ecae6;
     --blue-green: #219ebc;
-    --deep-space-blue: #023047; /* Color de Fondo/Headers */
+    --deep-space-blue: #023047; /* Brand background for navbar, footer and headers */
     --amber-flame: #ffb703;
     --princeton-orange: #fb8500;
 
-    /* Sobrescribir Colores Base de Bootstrap para Acentos */
-    --bs-primary: var(--blue-green); 
-    --bs-success: var(--amber-flame); 
+    /* Brand accent overrides */
+    --bs-primary: var(--blue-green);
+    --bs-success: var(--amber-flame);
     --bs-warning: var(--princeton-orange);
-    --bs-info: var(--sky-blue-light); 
+    --bs-info: var(--sky-blue-light);
 
-    /* Fondo y Texto General de la Página: Volvemos a CLARO/Blanco */
-    --bs-body-bg: #ffffff; 
-    --bs-body-color: #212529; /* Texto Oscuro */
+    /*
+     * Body background and text color are intentionally NOT declared here.
+     * Bootstrap 5.3 light color mode already provides #fff / #212529, and an
+     * unconditional :root declaration would beat [data-bs-theme="dark"]
+     * (same specificity, later stylesheet), which is what previously broke dark
+     * mode. Dark surfaces come from Bootstrap's own color mode variables.
+     */
+}
+
+/* ========================================================= */
+/* BRAND ACCENTS (theme-neutral, no priority forcing needed)  */
+/* ========================================================= */
+/*
+ * Bootstrap utilities resolve their color from the *-rgb variables, so
+ * declaring the variable on the utility itself wins over the global value with
+ * plain specificity, and without leaking into unrelated utilities
+ * (e.g. .border-primary stays Bootstrap blue as before).
+ */
+.text-primary {
+    --bs-primary-rgb: 33, 158, 188; /* blue-green */
+}
+
+/* Deep-space-blue identity for navbar, footer, badges and brand headers. */
+.bg-primary {
+    --bs-primary-rgb: 2, 48, 71; /* deep-space-blue */
+}
+
+.badge.bg-dark {
+    --bs-dark-rgb: 2, 48, 71; /* deep-space-blue */
+}
+
+/*
+ * Dark brand text on the amber/orange buttons instead of white.
+ * Overriding the Bootstrap button variables keeps every state (base, hover,
+ * active, disabled) consistent with the previous forced color, without any
+ * priority-forced declaration.
+ */
+.btn-success,
+.btn-warning {
+    --bs-btn-color: var(--deep-space-blue);
+    --bs-btn-hover-color: var(--deep-space-blue);
+    --bs-btn-active-color: var(--deep-space-blue);
+    --bs-btn-disabled-color: var(--deep-space-blue);
 }
 
 /* ================================================= */
-/* REGLAS DE APLICACIÓN ESPECÍFICA (NAVBAR & FOOTER) */
+/*  NAVBAR & FOOTER (deep-space-blue, BOTH THEMES)    */
 /* ================================================= */
-
-/* 1. Navbar y Footer (Fondo Uniforme Oscuro) */
-/* Forzamos el bg-primary (usado en navbar/footer) a ser Deep Space Blue */
-.navbar, .bg-primary, .footer {
-    background-color: var(--deep-space-blue) !important;
+/*
+ * Safety net for navbar/footer markup without the .bg-primary utility.
+ * Declared after Bootstrap, so it applies wherever the utility does not.
+ */
+.navbar,
+.footer {
+    background-color: var(--deep-space-blue);
 }
 
-/* 2. Contraste de Texto en Navbar y Footer (Texto Claro) */
+/*
+ * Light brand text on the brand background is required in both themes, so these
+ * two rules keep the only remaining priority-forced declarations: .text-white
+ * (footer span) and .text-warning (navbar username link) are priority-forced
+ * Bootstrap utilities in markup outside this task's edit surface.
+ */
 .navbar-brand,
 .navbar-nav .nav-link,
 .footer span {
-    color: var(--sky-blue-light) !important; 
+    color: var(--sky-blue-light) !important;
 }
 .navbar-brand:hover,
 .navbar-nav .nav-link:hover {
+    /* Also priority-forced: it must override the forced rule above. */
     color: var(--amber-flame) !important;
 }
 
-/* ========================================== */
-/* AJUSTES DE CONTENIDO (Tarjetas y Tablas)   */
-/* ========================================== */
-
-/* Fondo de Tarjetas: Mantenemos el fondo CLARO para legibilidad */
-.card, .card-body, .card-header, .card-footer {
-    background-color: #f8f8f8 !important; 
-    color: var(--deep-space-blue) !important; 
-}
-
-/* Botones y Badges (para contraste) */
-.btn-success, .btn-warning {
-    color: var(--deep-space-blue) !important; /* Texto Oscuro */
-}
-.badge.bg-dark {
-    background-color: var(--deep-space-blue) !important;
-}
-.text-primary {
-    color: var(--blue-green) !important;
+/* =================================================== */
+/* CARDS (light look preserved, dark handled natively)  */
+/* =================================================== */
+/*
+ * The previous stylesheet forced light cards on BOTH themes. That look is kept
+ * for the light theme only; dark mode uses Bootstrap's card variables
+ * (--bs-card-bg / --bs-card-cap-bg) so cards follow the active color mode.
+ * Intentionally not priority-forced: brand utilities such as .bg-primary,
+ * .bg-success or .bg-danger on card headers must keep winning.
+ */
+[data-bs-theme="light"] .card,
+[data-bs-theme="light"] .card-body,
+[data-bs-theme="light"] .card-header,
+[data-bs-theme="light"] .card-footer {
+    background-color: var(--bs-tertiary-bg);
+    color: var(--deep-space-blue);
 }

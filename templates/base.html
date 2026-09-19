@@ -1,10 +1,28 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" data-bs-theme="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Gestor Químico{% endblock %}</title>
-    
+
+    <script>
+        // Apply the stored theme before first paint so the page never flashes
+        // the light theme before JavaScript runs (see partials/theme_toggle.html).
+        (function () {
+            "use strict";
+            var theme = "light";
+            try {
+                var stored = window.localStorage.getItem("gestorQuimicoTheme");
+                if (stored === "light" || stored === "dark") {
+                    theme = stored;
+                }
+            } catch (error) {
+                theme = "light"; // Storage unavailable (e.g. private mode).
+            }
+            document.documentElement.setAttribute("data-bs-theme", theme);
+        })();
+    </script>
+
         {% load static %}
         <link rel="stylesheet" href="{% static 'vendor/bootstrap/bootstrap.min.css' %}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" integrity="sha512-1ycn6IcaQQ40/MKBW2W4Rhis/DbILU74C1vSrLJxCq57o941Ym01SwNsOMqvEBFlcgUa6xLiPY/NS5R+E6ztJQ==" crossorigin="anonymous" referrerpolicy="no-referrer">
