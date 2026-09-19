@@ -34,13 +34,13 @@ account (exercises the P0 ownership feature).
    (simbolo, grupo, período, categoría, electronegatividad, afinidad,
    ionización, radio, descripción corta en español), validated against the
    Word tables and model validators via a standalone validation script.
-2. [ ] Extend `cargar_elementos` to upsert `DetalleElemento` (idempotent,
+2. [x] Extend `cargar_elementos` to upsert `DetalleElemento` (idempotent,
    keeps user edits to other fields).
-3. [ ] Data migration seeding 5 industrias + 10 aplicaciones (Tabla 2,
+3. [x] Data migration seeding 5 industrias + 10 aplicaciones (Tabla 2,
    minus compounds). Idempotent via get_or_create.
-4. [ ] Tests: command loads/updates detalles; migration seeds base rows;
+4. [x] Tests: command loads/updates detalles; migration seeds base rows;
    dataset values fit validator bounds.
-5. [ ] Full suite + check; work-unit commits; README touch if warranted.
+5. [x] Full suite + check; work-unit commits; README touch if warranted.
 
 ## Evidence
 
@@ -51,3 +51,12 @@ account (exercises the P0 ownership feature).
   data migration (0007 + tests + fixtures get_or_create). Suite verde: 50 passed.
 - Resolución humana: Option A/A1 — fixtures reutilizan la industria sembrada
   por la collation acento-insensible de MySQL (utf8mb4_0900_ai_ci).
+- 2026-09-19 9e097c6 chore(tasks): registro de la feature.
+- 2026-09-19 ASSESS nativo: review nativa UNAVAILABLE para este candidato
+  (START baseRef falla con schema-incompatible; par fachada gentle-pi 3.2.1
+  vs CLI gentle-ai 3.3.0) -> riesgo tratado como alto, plan risk-gated:
+  writer self-verification + verificador independiente. Verificador
+  gentle-ai-verify: 7/7 PASS (suite 50 passed, check y makemigrations
+  --check limpios, readback estructural de 0006/0007, sin secretos ni
+  mojibake). Los 10 valores de referencia del docx cátedra se validaron
+  directo contra el Word al compilar el dataset (misma sesión).
