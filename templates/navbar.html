@@ -38,8 +38,8 @@
                             {% endif %}
                         </a>
                     </li>
-                    <li class="nav-item">
-                        <form method="post" action="{% url 'logout' %}" class="d-inline">
+                    <li class="nav-item d-flex align-items-center">
+                        <form method="post" action="{% url 'logout' %}" class="d-flex align-items-center">
                             {% csrf_token %}
                             <button type="submit" class="btn btn-sm btn-outline-danger">
                                 Cerrar Sesión
@@ -47,12 +47,12 @@
                         </form>
                     </li>
                 {% else %}
-                    <li class="nav-item me-2">
+                    <li class="nav-item me-2 d-flex align-items-center">
                         <a class="btn btn-sm btn-outline-light" href="{% url 'login' %}">
                             Iniciar Sesión
                         </a>
                     </li>
-                    <li class="nav-item">
+                    <li class="nav-item d-flex align-items-center">
                         <a class="btn btn-sm btn-warning" href="{% url 'registro' %}">
                             Registrarse
                         </a>

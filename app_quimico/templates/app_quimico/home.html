@@ -14,19 +14,21 @@
         </p>
         <hr class="my-4">
         
-        <a href="{% url 'elemento_lista' %}" class="btn btn-success btn-lg me-3">
-            Ver Tabla Periódica
-        </a>
-        
-        {% if user.is_authenticated %}
-            <a href="{% url 'compuesto_lista' %}" class="btn btn-info text-white btn-lg">
-                Ir a Mis Compuestos
+        <div class="d-grid gap-2 d-md-flex justify-content-md-center">
+            <a href="{% url 'elemento_lista' %}" class="btn btn-success btn-lg">
+                Ver Tabla Periódica
             </a>
-        {% else %}
-            <a href="{% url 'registro' %}" class="btn btn-warning btn-lg">
-                Quiero Registrarme
-            </a>
-        {% endif %}
+
+            {% if user.is_authenticated %}
+                <a href="{% url 'compuesto_lista' %}" class="btn btn-info text-white btn-lg">
+                    Ir a Mis Compuestos
+                </a>
+            {% else %}
+                <a href="{% url 'registro' %}" class="btn btn-warning btn-lg">
+                    Quiero Registrarme
+                </a>
+            {% endif %}
+        </div>
     </div>
 </div>
 
