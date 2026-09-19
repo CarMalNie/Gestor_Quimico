@@ -94,6 +94,51 @@ path('login/', CustomLoginView.as_view(), name='login'),
 # LOGOUT
 path('logout/', custom_logout_view, name='logout'),
 
+# ===================================== #
+# URLs de RECUPERACIÓN DE CONTRASEÑA    #
+# ===================================== #
+# Vistas nativas de django.contrib.auth. Los nombres de ruta se mantienen
+# canónicos (password_reset*) porque los success_url por defecto de las vistas
+# dependen de ellos; cada ruta apunta a las plantillas propias de la app.
+
+# 1) Solicitud: formulario con el correo para enviar el enlace.
+path(
+    'accounts/password_reset/',
+    auth_views.PasswordResetView.as_view(
+        template_name='app_quimico/autenticacion/password_reset_form.html',
+        email_template_name='app_quimico/autenticacion/password_reset_email.html',
+        subject_template_name='app_quimico/autenticacion/password_reset_subject.txt',
+    ),
+    name='password_reset',
+),
+
+# 2) Confirmación de envío (sin revelar si el correo existe).
+path(
+    'accounts/password_reset/done/',
+    auth_views.PasswordResetDoneView.as_view(
+        template_name='app_quimico/autenticacion/password_reset_done.html',
+    ),
+    name='password_reset_done',
+),
+
+# 3) Enlace del correo: definir la nueva contraseña (uidb64 + token).
+path(
+    'accounts/reset/<uidb64>/<token>/',
+    auth_views.PasswordResetConfirmView.as_view(
+        template_name='app_quimico/autenticacion/password_reset_confirm.html',
+    ),
+    name='password_reset_confirm',
+),
+
+# 4) Cambio completado.
+path(
+    'accounts/reset/done/',
+    auth_views.PasswordResetCompleteView.as_view(
+        template_name='app_quimico/autenticacion/password_reset_complete.html',
+    ),
+    name='password_reset_complete',
+),
+
 # PERFIL PERSONAL (Target de LOGIN_REDIRECT_URL)
 path('perfil/', views.HomeView.as_view(template_name='app_quimico/autenticacion/perfil_personal.html'), name='perfil_personal'),
 
