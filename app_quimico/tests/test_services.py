@@ -38,7 +38,7 @@ def compuesto_guardado(elemento_hidrogeno, elemento_oxigeno):
     from django.contrib.auth.models import User
 
     usuario = User.objects.create_user(username="dueño", password="pass12345")
-    industria = Industria.objects.create(nombre_industria="Farmaceutica")
+    industria = Industria.objects.get_or_create(nombre_industria="Farmacéutica")[0]
     return CompuestoQuimico.objects.create(
         nombre_compuesto="Agua",
         formula_compuesto="H2O",

@@ -8,7 +8,7 @@ from app_quimico.models import Aplicacion, Industria
 
 @pytest.mark.django_db
 def test_form_rechaza_industria_aplicacion_no_coincidente():
-    industria_1 = Industria.objects.create(nombre_industria="Farmaceutica")
+    industria_1 = Industria.objects.get_or_create(nombre_industria="Farmacéutica")[0]
     industria_2 = Industria.objects.create(nombre_industria="Alimentaria")
     aplicacion = Aplicacion.objects.create(id_industria=industria_2, nombre_uso="Disolvente")
 
@@ -25,7 +25,7 @@ def test_form_rechaza_industria_aplicacion_no_coincidente():
 
 @pytest.mark.django_db
 def test_form_acepta_industria_aplicacion_coincidente():
-    industria = Industria.objects.create(nombre_industria="Farmaceutica")
+    industria = Industria.objects.get_or_create(nombre_industria="Farmacéutica")[0]
     aplicacion = Aplicacion.objects.create(id_industria=industria, nombre_uso="Disolvente")
 
     form = CompuestoAplicacionForm(data={

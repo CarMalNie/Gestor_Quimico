@@ -15,7 +15,7 @@ pytestmark = pytest.mark.django_db
 
 @pytest.fixture
 def industria():
-    return Industria.objects.create(nombre_industria="Farmaceutica")
+    return Industria.objects.get_or_create(nombre_industria="Farmacéutica")[0]
 
 
 @pytest.fixture
