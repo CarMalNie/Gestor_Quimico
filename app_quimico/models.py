@@ -223,27 +223,27 @@ class DetalleElemento(models.Model):
         ]
     )
     
-    # Afinidad Electrónica: [-348.00, -0.0001]
+    # Afinidad Electrónica: [-348.60, -0.0001]
     afinidad_electronica = models.DecimalField(
         max_digits=6, 
         decimal_places=2, 
         null=True, 
         blank=True,
         validators=[
-            MinValueValidator(Decimal('-348.00'), message="El valor mínimo es -348.00 kJ/mol (Cloro)"),
+            MinValueValidator(Decimal('-348.60'), message="El valor mínimo es -348.60 kJ/mol (Cloro)"),
             MaxValueValidator(Decimal('-0.0001'), message="El valor máximo debe ser estrictamente negativo")
         ],
         verbose_name="Afinidad Electrónica"
     )
     
-    # Energía de Ionización: [382.70, 2372.30]
+    # Energía de Ionización: [375.70, 2372.30]
     energia_de_ionizacion = models.DecimalField(
         max_digits=6, 
         decimal_places=2, 
         null=True, 
         blank=True,
         validators=[
-            MinValueValidator(Decimal('382.70'), message="El valor mínimo es 382.70 kJ/mol (Cesio)"),
+            MinValueValidator(Decimal('375.70'), message="El valor mínimo es 375.70 kJ/mol (Cesio)"),
             MaxValueValidator(Decimal('2372.30'), message="El valor máximo es 2372.30 kJ/mol (Helio)")
         ],
         verbose_name="Energía de Ionización"
