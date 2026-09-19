@@ -43,6 +43,13 @@ Rejected alternative (documented decision): secret question/answer recovery.
 Weak pattern (answers cannot be rotated once leaked, easily guessable,
 discouraged by OWASP) and more custom work than the native email flow.
 
+## Evidence
+
+- 2026-09-19 aeff9fa feat(auth): recuperacion de contrasena por email (T2-T4:
+  4 rutas nativas /accounts/, 6 templates, EMAIL_* por decouple, link en
+  login, 10 tests; suite 66 passed). .env.example documentado en el mismo
+  commit. T1 (admin) ya nativa, sin codigo.
+
 ## Decisions / notes
 
 - Scope decision 2026-07-19 (planning session): user asked for an opinion;
