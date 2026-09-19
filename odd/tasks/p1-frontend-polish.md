@@ -5,7 +5,7 @@ Light frontend pass per the operator-approved backlog (obs #417 items 4a,
 
 ## Tasks
 
-1. [ ] Password visibility toggle (eye button, right side of the input,
+1. [x] Password visibility toggle (eye button, right side of the input,
    show/hide alternation) in login and registro forms. No external libs —
    the Font Awesome 5 CDN already loaded in base.html provides
    fa-eye/fa-eye-slash. Reusable approach (partial/template include).

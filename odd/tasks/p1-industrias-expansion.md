@@ -47,7 +47,8 @@ Aplicaciones (26, nombre_uso → industria):
    next free number after 0007.
 2. [x] Tests: total counts after migration (13 industrias, 36 aplicaciones),
    FK mapping spot checks.
-3. [ ] Full suite green + commits (work-unit), push per operator decision.
+3. [x] Full suite green (56 passed, pytest via .venv) + commits (work-unit),
+   pushed to origin/main per operator decision.
 
 ## Evidence
 
