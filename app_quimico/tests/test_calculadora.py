@@ -2,6 +2,8 @@
 
 import pytest
 
+from app_quimico import utils
+from app_quimico.services import calcular_pm
 from app_quimico.utils import CalculadoraPM
 
 WEIGHTS = {
@@ -113,3 +115,33 @@ def test_subindice_con_cero_interior_valido():
     pm, conteo = _calc("H10")
     assert conteo == {"H": 10}
     assert pm == pytest.approx(10.08, rel=1e-3)
+
+
+# --- calcular_pm service: edge whitespace is tolerated, internal is not ---
+
+# Weight table injected into the process-wide cache so the service can run
+# without touching the database; monkeypatch restores the cache afterwards.
+_PESOS_SERVICIO = {"Na": 22.990, "Cl": 35.453, "O": 15.999}
+
+
+@pytest.fixture
+def pesos_atomicos_servicio(monkeypatch):
+    monkeypatch.setattr(utils, "_cache_pesos", dict(_PESOS_SERVICIO))
+
+
+def test_calcular_pm_ignora_espacios_en_los_bordes(pesos_atomicos_servicio):
+    esperado, _ = calcular_pm("NaClO")
+    for formula in ("NaClO ", " NaClO", "  NaClO  "):
+        pm, conteo = calcular_pm(formula)
+        assert pm == esperado
+        assert conteo == {"Na": 1, "Cl": 1, "O": 1}
+
+
+def test_calcular_pm_rechaza_espacio_interno(pesos_atomicos_servicio):
+    with pytest.raises(ValueError, match="no está permitido"):
+        calcular_pm("Na ClO")
+
+
+def test_calcular_pm_rechaza_formula_solo_espacios(pesos_atomicos_servicio):
+    with pytest.raises(ValueError, match="vacía"):
+        calcular_pm("   ")

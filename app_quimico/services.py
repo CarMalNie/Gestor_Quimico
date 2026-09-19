@@ -16,9 +16,12 @@ _PM_QUANTUM = Decimal("0.0001")
 def calcular_pm(formula):
     """Parses a formula and returns (peso_molecular, elementos_conteo).
 
+    Surrounding whitespace is tolerated (copy-paste is common); internal
+    whitespace stays invalid under strict IUPAC syntax.
     peso_molecular is a Decimal quantized to the stored precision.
     Raises ValueError with a user-friendly Spanish message for invalid input.
     """
+    formula = formula.strip()
     pm_float, elementos_conteo = CalculadoraPM().analizar_formula(formula)
     peso = Decimal(str(pm_float)).quantize(_PM_QUANTUM)
     return peso, elementos_conteo
