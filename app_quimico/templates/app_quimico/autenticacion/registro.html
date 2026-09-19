@@ -16,7 +16,12 @@
                 <form method="post">
                     {% csrf_token %}
                     
-                    {{ form|crispy }}
+                    {{ form.username|as_crispy_field }}
+                    {{ form.email|as_crispy_field }}
+                    {{ form.first_name|as_crispy_field }}
+                    {{ form.last_name|as_crispy_field }}
+                    {% include 'partials/password_toggle.html' with field=form.password1 with_script=True %}
+                    {% include 'partials/password_toggle.html' with field=form.password2 %}
                     
                     <button type="submit" class="btn btn-success mt-3">
                         Registrar

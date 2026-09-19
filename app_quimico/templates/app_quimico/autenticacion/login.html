@@ -14,7 +14,7 @@
                     {% csrf_token %}
                     
                     {{ form.username|as_crispy_field }}
-                    {{ form.password|as_crispy_field }}
+                    {% include 'partials/password_toggle.html' with field=form.password with_script=True %}
 
                     {% if form.errors %}
                         <div class="alert alert-danger">
