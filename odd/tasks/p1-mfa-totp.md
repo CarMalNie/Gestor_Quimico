@@ -56,7 +56,7 @@ Context established during exploration (do not re-explore from scratch):
       user without device logs in as before; axes interplay: too many failed
       token attempts do not bypass axes lockout rules; logout works with
       OTPMiddleware installed.
-- [ ] T6 Close: full suite green, work-unit commit (Conventional Commit),
+- [x] T6 Close: full suite green, work-unit commit (Conventional Commit),
       evidence recorded in this doc.
 
 Rejected alternative: custom TOTP implementation (RFC 6238 by hand). Risky,
@@ -82,8 +82,16 @@ burns the free email quota; TOTP is the agreed scope (Google Authenticator).
   message, and keeps today's behaviour otherwise.
 - T5: `pytest app_quimico/tests/test_mfa_totp.py -q` -> 21 passed.
 - Full suite: `pytest -q` -> 96 passed (baseline before the feature: 75).
-- Pending: T6 only (work-unit commit; the operator owns the commit and the
-  PythonAnywhere deployment steps).
+- 2026-09-20 c0277c7 feat(auth): MFA TOTP opcional con django-otp (T1-T5
+  completos: deps django-otp 1.7.3 + qrcode 8.2, settings con OTPMiddleware,
+  enrolamiento QR en /accounts/mfa/setup/, segundo paso /accounts/mfa/verify/
+  con ?next= preservado, 21 tests MFA; suite 96 passed). Verificación
+  independiente gentle-ai-verify: PASS en 5 checks (scope, seguridad
+  mfa_views, form_valid, comandos, sin archivos fuera de lista).
+- Deployment (operator-owned): PythonAnywhere necesita `pip install -r
+  requirements.txt` (django-otp, qrcode), `python manage.py migrate`
+  (tabla otp_totp_totpdevice) y recarga de la web app. Operador se encarga
+  de estos pasos y de la activación SMTP del email de reset en ese momento.
 
 ## Decisions / notes
 
