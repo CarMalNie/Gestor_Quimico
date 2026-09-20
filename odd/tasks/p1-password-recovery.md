@@ -1,7 +1,7 @@
 # Feature: p1-password-recovery — gestor_quimico (BACKLOG)
 
-Status: BACKLOG — planned, not started. Approved in planning session;
-to be picked up in a later session.
+Status: T2-T4 DONE (implemented and committed 2026-09-19, aeff9fa).
+T5 (MFA) remains open as a separate follow-up feature.
 
 Goal: password recovery for users who lose their credentials, plus optional
 TOTP MFA as a second iteration.
@@ -18,7 +18,7 @@ Context established during exploration (do not re-explore from scratch):
 
 ## Tasks
 
-- [ ] T1 Admin password change (no code): use the built-in admin "change
+- [x] T1 Admin password change (no code): use the built-in admin "change
       password" form (does not require the old password). It rotates the
       password hash and invalidates active sessions. If axes locked the
       account, unlock it via the axes AccessAttempt admin entry.
@@ -58,9 +58,9 @@ discouraged by OWASP) and more custom work than the native email flow.
   separate later iteration.
 - Implementation 2026-09-19 (T2-T4): routes, templates, settings and tests
   written; `pytest app_quimico/tests/test_password_reset.py -q` 10 passed and
-  full suite `pytest -q` 66 passed. Commit identity pending: the orchestrator
-  owns the work-unit commit. T4's `password validators` and `axes interplay`
+  full suite `pytest -q` 66 passed. Commit identity: aeff9fa (work-unit
+  commit), c1fa05a (evidence). T4's `password validators` and `axes interplay`
   items are covered by dedicated tests.
-- Open item: `.env.example` documentation for the SMTP variables could not be
-  written (tool-level safety guard blocks every `.env*` path); the orchestrator
-  must record the documented block or authorize another route.
+- `.env.example` SMTP documentation: the writer subagent's guard blocks `.env*`
+  paths, so the parent applied the documented block directly in aeff9fa.
+  Resolved — no pending route.
