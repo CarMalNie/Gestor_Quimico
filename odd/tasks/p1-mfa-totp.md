@@ -149,3 +149,8 @@ burns the free email quota; TOTP is the agreed scope (Google Authenticator).
   requirements.txt`) + `manage.py migrate` + web app reload before users
   see the feature. Same applies retroactively: password-recovery and
   password-change had no new deps or migrations, but MFA does.
+- Brevo SMTP key (2026-09-20): operator generated the SMTP key with
+  NO EXPIRY (no regeneration deadline). IP blocking for SMTP keys
+  intentionally left OFF (dynamic local dev IP + variable PA egress IPs
+  would break sending). Key rotation is still good hygiene: rotate only on
+  suspicion of compromise, updating the PA .env at the same time.
