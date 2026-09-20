@@ -39,7 +39,7 @@ Context established during exploration (do not re-explore from scratch):
       redirect to login; wrong old password rejected; weak new password
       rejected by validators; successful change logs the expected redirect and
       the session survives (`update_session_auth_hash`); done page reachable.
-- [ ] T4 Close: full suite green, work-unit commit (Conventional Commit),
+- [x] T4 Close: full suite green, work-unit commit (Conventional Commit),
       evidence recorded in this doc.
 
 Rejected alternative: custom change-password form logic. Native views already
@@ -48,9 +48,12 @@ would only add surface.
 
 ## Evidence
 
-- 2026-09-20 (uncommitted working tree): `app_quimico/tests/test_password_change.py`
-  9 passed; full suite `pytest -q` 75 passed; `python manage.py check` no
-  issues. T1-T3 done. No commit made (parent owns terminal git).
+- 2026-09-20 fa468bb feat(auth): cambio de contrasena para el usuario
+  (T1-T3: 2 rutas nativas /accounts/password-change/ con login requerido,
+  2 templates estilo auth, link en perfil, 9 tests; suite 75 passed,
+  manage.py check limpio). Verificación independiente gentle-ai-verify:
+  PASS (scope, templates, checks, sin archivos fuera de lista). Evidencia
+  de este commit registrada en 0212fc2.
 
 ## Decisions / notes
 
