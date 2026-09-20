@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+
+{% block title %}Verificación en dos pasos{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center mt-5">
+    <div class="col-md-5">
+        <h1 class="mb-4">🔐 Verificación en dos pasos</h1>
+        <p class="text-muted small mb-3">
+            Ingresa el código de 6 dígitos de tu app de autenticación para
+            completar el inicio de sesión.
+        </p>
+
+        <div class="card shadow">
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+
+                    {{ form.token|as_crispy_field }}
+
+                    {% if form.non_field_errors %}
+                        <div class="alert alert-danger">
+                            {% for error in form.non_field_errors %}<strong>{{ error }}</strong>{% endfor %}
+                        </div>
+                    {% endif %}
+
+                    <button type="submit" class="btn btn-primary mt-3 w-100">
+                        Verificar e ingresar
+                    </button>
+                </form>
+            </div>
+            <div class="card-footer text-end">
+                <form method="post" action="{% url 'logout' %}" class="d-inline">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-outline-secondary btn-sm">
+                        Cerrar sesión
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

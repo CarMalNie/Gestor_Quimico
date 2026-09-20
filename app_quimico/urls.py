@@ -1,6 +1,7 @@
 from django.urls import path
 from django.contrib.auth import views as auth_views
 from app_quimico.views import CustomLoginView, custom_logout_view, HomeView
+from app_quimico import mfa_views
 from . import views 
 
 urlpatterns = [
@@ -93,6 +94,17 @@ path('login/', CustomLoginView.as_view(), name='login'),
 
 # LOGOUT
 path('logout/', custom_logout_view, name='logout'),
+
+# ========================================== #
+# URLs de VERIFICACIÓN EN DOS PASOS (MFA)    #
+# ========================================== #
+# django-otp: inscripción opcional (setup) y segundo paso del login (verify).
+
+# 1) Inscripción: QR + confirmación del primer código.
+path('accounts/mfa/setup/', mfa_views.mfa_setup, name='mfa_setup'),
+
+# 2) Segundo paso: código del dispositivo ya confirmado.
+path('accounts/mfa/verify/', mfa_views.mfa_verify, name='mfa_verify'),
 
 # ===================================== #
 # URLs de RECUPERACIÓN DE CONTRASEÑA    #

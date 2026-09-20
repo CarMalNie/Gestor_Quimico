@@ -1,6 +1,8 @@
-from django.urls import reverse_lazy
+from django.urls import reverse, reverse_lazy
 from django.shortcuts import redirect, render, get_object_or_404
 from django.contrib import messages
+from urllib.parse import quote
+from django.conf import settings
 from django.db import transaction 
 from .services import calcular_pm, registrar_elementos_compuesto
 from django.contrib.auth.views import LoginView, LogoutView
@@ -10,6 +12,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin, 
 from django.contrib.auth.models import Group
 from django.contrib.auth.models import User
 from django.views.decorators.http import require_POST
+from django_otp.plugins.otp_totp.models import TOTPDevice
 from .services import calcular_pm, registrar_elementos_compuesto
 
 import logging
@@ -96,7 +99,20 @@ class CustomLoginView(LoginView):
         # 1. Ejecutar el login del padre (lo hace internamente)
         response = super().form_valid(form)
         
-        # 2. Agregar el mensaje de éxito DESPUÉS de loguear
+        # 2. Segundo factor: si el usuario tiene un dispositivo TOTP confirmado,
+        #    se lo redirige a verificar el código ANTES de dar el mensaje de
+        #    bienvenida. La sesión queda autenticada pero sin verificar; el
+        #    mensaje y el destino se entregan recién en 'mfa_verify'.
+        if TOTPDevice.objects.filter(user=self.request.user, confirmed=True).exists():
+            # Preserva el destino ?next= original a traves del segundo paso;
+            # 'mfa_verify' lo revalida (host local) antes de redirigir.
+            next_url = self.get_redirect_url() or self.get_success_url()
+            verify_url = reverse('mfa_verify')
+            if next_url and next_url != reverse(settings.LOGIN_REDIRECT_URL):
+                verify_url = f"{verify_url}?next={quote(next_url)}"
+            return redirect(verify_url)
+        
+        # 3. Agregar el mensaje de éxito DESPUÉS de loguear
         messages.success(self.request, f"¡Bienvenido(a) de nuevo, {self.request.user.username}! Has iniciado sesión con éxito.")
         
         return response

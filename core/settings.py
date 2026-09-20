@@ -44,6 +44,10 @@ INSTALLED_APPS = [
     'crispy_bootstrap5',
     # Login rate limiting
     'axes',
+    # Autenticación de dos factores (TOTP): el plugin otp_totp incluye su
+    # propio modelo TOTPDevice y sus migraciones.
+    'django_otp',
+    'django_otp.plugins.otp_totp',
     # Aplicación del Proyecto "app_quimico" agregada
     'app_quimico',
 ]
@@ -53,6 +57,9 @@ CRISPY_TEMPLATE_PACK = "bootstrap5"
 
 # django-axes must run before the default ModelBackend so repeated failures
 # are counted and blocked.
+# django-otp does not ship an authentication backend: the second factor is
+# resolved through OTPMiddleware + django_otp.login(), so this list is kept
+# unchanged.
 AUTHENTICATION_BACKENDS = [
     'axes.backends.AxesStandaloneBackend',
     'django.contrib.auth.backends.ModelBackend',
@@ -65,6 +72,9 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    # django-otp debe ir inmediatamente después de AuthenticationMiddleware:
+    # decora request.user con la verificación OTP (is_verified / otp_device).
+    'django_otp.middleware.OTPMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
