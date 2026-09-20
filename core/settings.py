@@ -157,14 +157,22 @@ AXES_COOLOFF_TIME = 1  # hours
 # Email (recuperación de contraseña)
 # https://docs.djangoproject.com/en/5.2/topics/email/
 # Desarrollo: backend de consola, el correo de recuperación se imprime en la
-# terminal. Simulación de producción: definir EMAIL_HOST para usar SMTP. Las
-# credenciales siempre vienen del entorno, nunca del código (ver .env.example).
+# terminal. Simulación de producción: definir EMAIL_HOST para usar SMTP.
+# Producción en PythonAnywhere free: los web apps no pueden abrir SMTP saliente
+# (el proxy solo publica HTTP(S) de la lista blanca, y api.brevo.com está en
+# ella), así que definir EMAIL_API_KEY envía por la API HTTP de Brevo.
+# Prioridad del default: EMAIL_API_KEY > EMAIL_HOST > consola. Un EMAIL_BACKEND
+# explícito en el entorno siempre gana. Las credenciales siempre vienen del
+# entorno, nunca del código (ver .env.example).
 
 EMAIL_HOST = config('EMAIL_HOST', default='')
 EMAIL_PORT = config('EMAIL_PORT', default=587, cast=int)
 EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='')
 EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
 EMAIL_USE_TLS = config('EMAIL_USE_TLS', default=True, cast=bool)
+
+# API key de Brevo (panel: SMTP & API -> API Keys). Vacía = no se usa la API.
+EMAIL_API_KEY = config('EMAIL_API_KEY', default='')
 
 DEFAULT_FROM_EMAIL = config(
     'DEFAULT_FROM_EMAIL', default='Gestor Químico <no-reply@gestorquimico.local>'
@@ -173,9 +181,13 @@ DEFAULT_FROM_EMAIL = config(
 EMAIL_BACKEND = config(
     'EMAIL_BACKEND',
     default=(
-        'django.core.mail.backends.smtp.EmailBackend'
-        if EMAIL_HOST
-        else 'django.core.mail.backends.console.EmailBackend'
+        'app_quimico.brevo_api_backend.BrevoApiEmailBackend'
+        if EMAIL_API_KEY
+        else (
+            'django.core.mail.backends.smtp.EmailBackend'
+            if EMAIL_HOST
+            else 'django.core.mail.backends.console.EmailBackend'
+        )
     ),
 )
 
