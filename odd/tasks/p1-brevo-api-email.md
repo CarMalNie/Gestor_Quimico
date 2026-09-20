@@ -86,7 +86,14 @@ same outbound-SMTP block, more infrastructure.
   and writing any `.env*` path, so the operator authorized a paste-based
   plan and the orchestrator applied it via a targeted replacement, verified
   by occurrence counts only (1 EMAIL_API_KEY line; credentials warning
-  intact). T5 pending (commit is the operator/parent decision).
+  intact).
+- 2026-09-20 57e461b feat(email): backend de envio por API HTTP de Brevo
+  (T1-T4: BrevoApiEmailBackend con urllib stdlib, selección 3-vía en
+  settings, 16 tests con HTTP mockeado; suite 112 passed; .env.example
+  con la opción C). Verificación independiente gentle-ai-verify: PASS
+  (seguridad: clave nunca logueada, errores mapeados a SMTPException,
+  sin inyección; precedencia; tests; scope). Nota de rotación de la
+  SMTP key commiteada aparte en c7c2767.
 
 ## Decisions / notes
 
