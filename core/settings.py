@@ -44,10 +44,12 @@ INSTALLED_APPS = [
     'crispy_bootstrap5',
     # Login rate limiting
     'axes',
-    # Autenticación de dos factores (TOTP): el plugin otp_totp incluye su
-    # propio modelo TOTPDevice y sus migraciones.
+    # Autenticación de dos factores (TOTP) y códigos de respaldo: los plugins
+    # otp_totp y otp_static incluyen sus propios modelos (TOTPDevice;
+    # StaticDevice/StaticToken) y sus migraciones.
     'django_otp',
     'django_otp.plugins.otp_totp',
+    'django_otp.plugins.otp_static',
     # Aplicación del Proyecto "app_quimico" agregada
     'app_quimico',
 ]

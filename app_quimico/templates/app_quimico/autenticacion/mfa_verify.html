@@ -8,27 +8,64 @@
     <div class="col-md-5">
         <h1 class="mb-4">🔐 Verificación en dos pasos</h1>
         <p class="text-muted small mb-3">
-            Ingresa el código de 6 dígitos de tu app de autenticación para
-            completar el inicio de sesión.
+            {% if show_backup %}
+                Ingresa uno de tus códigos de respaldo. Cada código sirve una sola
+                vez y no podrás volver a usarlo.
+            {% else %}
+                Ingresa el código de 6 dígitos de tu app de autenticación para
+                completar el inicio de sesión.
+            {% endif %}
         </p>
 
         <div class="card shadow">
             <div class="card-body">
-                <form method="post">
-                    {% csrf_token %}
+                {% if show_backup %}
+                    <form method="post">
+                        {% csrf_token %}
 
-                    {{ form.token|as_crispy_field }}
+                        {{ backup_form.backup_code|as_crispy_field }}
 
-                    {% if form.non_field_errors %}
-                        <div class="alert alert-danger">
-                            {% for error in form.non_field_errors %}<strong>{{ error }}</strong>{% endfor %}
-                        </div>
-                    {% endif %}
+                        {% if backup_form.non_field_errors %}
+                            <div class="alert alert-danger">
+                                {% for error in backup_form.non_field_errors %}<strong>{{ error }}</strong>{% endfor %}
+                            </div>
+                        {% endif %}
 
-                    <button type="submit" class="btn btn-primary mt-3 w-100">
-                        Verificar e ingresar
-                    </button>
-                </form>
+                        <button type="submit" class="btn btn-primary mt-3 w-100">
+                            Verificar con código de respaldo
+                        </button>
+                    </form>
+
+                    <div class="text-center mt-3">
+                        <a href="?{% if request.GET.next %}next={{ request.GET.next|urlencode }}{% endif %}"
+                           class="small link-secondary">
+                            Volver al código del autenticador
+                        </a>
+                    </div>
+                {% else %}
+                    <form method="post">
+                        {% csrf_token %}
+
+                        {{ form.token|as_crispy_field }}
+
+                        {% if form.non_field_errors %}
+                            <div class="alert alert-danger">
+                                {% for error in form.non_field_errors %}<strong>{{ error }}</strong>{% endfor %}
+                            </div>
+                        {% endif %}
+
+                        <button type="submit" class="btn btn-primary mt-3 w-100">
+                            Verificar e ingresar
+                        </button>
+                    </form>
+
+                    <div class="text-center mt-3">
+                        <a href="?backup=1{% if request.GET.next %}&next={{ request.GET.next|urlencode }}{% endif %}"
+                           class="small link-secondary">
+                            ¿Perdiste tu autenticador? Usa un código de respaldo
+                        </a>
+                    </div>
+                {% endif %}
             </div>
             <div class="card-footer text-end">
                 <form method="post" action="{% url 'logout' %}" class="d-inline">

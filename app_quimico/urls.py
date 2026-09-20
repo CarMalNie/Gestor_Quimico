@@ -103,8 +103,11 @@ path('logout/', custom_logout_view, name='logout'),
 # 1) Inscripción: QR + confirmación del primer código.
 path('accounts/mfa/setup/', mfa_views.mfa_setup, name='mfa_setup'),
 
-# 2) Segundo paso: código del dispositivo ya confirmado.
+# 2) Segundo paso: código del dispositivo ya confirmado (o de respaldo).
 path('accounts/mfa/verify/', mfa_views.mfa_verify, name='mfa_verify'),
+
+# 3) Códigos de respaldo: generar/regenerar (requiere TOTP ya confirmado).
+path('accounts/mfa/backup-codes/', mfa_views.mfa_backup_codes, name='mfa_backup_codes'),
 
 # ===================================== #
 # URLs de RECUPERACIÓN DE CONTRASEÑA    #
