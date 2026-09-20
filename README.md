@@ -17,6 +17,9 @@ compuestos con sus usos industriales, con control de propiedad por usuario y rol
   aplicación industrial, concentración mínima y composición elemental derivada de la fórmula.
 - **Roles separados por propósito**: usuarios de producto (químicos), curadores de datos maestros
   y gobernanza de plataforma (ver matriz de roles).
+- **Ciclo de credenciales completo**: registro, login protegido con rate limiting,
+  recuperación de contraseña por email real, cambio de contraseña para el usuario
+  autenticado y MFA TOTP opcional (Google Authenticator compatible).
 
 ## Arquitectura
 
@@ -26,9 +29,10 @@ compuestos con sus usos industriales, con control de propiedad por usuario y rol
 | Vistas | Class-Based Views (CRUD completo), transacciones atómicas, `select_related`/`prefetch_related` |
 | Motor de cálculo | `app_quimico.utils.CalculadoraPM`: validación IUPAC estricta, tokenización posicional, balanceo de agrupadores, cache de pesos por proceso |
 | Formularios | `django-crispy-forms` (Bootstrap 5), validación cruzada industria↔aplicación, cascada cliente |
-| Frontend | Templates DTL, Bootstrap 5.3 local-friendly, CSS de diseño propio |
+| Frontend | Templates DTL, Bootstrap 5.3 local-friendly, CSS de diseño propio, tema claro/oscuro persistente |
 | Base de datos | MySQL (modo `STRICT_TRANS_TABLES`) |
-| Tests | pytest + pytest-django: permisos/ownership, parser (sin BD), validación de formularios |
+| Envío de email | Transporte dual por entorno: SMTP (Brevo) en desarrollo, API HTTP de Brevo en PythonAnywhere (selección automática por variables de entorno) |
+| Tests | pytest + pytest-django: 112 ejecuciones (95 tests, algunos parametrizados) — permisos/ownership, parser (sin BD), formularios, flujos de autenticación, MFA y backend de email |
 
 ### Matriz de roles
 
@@ -50,6 +54,25 @@ realizan a través del panel de administración de Django.
 - Los hidratos (`CuSO4·5H2O`) se rechazan explícitamente con mensaje informativo (soporte planificado).
 - El PM se recalcula automáticamente al crear o modificar la fórmula; la composición elemental se
   deriva de la fórmula y queda registrada como relación M:N auditable.
+
+## Autenticación y recuperación
+
+- **Registro y login**: registro con asignación automática al grupo `Químicos`; login con bloqueo
+  por intentos fallidos (django-axes).
+- **Recuperación de contraseña por email**: flujo nativo de Django (`/accounts/password_reset/`)
+  con plantillas propias, respuesta idéntica para emails existentes o desconocidos (sin
+  enumeración de usuarios), token de un solo uso y expiración configurable.
+- **Cambio de contraseña autenticado**: `/accounts/password-change/` (vistas nativas) con
+  verificación de la contraseña anterior, validadores estándar y rotación del hash de sesión
+  (la sesión del usuario sobrevive al cambio).
+- **MFA TOTP opcional**: enrolamiento con QR (cualquier app TOTP: Google/Microsoft Authenticator,
+  Authy, Bitwarden…) vía `django-otp`; segundo paso en el login para usuarios con dispositivo
+  confirmado; verificación con throttling integrado; gestión de dispositivos vía `/admin`.
+- **Recuperación con autenticador perdido**: vía administrativa — el staff elimina el dispositivo
+  TOTP del usuario desde el admin (sección *OTP TOTP*) y el usuario re-enrola. El reset de
+  contraseña **no** saltea el segundo factor.
+- **Planificado**: códigos de respaldo de un solo uso (`otp_static`) para auto-recuperación sin
+  intervención del admin (prerrequisito para la API REST).
 
 ## Configuración
 
@@ -76,6 +99,29 @@ python manage.py runserver
 ```
 
 La aplicación queda en `http://127.0.0.1:8000/`.
+
+### Envío de email (recuperación de contraseña)
+
+El transporte se selecciona automáticamente por variables de entorno (ver `.env.example`):
+
+| Entorno | Variable clave | Transporte |
+| :--- | :--- | :--- |
+| Desarrollo local | `EMAIL_HOST` | SMTP (p. ej. Brevo ~300/día, Gmail app password ~500/día) |
+| Producción en PythonAnywhere (free) | `EMAIL_API_KEY` | API HTTP de Brevo (`api.brevo.com`, en la whitelist de PA) |
+| Sin configurar | — | Consola (el email se imprime en terminal) |
+
+Ambos transportes usan el mismo flujo de Django (`send_mail`); el backend de API es
+implementación propia (`app_quimico/brevo_api_backend.py`). Las claves SMTP y API de Brevo
+son credenciales independientes y no se versionan.
+
+### Despliegue (PythonAnywhere)
+
+1. `git pull` en la consola del proyecto
+2. Instalar dependencias con el pip del virtualenv de la web app
+3. `python manage.py migrate`
+4. `.env` con credenciales de BD, `EMAIL_*` de Brevo y `EMAIL_API_KEY` (el plan gratuito de
+   PA bloquea SMTP saliente desde web apps; `api.brevo.com` está en su lista blanca)
+5. Reload de la web app desde el dashboard
 
 ### Grupos y permisos (primer arranque)
 
@@ -107,12 +153,17 @@ pytest app_quimico -q
   usuario e IP, con cool-off de 1 hora.
 - Ownership estricto: los compuestos web son privados de su dueño para todos los
   roles, verificado por tests de permisos.
-- Suite de 41 tests cubre permisos, parser, servicios, forms, paginación y seguridad.
+- Suite de **112 ejecuciones de tests** (95 tests, algunos parametrizados) cubre permisos,
+  parser, servicios, forms, paginación, seguridad, flujos de autenticación, MFA y el
+  backend de email.
 
 ## Roadmap
 
+- [x] CI con GitHub Actions (tests en cada push)
+- [x] Recuperación y cambio de contraseña, MFA TOTP, envío de email real (Brevo SMTP/API)
+- [x] Tema claro/oscuro persistente; paginación en listados
+- [ ] Códigos de respaldo MFA de un solo uso (`otp_static`) — **prerrequisito de la API REST**
 - [ ] API REST con Django REST Framework (mismas reglas de propiedad por rol)
-- [ ] Cobertura de tests ampliada (integración de flujos completos)
-- [ ] CI con GitHub Actions (tests + lint) y contenedor de despliegue
 - [ ] Soporte de hidratos en el motor de cálculo
-- [ ] Paginación y ordenamiento en listados
+- [ ] Pulido de navbar en ancho móvil (360–414 px, ambos temas)
+- [ ] Integración de flujos completos en tests + contenedor de despliegue
