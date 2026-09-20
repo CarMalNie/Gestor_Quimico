@@ -139,6 +139,34 @@ path(
     name='password_reset_complete',
 ),
 
+# =============================================== #
+# URLs de CAMBIO DE CONTRASEÑA (usuario con sesión) #
+# =============================================== #
+# Vistas nativas de django.contrib.auth. PasswordChangeView incluye el check
+# de la contraseña actual, aplica AUTH_PASSWORD_VALIDATORS y rota el hash con
+# update_session_auth_hash (la sesión sobrevive al cambio). Tanto esta vista
+# como la de confirmación aplican login_required en su dispatch.
+# El nombre `password_change_done` es obligatorio: es el success_url por
+# defecto de PasswordChangeView.
+
+# 1) Formulario: contraseña actual + nueva + confirmación.
+path(
+    'accounts/password-change/',
+    auth_views.PasswordChangeView.as_view(
+        template_name='app_quimico/autenticacion/password_change_form.html',
+    ),
+    name='password_change',
+),
+
+# 2) Cambio completado (también requiere sesión activa).
+path(
+    'accounts/password-change/done/',
+    auth_views.PasswordChangeDoneView.as_view(
+        template_name='app_quimico/autenticacion/password_change_done.html',
+    ),
+    name='password_change_done',
+),
+
 # PERFIL PERSONAL (Target de LOGIN_REDIRECT_URL)
 path('perfil/', views.HomeView.as_view(template_name='app_quimico/autenticacion/perfil_personal.html'), name='perfil_personal'),
 
