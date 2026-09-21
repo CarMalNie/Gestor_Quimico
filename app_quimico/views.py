@@ -111,7 +111,20 @@ class CustomLoginView(LoginView):
             if next_url and next_url != reverse(settings.LOGIN_REDIRECT_URL):
                 verify_url = f"{verify_url}?next={quote(next_url)}"
             return redirect(verify_url)
-        
+
+        # Force-MFA policy (operator decision): Administradores must enrol
+        # MFA right after password login before using the site.
+        if (
+            self.request.user.groups.filter(name='Administradores').exists()
+            and not TOTPDevice.objects.filter(user=self.request.user, confirmed=True).exists()
+        ):
+            messages.warning(
+                self.request,
+                "Tu perfil de Administrador requiere autenticación en dos pasos. "
+                "Configurala ahora para continuar.",
+            )
+            return redirect('mfa_setup')
+
         # 3. Agregar el mensaje de éxito DESPUÉS de loguear
         messages.success(self.request, f"¡Bienvenido(a) de nuevo, {self.request.user.username}! Has iniciado sesión con éxito.")
         
