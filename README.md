@@ -51,7 +51,9 @@ realizan a través del panel de administración de Django.
 - Los símbolos de dos letras se escriben con la primera en mayúscula y la segunda en minúscula.
 - `Cu` → cobre (1 elemento); `CU` → carbono + uranio (lectura literal, 2 elementos).
 - `cU`, `cu`, `Uc` y cualquier carácter fuera de la gramática IUPAC generan error de validación.
-- Los hidratos (`CuSO4·5H2O`) se rechazan explícitamente con mensaje informativo (soporte planificado).
+- Los hidratos (`CuSO4·5H2O`) están soportados: el separador (`.` o `·`) divide la fórmula en
+  segmentos y cada segmento posterior acepta un coeficiente entero positivo opcional (implícito `1`)
+  que multiplica todo el bloque (ej. `CuSO4·5H2O` = `CuSO4` + 5 × `H2O`).
 - El PM se recalcula automáticamente al crear o modificar la fórmula; la composición elemental se
   deriva de la fórmula y queda registrada como relación M:N auditable.
 
@@ -174,6 +176,6 @@ pytest app_quimico -q
 - [x] Tema claro/oscuro persistente; paginación en listados
 - [x] Códigos de respaldo MFA de un solo uso (`otp_static`) — **prerrequisito de la API REST**
 - [ ] API REST con Django REST Framework (mismas reglas de propiedad por rol)
-- [ ] Soporte de hidratos en el motor de cálculo
+- [x] Soporte de hidratos en el motor de cálculo
 - [ ] Pulido de navbar en ancho móvil (360–414 px, ambos temas)
 - [ ] Integración de flujos completos en tests + contenedor de despliegue

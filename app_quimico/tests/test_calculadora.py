@@ -13,6 +13,7 @@ WEIGHTS = {
     "U": 238.029,
     "Cu": 63.546,
     "Ca": 40.078,
+    "Fe": 55.845,
     "S": 32.065,
     "Co": 58.933,
     "N": 14.007,
@@ -70,14 +71,70 @@ def test_uc_lowercase_invalido():
         _calc("uc")
 
 
-def test_hidrato_interpunct_rechazado():
-    with pytest.raises(ValueError, match="hidrato"):
-        _calc("CuSO4·5H2O")
+# --- Hidratos: separador + coeficiente opcional por segmento ---
 
 
-def test_hidrato_punto_rechazado():
-    with pytest.raises(ValueError, match="hidrato"):
-        _calc("CuSO4.5H2O")
+def test_hidrato_coeficiente_explicito():
+    pm, conteo = _calc("CuSO4·5H2O")
+    pm_anhidro, conteo_anhidro = _calc("CuSO4")
+    pm_agua, conteo_agua = _calc("H2O")
+    assert conteo_anhidro == {"Cu": 1, "S": 1, "O": 4}
+    assert conteo_agua == {"H": 2, "O": 1}
+    assert conteo == {"Cu": 1, "S": 1, "O": 9, "H": 10}
+    assert pm == pytest.approx(pm_anhidro + 5 * pm_agua, rel=1e-9)
+
+
+def test_hidrato_punto_ascii_equivalente():
+    pm_interpunct, conteo_interpunct = _calc("CuSO4·5H2O")
+    pm_punto, conteo_punto = _calc("CuSO4.5H2O")
+    assert conteo_punto == conteo_interpunct
+    assert pm_punto == pytest.approx(pm_interpunct, rel=1e-9)
+
+
+def test_hidrato_coeficiente_implicito_uno():
+    pm, conteo = _calc("CuSO4·H2O")
+    pm_anhidro, _ = _calc("CuSO4")
+    pm_agua, _ = _calc("H2O")
+    assert conteo == {"Cu": 1, "S": 1, "O": 5, "H": 2}
+    assert pm == pytest.approx(pm_anhidro + pm_agua, rel=1e-9)
+
+
+def test_hidrato_con_agrupadores():
+    pm, conteo = _calc("CuSO4·5(H2O)")
+    assert conteo == {"Cu": 1, "S": 1, "O": 9, "H": 10}
+    assert pm == pytest.approx(_calc("CuSO4·5H2O")[0], rel=1e-9)
+
+
+def test_hidrato_anhidro_con_agrupadores_anidados():
+    pm, conteo = _calc("Fe(NH4)2(SO4)2·6H2O")
+    assert conteo == {"Fe": 1, "N": 2, "H": 20, "S": 2, "O": 14}
+    assert pm == pytest.approx(392.135, rel=1e-3)
+
+
+def test_hidrato_multiples_segmentos():
+    pm, conteo = _calc("CuSO4·2H2O·3NH3")
+    assert conteo == {"Cu": 1, "S": 1, "O": 6, "H": 13, "N": 3}
+    assert pm == pytest.approx(246.730, rel=1e-3)
+
+
+def test_hidrato_coeficiente_cero_rechazado():
+    with pytest.raises(ValueError, match="[Cc]oeficiente de hidrato"):
+        _calc("CuSO4·0H2O")
+
+
+def test_hidrato_segmento_vacio_rechazado():
+    with pytest.raises(ValueError, match="[Hh]idrato"):
+        _calc("CuSO4·")
+
+
+def test_hidrato_separador_inicial_rechazado():
+    with pytest.raises(ValueError, match="[Hh]idrato"):
+        _calc("·5H2O")
+
+
+def test_hidrato_grupo_desbalanceado_rechazado():
+    with pytest.raises(ValueError, match="grupador"):
+        _calc("CuSO4·5(H2O")
 
 
 def test_parentesis_sin_cierre():

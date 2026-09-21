@@ -7,7 +7,7 @@ _PARES_CIERRE = {cierre: apertura for apertura, cierre in _PARES_APERTURA.items(
 # Allowed characters for strict IUPAC formulas (no whitespace, no punctuation).
 _CARACTERES_PERMITIDOS = set('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789()[]{}')
 
-# Hydrate separators that are explicitly rejected (not supported yet).
+# Hydrate separators: split the formula into segments (e.g. 'CuSO4·5H2O').
 _SEPARADORES_HIDRATO = ('.', '·', '⋅', '∙')
 
 # Process-wide cache of atomic weights loaded from the DB only once.
@@ -54,16 +54,9 @@ class CalculadoraPM:
         return self.peso_atomico_cache.get(simbolo, 0.0)
 
     def _validar_formula(self, formula):
+        """Validates one anhydrous segment (no hydrate separator inside)."""
         if not formula or not formula.strip():
             raise ValueError("Fórmula vacía: ingresá la fórmula química del compuesto.")
-
-        # Hydrates are rejected explicitly to avoid silent miscounting.
-        for separador in _SEPARADORES_HIDRATO:
-            if separador in formula:
-                raise ValueError(
-                    "Hidratos no soportados: la fórmula contiene un separador de hidrato ('.' o '·'). "
-                    "Esta notación (ej. 'CuSO4·5H2O') todavía no está soportada; ingresá solo la fórmula anhidra."
-                )
 
         for caracter in formula:
             if caracter not in _CARACTERES_PERMITIDOS:
@@ -87,6 +80,39 @@ class CalculadoraPM:
                 stack.pop()
         if stack:
             raise ValueError(f"Agrupador desbalanceado: falta cerrar el agrupador '{stack[-1]}'.")
+
+    def _dividir_hidratos(self, formula):
+        """Splits a raw formula on every hydrate separator, preserving order.
+
+        A single-element result means the formula has no hydrate notation.
+        """
+        segmentos = [formula]
+        for separador in _SEPARADORES_HIDRATO:
+            siguientes = []
+            for segmento in segmentos:
+                siguientes.extend(segmento.split(separador))
+            segmentos = siguientes
+        return segmentos
+
+    def _extraer_coeficiente_hidrato(self, segmento):
+        """Splits a hydrate segment into (coeficiente, fórmula restante).
+
+        The leading integer is optional and defaults to 1; zero is rejected
+        with the same reasoning as a zero subscript.
+        """
+        i = 0
+        n = len(segmento)
+        while i < n and segmento[i].isdigit():
+            i += 1
+        if i == 0:
+            return 1, segmento
+        token = segmento[:i]
+        if token.strip('0') == '':
+            raise ValueError(
+                "Coeficiente de hidrato inválido: el coeficiente '0' no tiene sentido químico. "
+                "Los coeficientes de hidrato deben ser enteros positivos (ej. 'CuSO4·5H2O')."
+            )
+        return int(token), segmento[i:]
 
     def _tokenizar(self, formula):
         # Position-based scan: no character can be silently dropped.
@@ -124,24 +150,19 @@ class CalculadoraPM:
                 )
         return tokens
 
-    def analizar_formula(self, formula_original):
-        """
-        Returns (pm_float, elementos_conteo) or raises ValueError with a
-        user-friendly Spanish message for invalid input.
-        """
-        formula = formula_original
-        self._validar_formula(formula)
+    def _contar_tokens(self, tokens):
+        """Counts atoms for one parsed segment using the right-to-left stack.
 
-        tokens = self._tokenizar(formula)
-
+        Returns a {símbolo: cantidad} map without applying any hydrate
+        coefficient; the caller merges segments.
+        """
         conteo = {}
         multiplicadores_stack = [1]
         factor_actual = 1
         ultimo_subindice = 1
 
         # Right-to-left stack algorithm preserves group multipliers.
-        tokens.reverse()
-        for token in tokens:
+        for token in reversed(tokens):
             if token.isdigit():
                 ultimo_subindice = int(token)
             elif token in _PARES_CIERRE:
@@ -169,14 +190,56 @@ class CalculadoraPM:
 
         if len(multiplicadores_stack) > 1:
             raise ValueError("Fórmula incompleta: falta cerrar uno o más agrupadores.")
-        if not conteo:
-            raise ValueError("Fórmula vacía o la sintaxis es completamente inválida.")
+        return conteo
+
+    def analizar_formula(self, formula_original):
+        """
+        Returns (pm_float, elementos_conteo) or raises ValueError with a
+        user-friendly Spanish message for invalid input.
+
+        Hydrate notation is supported: separators break the formula into
+        segments, and every segment after the first accepts an optional
+        leading positive integer coefficient that multiplies the whole
+        segment (e.g. 'CuSO4·5H2O' = CuSO4 + 5 x H2O).
+        """
+        if not formula_original or not formula_original.strip():
+            raise ValueError("Fórmula vacía: ingresá la fórmula química del compuesto.")
+
+        segmentos = self._dividir_hidratos(formula_original)
+        tiene_hidrato = len(segmentos) > 1
+
+        conteo_total = {}
+        for indice, segmento in enumerate(segmentos):
+            texto = segmento.strip()
+            coeficiente = 1
+            if tiene_hidrato and indice > 0:
+                # The anhydrous part has no coefficient; hydrate parts may.
+                coeficiente, texto = self._extraer_coeficiente_hidrato(texto)
+
+            if not texto:
+                if tiene_hidrato and indice == 0:
+                    raise ValueError(
+                        "Hidrato inválido: la fórmula no puede empezar con un separador de hidrato. "
+                        "Indicá primero la fórmula anhidra (ej. 'CuSO4·5H2O')."
+                    )
+                raise ValueError(
+                    "Hidrato inválido: falta la fórmula de uno de los segmentos del hidrato "
+                    "(ej. 'CuSO4·5H2O')."
+                )
+
+            self._validar_formula(texto)
+            conteo_segmento = self._contar_tokens(self._tokenizar(texto))
+            if not conteo_segmento:
+                raise ValueError("Fórmula vacía o la sintaxis es completamente inválida.")
+
+            for simbolo, cantidad in conteo_segmento.items():
+                conteo_total[simbolo] = conteo_total.get(simbolo, 0) + cantidad * coeficiente
 
         pm_total = 0.0
-        for simbolo, cantidad in conteo.items():
+        for simbolo, cantidad in conteo_total.items():
             peso_atomico = self._obtener_peso_atomico(simbolo)
             if peso_atomico == 0.0:
                 raise Exception(f"Error interno: Peso atómico de '{simbolo}' no encontrado en la caché.")
             pm_total += peso_atomico * cantidad
 
-        return pm_total, conteo
+        return pm_total, conteo_total
