@@ -53,7 +53,10 @@ and live local DB).
   de recuperacion (4 files, 26 insertions). Suite 137 passed (pytest -q).
   Implemented via gentle-ai-worker; .env.example line added by operator
   (harness policy blocks agent writes to .env*). Push/PA deploy pending
-  explicit operator request.
+  explicit operator request. Operator checkpoint agreed: production email
+  validation (subject/body show "Gestor Químico", link intact) scheduled
+  BEFORE starting the 2D diagram work; risk is low (presentation-only change,
+  template strings untouched, test covers the assertion).
 
 ## Notes
 
