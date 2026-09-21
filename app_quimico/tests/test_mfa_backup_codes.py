@@ -154,6 +154,16 @@ def test_backup_codes_page_shows_codes_on_generation_response_only(
     assert code not in reloaded.content.decode()
 
 
+def test_generation_page_offers_copy_all_button(logged_client, confirmed_device):
+    response = logged_client.post(reverse("mfa_backup_codes"))
+
+    assert response.status_code == 200
+    content = response.content.decode()
+    assert 'id="copy-backup-codes"' in content
+    assert 'id="backup-codes-grid"' in content
+    assert 'js/backup_codes_copy.js' in content
+
+
 # --- Fallback verification (mfa_verify) ---
 
 
