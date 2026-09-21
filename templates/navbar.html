@@ -28,12 +28,12 @@
                 {% endif %}
             </ul>
 
-                        <ul class="navbar-nav">
-                <li class="nav-item d-flex align-items-center me-3">
+                        <ul class="navbar-nav align-items-lg-center mb-2 mb-lg-0">
+                <li class="nav-item d-flex align-items-center me-lg-3">
                     {% include 'partials/theme_toggle.html' with with_script=True %}
                 </li>
                 {% if user.is_authenticated %}
-                    <li class="nav-item me-3">
+                    <li class="nav-item me-lg-3">
                         <a class="nav-link text-warning" href="{% url 'perfil_personal' %}">
                             <strong>{{ user.username }}</strong>
                             {% if user.groups.all %}
@@ -50,7 +50,7 @@
                         </form>
                     </li>
                 {% else %}
-                    <li class="nav-item me-2 d-flex align-items-center">
+                    <li class="nav-item me-lg-2 d-flex align-items-center">
                         <a class="btn btn-sm btn-outline-light" href="{% url 'login' %}">
                             Iniciar Sesión
                         </a>
