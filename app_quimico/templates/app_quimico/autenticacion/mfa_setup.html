@@ -25,6 +25,33 @@
                     </a>
                 </div>
             </div>
+
+            {% if can_reconfigure %}
+                <div class="card shadow mt-4">
+                    <div class="card-body">
+                        <h2 class="h5 mb-3">Re-configurar autenticador</h2>
+                        <p class="text-muted small mb-3">
+                            Como tu sesión ya está verificada, podés re-configurar
+                            tu propio autenticador sin ayuda del administrador. Es
+                            útil si cambiaste de teléfono o perdiste el actual.
+                        </p>
+                        <div class="alert alert-warning mb-3">
+                            Re-configurar tu autenticador
+                            <strong>invalidará el actual y tus códigos de respaldo</strong>.
+                            Deberás escanear el nuevo código QR y confirmarlo
+                            antes de poder usarlo.
+                        </div>
+                        <form method="post">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="reconfigure">
+                            <button type="submit" class="btn btn-outline-danger w-100"
+                                    onclick="return confirm('¿Re-configurar tu autenticador? Esto invalidará tu authenticator actual y tus códigos de respaldo.');">
+                                Re-configurar autenticador
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            {% endif %}
         {% else %}
             <p class="text-muted small mb-3">
                 Escanea el código con Google Authenticator (o cualquier app TOTP)

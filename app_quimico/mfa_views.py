@@ -14,6 +14,12 @@ Además de TOTP, ``mfa_backup_codes`` genera códigos de respaldo de un solo uso
 (``otp_static``) y ``mfa_verify`` acepta uno de ellos como alternativa cuando el
 usuario perdió su autenticador. Los códigos son un respaldo del segundo factor,
 no un factor independiente: requieren un ``TOTPDevice`` ya confirmado.
+
+Cierre del ciclo "perdí mi celu": un usuario con la sesión ya verificada puede
+re-configurar su propio autenticador desde ``mfa_setup`` (POST
+``action=reconfigure``). El rebind exige la sesión verificada, borra sus
+dispositivos TOTP, invalida los códigos de respaldo existentes y continúa con un
+enrolamiento fresco en la misma respuesta.
 """
 
 import io
@@ -142,6 +148,20 @@ def _consume_backup_code(user, code):
     return None
 
 
+def _invalidate_backup_codes(user):
+    """Invalida los códigos de respaldo existentes del usuario.
+
+    Borra los ``StaticToken`` del ``StaticDevice`` reutilizando el dispositivo
+    (decisión de diseño #3 del rebind): el ``StaticDevice`` se conserva para que
+    el usuario genere un set nuevo. Devuelve ``True`` cuando había códigos que
+    invalidar.
+    """
+    if not StaticToken.objects.filter(device__user=user).exists():
+        return False
+    _static_device(user).token_set.all().delete()
+    return True
+
+
 def _pending_device(user):
     """Reutiliza el dispositivo sin confirmar del usuario o crea uno nuevo."""
     device = TOTPDevice.objects.filter(user=user, confirmed=False).first()
@@ -178,17 +198,65 @@ def _login_redirect_url(request):
 
 @login_required
 def mfa_setup(request):
-    """Inscripción opcional en MFA: QR + confirmación del primer código."""
+    """Inscripción opcional en MFA: QR + confirmación del primer código.
+
+    Si el usuario ya tiene un dispositivo confirmado, la página solo muestra su
+    estado. Un usuario con la **sesión verificada** (ya superó el segundo factor)
+    puede re-configurar su autenticador con un POST ``action=reconfigure``:
+    se borran sus dispositivos TOTP y los códigos de respaldo, y la misma
+    respuesta continúa con el enrolamiento fresco (QR nuevo).
+    """
+    reconfigured = False
     if _confirmed_device(request.user) is not None:
-        return render(request, SETUP_TEMPLATE, {"already_enrolled": True})
+        can_reconfigure = request.user.is_verified()
+        is_reconfigure = (
+            request.method == "POST"
+            and request.POST.get("action") == "reconfigure"
+        )
+        if not (can_reconfigure and is_reconfigure):
+            # Sin sesión verificada (o sin POST válido) no hay rebind: solo
+            # estado. La acción destructiva nunca es alcanzable por GET.
+            return render(
+                request,
+                SETUP_TEMPLATE,
+                {"already_enrolled": True, "can_reconfigure": can_reconfigure},
+            )
+
+        # Rebind: se eliminan todos los TOTPDevice (confirmados y restos
+        # sin confirmar de setups abortados) y se invalidan los códigos de
+        # respaldo existentes; se sigue con el flujo fresco de abajo.
+        TOTPDevice.objects.filter(user=request.user).delete()
+        invalidated_backup_codes = _invalidate_backup_codes(request.user)
+        messages.success(
+            request,
+            "Re-configuraste tu autenticador. Escaneá el nuevo código QR y "
+            "confirmalo con el código de 6 dígitos.",
+        )
+        if invalidated_backup_codes:
+            messages.warning(
+                request,
+                "Tus códigos de respaldo anteriores fueron invalidados: "
+                "generá un set nuevo cuando confirmes el nuevo autenticador.",
+            )
+        reconfigured = True
 
     device = _pending_device(request.user)
-    form = TokenForm(request.POST or None)
+    # El POST de rebind no trae token: se renderiza el formulario sin atar para
+    # no mostrar un error de campo obligatorio en el QR nuevo.
+    if reconfigured:
+        form = TokenForm()
+    else:
+        form = TokenForm(request.POST or None)
 
     if request.method == "POST" and form.is_valid():
         if device.verify_token(form.cleaned_data["token"]):
             device.confirmed = True
             device.save()
+            # El usuario acaba de probar posesión del factor: la sesión queda
+            # verificada. Es lo que mantiene la sesión válida tras un rebind,
+            # donde el dispositivo anterior se eliminó y su clave de sesión ya
+            # no resuelve a ningún device (el middleware la descarta).
+            otp_login(request, device)
             messages.success(
                 request, "¡Listo! La verificación en dos pasos quedó activada."
             )
@@ -198,6 +266,7 @@ def mfa_setup(request):
     context = {
         "form": form,
         "already_enrolled": False,
+        "can_reconfigure": False,
         "provisioning_uri": device.config_url,
         "qr_svg": _provisioning_qr_svg(device.config_url),
     }

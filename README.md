@@ -32,7 +32,7 @@ compuestos con sus usos industriales, con control de propiedad por usuario y rol
 | Frontend | Templates DTL, Bootstrap 5.3 local-friendly, CSS de diseño propio, tema claro/oscuro persistente |
 | Base de datos | MySQL (modo `STRICT_TRANS_TABLES`) |
 | Envío de email | Transporte dual por entorno: SMTP (Brevo) en desarrollo, API HTTP de Brevo en PythonAnywhere (selección automática por variables de entorno) |
-| Tests | pytest + pytest-django: 125 ejecuciones (108 tests, algunos parametrizados) — permisos/ownership, parser (sin BD), formularios, flujos de autenticación, MFA y backend de email |
+| Tests | pytest + pytest-django: 136 ejecuciones (131 tests, algunos parametrizados) — permisos/ownership, parser (sin BD), formularios, flujos de autenticación, MFA y backend de email |
 
 ### Matriz de roles
 
@@ -74,6 +74,13 @@ realizan a través del panel de administración de Django.
   Regenerarlos invalida el set anterior. Alternativa administrativa — el staff elimina el
   dispositivo TOTP del usuario desde el admin (sección *OTP TOTP*) y el usuario re-enrola. El
   reset de contraseña **no** saltea el segundo factor.
+- **Re-configuración propia del autenticador (self-rebind)**: desde `/accounts/mfa/setup/`, un
+  usuario con la sesión ya **verificada** (segundo factor superado) puede reemplazar su
+  autenticador sin intervención del admin (útil al cambiar de teléfono o perder el actual). La
+  acción es un POST con confirmación que **borra sus dispositivos TOTP, invalida los códigos de
+  respaldo existentes** y abre un enrolamiento fresco (QR nuevo → confirmación). Sin sesión
+  verificada la opción no aparece ni se acepta: una contraseña sola no alcanza para reemplazar
+  el factor.
 - **Códigos de respaldo MFA**: implementados con `django_otp.plugins.otp_static`; son un respaldo
   del segundo factor (requieren TOTP confirmado), no un factor independiente.
 
@@ -156,7 +163,7 @@ pytest app_quimico -q
   usuario e IP, con cool-off de 1 hora.
 - Ownership estricto: los compuestos web son privados de su dueño para todos los
   roles, verificado por tests de permisos.
-- Suite de **125 ejecuciones de tests** (108 tests, algunos parametrizados) cubre permisos,
+- Suite de **136 ejecuciones de tests** (131 tests, algunos parametrizados) cubre permisos,
   parser, servicios, forms, paginación, seguridad, flujos de autenticación, MFA y el
   backend de email.
 
