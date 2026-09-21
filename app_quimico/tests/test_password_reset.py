@@ -84,6 +84,22 @@ def test_password_reset_done_returns_200(client):
     assert response.status_code == 200
 
 
+# --- Email branding: no request-host leakage ---
+
+
+def test_reset_email_uses_configured_site_name(client, user):
+    """Subject/body show SITE_DISPLAY_NAME, never the request host."""
+    _request_reset(client, user.email)
+
+    assert len(mail.outbox) == 1
+    message = mail.outbox[0]
+
+    assert "Gestor Químico" in message.subject
+    assert "testserver" not in message.subject
+    assert "localhost" not in message.subject
+    assert "Equipo de Gestor Químico" in message.body
+
+
 # --- Full token confirmation flow ---
 
 

@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.urls import path
 from django.contrib.auth import views as auth_views
 from app_quimico.views import CustomLoginView, custom_logout_view, HomeView
@@ -123,6 +124,9 @@ path(
         template_name='app_quimico/autenticacion/password_reset_form.html',
         email_template_name='app_quimico/autenticacion/password_reset_email.html',
         subject_template_name='app_quimico/autenticacion/password_reset_subject.txt',
+        # Brand the reset email with the configured display name instead of the
+        # request host (django.contrib.sites is not installed).
+        extra_email_context={'site_name': settings.SITE_DISPLAY_NAME},
     ),
     name='password_reset',
 ),

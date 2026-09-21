@@ -180,6 +180,11 @@ DEFAULT_FROM_EMAIL = config(
     'DEFAULT_FROM_EMAIL', default='Gestor Químico <no-reply@gestorquimico.local>'
 )
 
+# Display name used in user-facing emails (password reset subject/body).
+# Kept independent from django.contrib.sites so the branded name does not
+# depend on the request host.
+SITE_DISPLAY_NAME = config('SITE_DISPLAY_NAME', default='Gestor Químico')
+
 EMAIL_BACKEND = config(
     'EMAIL_BACKEND',
     default=(
