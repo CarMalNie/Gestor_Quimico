@@ -91,6 +91,43 @@ def test_hidrato_punto_ascii_equivalente():
     assert pm_punto == pytest.approx(pm_interpunct, rel=1e-9)
 
 
+def test_hidrato_asterisco_ascii_equivalente():
+    pm_interpunct, conteo_interpunct = _calc("CuSO4·5H2O")
+    pm_asterisco, conteo_asterisco = _calc("CuSO4*5H2O")
+    assert conteo_interpunct == {"Cu": 1, "S": 1, "O": 9, "H": 10}
+    assert conteo_asterisco == conteo_interpunct
+    assert pm_asterisco == pytest.approx(pm_interpunct, rel=1e-9)
+
+
+def test_hidrato_espacio_antes_del_coeficiente_equivalente():
+    pm_asterisco, conteo_asterisco = _calc("CuSO4*5H2O")
+    pm_espacio, conteo_espacio = _calc("CuSO4 5H2O")
+    assert conteo_espacio == {"Cu": 1, "S": 1, "O": 9, "H": 10}
+    assert conteo_espacio == conteo_asterisco
+    assert pm_espacio == pytest.approx(pm_asterisco, rel=1e-9)
+
+
+def test_hidrato_espacios_multiples_antes_del_coeficiente():
+    pm, conteo = _calc("CuSO4   5H2O")
+    assert conteo == {"Cu": 1, "S": 1, "O": 9, "H": 10}
+    assert pm == pytest.approx(_calc("CuSO4*5H2O")[0], rel=1e-9)
+
+
+def test_hidrato_espacios_alrededor_del_separador():
+    pm_interpunct, conteo_interpunct = _calc("CuSO4·5H2O")
+    pm_espaciado, conteo_espaciado = _calc("CuSO4 · 5H2O")
+    assert conteo_interpunct == {"Cu": 1, "S": 1, "O": 9, "H": 10}
+    assert conteo_espaciado == conteo_interpunct
+    assert pm_espaciado == pytest.approx(pm_interpunct, rel=1e-9)
+
+
+def test_espacio_fuera_de_posicion_hidrato_sigue_invalido():
+    with pytest.raises(ValueError, match="[Ss]intaxis"):
+        _calc("Cu SO4")
+    with pytest.raises(ValueError, match="[Ss]intaxis"):
+        _calc("CuSO4 H2O")
+
+
 def test_hidrato_coeficiente_implicito_uno():
     pm, conteo = _calc("CuSO4·H2O")
     pm_anhidro, _ = _calc("CuSO4")

@@ -1,3 +1,5 @@
+import re
+
 from app_quimico.models import ElementoQuimico
 
 # Brackets and their matching pairs.
@@ -8,7 +10,8 @@ _PARES_CIERRE = {cierre: apertura for apertura, cierre in _PARES_APERTURA.items(
 _CARACTERES_PERMITIDOS = set('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789()[]{}')
 
 # Hydrate separators: split the formula into segments (e.g. 'CuSO4·5H2O').
-_SEPARADORES_HIDRATO = ('.', '·', '⋅', '∙')
+# '*' is accepted as the easy-to-type ASCII stand-in for the interpunct.
+_SEPARADORES_HIDRATO = ('.', '·', '⋅', '∙', '*')
 
 # Process-wide cache of atomic weights loaded from the DB only once.
 _cache_pesos = None
@@ -80,6 +83,20 @@ class CalculadoraPM:
                 stack.pop()
         if stack:
             raise ValueError(f"Agrupador desbalanceado: falta cerrar el agrupador '{stack[-1]}'.")
+
+    def _normalizar_hidratos(self, formula):
+        """Rewrites the accepted hydrate spellings into one canonical form.
+
+        Whitespace around an explicit separator is irrelevant because the
+        segments are stripped later, so it is dropped first; this keeps the
+        substitution below from emitting two separators back to back when the
+        user writes 'CuSO4 · 5H2O'. Whitespace directly before a digit is the
+        separator itself, so 'CuSO4 5H2O' (and 'CuSO4   5H2O') behave exactly
+        like 'CuSO4*5H2O'. Any other whitespace (before a letter or bracket) is
+        preserved so strict validation still rejects 'Cu SO4' or 'CuSO4 H2O'.
+        """
+        formula = re.sub(r'\s*([.·⋅∙*])\s*', r'\1', formula)
+        return re.sub(r'\s+(?=\d)', '*', formula)
 
     def _dividir_hidratos(self, formula):
         """Splits a raw formula on every hydrate separator, preserving order.
@@ -200,12 +217,13 @@ class CalculadoraPM:
         Hydrate notation is supported: separators break the formula into
         segments, and every segment after the first accepts an optional
         leading positive integer coefficient that multiplies the whole
-        segment (e.g. 'CuSO4·5H2O' = CuSO4 + 5 x H2O).
+        segment (e.g. 'CuSO4·5H2O' = CuSO4 + 5 x H2O). The separator may be
+        omitted before a spaced coefficient, so 'CuSO4 5H2O' is equivalent.
         """
         if not formula_original or not formula_original.strip():
             raise ValueError("Fórmula vacía: ingresá la fórmula química del compuesto.")
 
-        segmentos = self._dividir_hidratos(formula_original)
+        segmentos = self._dividir_hidratos(self._normalizar_hidratos(formula_original))
         tiene_hidrato = len(segmentos) > 1
 
         conteo_total = {}
