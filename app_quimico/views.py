@@ -530,7 +530,13 @@ class CompuestoUpdateView(LoginRequiredMixin, UserPassesTestMixin, TemplateView)
 
     def post(self, request, *args, **kwargs):
         compuesto, relacion = self.get_compuesto_data()
-        
+
+        # Capture the DB formula BEFORE the bound forms are validated: both
+        # ModelForm.is_valid() (via _post_clean/construct_instance) and
+        # save(commit=False) mutate the passed instance in place, so reading it
+        # after validation already returns the new POST value.
+        formula_original = compuesto.formula_compuesto
+
         formula_post_data = request.POST.get('formula_compuesto', 'FIELD_NOT_FOUND') 
         
         compuesto_form = CompuestoQuimicoForm(request.POST, instance=compuesto)
@@ -541,11 +547,9 @@ class CompuestoUpdateView(LoginRequiredMixin, UserPassesTestMixin, TemplateView)
         if compuesto_form.is_valid() and relacion_form.is_valid():
             try:
                 with transaction.atomic():
-                    
-                    compuesto_obj = compuesto_form.save(commit=False) 
-                    
-                    formula_original = compuesto.formula_compuesto
-                    
+
+                    compuesto_obj = compuesto_form.save(commit=False)
+
                     debe_recalcular = (
                         formula_post_data != formula_original or
                         compuesto_obj.peso_molecular_compuesto is None or
