@@ -65,6 +65,15 @@ and live local DB).
   + README roadmap). Suite 146 passed; focused module 28 passed.
 - 2026-09-21 d5e3b61 feat(auth): MFA obligatorio para Administradores (gate
   en CustomLoginView + 6 tests). Suite 152 passed.
+- 2026-09-21 Production validation by operator (CI green, PA pull+migrate+reload):
+  email shows "Gestor Químico" (subject+footer) OK, navbar mobile OK,
+  CuSO4·5H2O PM 249.6770 OK, force-MFA gate OK. Follow-up fixes from that
+  validation: b471ab2 fix(auth) email phrase "una nueva contraseña",
+  16d0683 feat(calculadora) '*' and space-before-coefficient hydrate
+  separators (space outside hydrate position stays invalid), 452f5e3
+  fix(frontend) compound edit unlocks the formula field (backend already
+  recalculated PM + recomposed; readonly was frontend-only). Suite 158
+  passed. Push + PA (pull + reload, no migrate/no collectstatic) pending.
 
 ## Session close checkpoint (agreed with operator)
 
