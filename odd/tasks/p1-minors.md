@@ -77,12 +77,13 @@ and live local DB).
 
 ## Session close checkpoint (agreed with operator)
 
-- Next session start: push (23387bc..d5e3b61), PA deploy (pull + migrate —
-  0009 is new — + reload; no collectstatic needed), then operator validates
-  in production: reset email shows "Gestor Químico" in subject/footer,
-  navbar at phone width, CuSO4·5H2O calculation, admin login gate. ALL this
-  validation happens BEFORE starting periodic-table work (itself before the
-  2D diagram work). Operator checkpoint agreed: production email
+- VALIDATION COMPLETE (2026-09-21): operator confirmed in production the
+  stale-PM fix — editing CuSO4 5H2O -> CuSO4 now recalculates PM (~159.6)
+  and recomposes. All checkpoint items validated: email branding, navbar
+  mobile, hydrates, force-MFA gate, formula edit + PM recalc.
+- FEATURE CLOSED. Next session: periodic table Entrega 1 (design obs #527)
+  and 2D diagram work (obs #516). Production state: 3e30495 pushed and
+  deployed (pull + reload; last migrate was 0009). Operator checkpoint agreed: production email
   validation (subject/body show "Gestor Químico", link intact) scheduled
   BEFORE starting the 2D diagram work; risk is low (presentation-only change,
   template strings untouched, test covers the assertion).
