@@ -1,9 +1,9 @@
-"""Form validation tests for CompuestoAplicacionForm."""
+"""Form validation tests for CompuestoAplicacionForm and CompuestoQuimicoForm."""
 
 import pytest
 
-from app_quimico.forms import CompuestoAplicacionForm
-from app_quimico.models import Aplicacion, Industria
+from app_quimico.forms import CompuestoAplicacionForm, CompuestoQuimicoForm
+from app_quimico.models import Aplicacion, CompuestoQuimico, Industria
 
 
 @pytest.mark.django_db
@@ -36,3 +36,20 @@ def test_form_acepta_industria_aplicacion_coincidente():
     })
 
     assert form.is_valid()
+
+
+@pytest.mark.django_db
+def test_compuesto_form_edicion_no_bloquea_formula():
+    """Editing a saved compound must keep formula_compuesto editable (no readonly)."""
+    industria = Industria.objects.get_or_create(nombre_industria="Farmacéutica")[0]
+    compuesto = CompuestoQuimico.objects.create(
+        nombre_compuesto="Agua",
+        formula_compuesto="H2O",
+        id_industria=industria,
+    )
+
+    form = CompuestoQuimicoForm(instance=compuesto)
+    rendered = form["formula_compuesto"].as_widget()
+
+    assert "readonly" not in rendered
+    assert "bg-light" not in rendered

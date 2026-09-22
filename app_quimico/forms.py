@@ -120,11 +120,7 @@ class CompuestoQuimicoForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.helper = FormHelper()
-        
-        if self.instance and self.instance.pk:
-            self.fields['formula_compuesto'].widget.attrs['readonly'] = True
-            self.fields['formula_compuesto'].widget.attrs['class'] += ' bg-light'
-        
+
         self.helper.layout = Layout(
             Fieldset(
                 'Datos del Compuesto',
