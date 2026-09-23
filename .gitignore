@@ -56,3 +56,4 @@ htmlcov/
 !.env.example
 # Local Pi runtime state
 .atl/
+.codegraph/
