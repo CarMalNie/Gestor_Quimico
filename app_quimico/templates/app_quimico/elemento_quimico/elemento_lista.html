@@ -5,6 +5,8 @@
 {% block title %}Tabla Periódica: Listado de Elementos{% endblock %}
 
 {% block content %}
+{# base.html no expone un bloque extra_css: la hoja de la tabla periódica se carga acá (link en body es HTML5 válido). #}
+<link rel="stylesheet" href="{% static 'css/periodic_table.css' %}">
 <div class="row">
     <div class="col-12 d-flex justify-content-between align-items-center mb-4">
         <h1>⚛️ Tabla Periódica: Listado de Elementos</h1>

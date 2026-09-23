@@ -1,0 +1,322 @@
+/* ==========================================================================
+ * Tabla periódica (vista ?vista=tabla de elemento_lista.html)
+ *
+ * Aspecto de la grilla 18x7 + 2 filas despegadas del bloque f, mapa de color
+ * por categoría (12 CATEGORIA_CHOICES), estilo de honestidad para elementos
+ * sintéticos (Z >= 104) y clases de estado que el JS (T5) activa/desactiva.
+ *
+ * Las posiciones (grid-column/grid-row) llegan inline desde la vista; acá
+ * solo se define la plantilla de columnas/filas y la apariencia.
+ * Los slugs son los de Django `slugify` sobre la etiqueta de categoría.
+ * ========================================================================== */
+
+/* ==========================================================================
+   1. PALETA POR CATEGORÍA
+   Cada categoría expone --pt-c-<slug> (fondo) y --pt-t-<slug> (texto).
+   Variante clara: pastel con texto oscuro. Variante oscura: tono profundo
+   desaturado con texto claro. Sin ':root' para no pisar el modo oscuro.
+   ========================================================================== */
+[data-bs-theme="light"] {
+    --pt-borde: rgba(2, 48, 71, .22); /* deep-space-blue tenue */
+    --pt-anillo: rgba(2, 48, 71, .55);
+
+    --pt-c-metales: #c5d3ef;
+    --pt-t-metales: #1a2a52;
+    --pt-c-no-metales: #c9e7c6;
+    --pt-t-no-metales: #1c3f1b;
+    --pt-c-alcalinos: #f6c7c4;
+    --pt-t-alcalinos: #58181a;
+    --pt-c-alcalinos-terreos: #f9d6b6;
+    --pt-t-alcalinos-terreos: #5d3311;
+    --pt-c-lantanidos: #f2cbdf;
+    --pt-t-lantanidos: #53173a;
+    --pt-c-actinidos: #e2cfc2;
+    --pt-t-actinidos: #43291c;
+    --pt-c-metales-de-transicion: #d8cff0;
+    --pt-t-metales-de-transicion: #32215c;
+    --pt-c-otros-metales: #d6d9de;
+    --pt-t-otros-metales: #24282e;
+    --pt-c-metaloides: #bfe6de;
+    --pt-t-metaloides: #0f4038;
+    --pt-c-otros-no-metales: #dfe9b4;
+    --pt-t-otros-no-metales: #384414;
+    --pt-c-halogenos: #f6e5a8;
+    --pt-t-halogenos: #4a3a06;
+    --pt-c-gases-nobles: #c3e5f5;
+    --pt-t-gases-nobles: #103a4a;
+}
+
+[data-bs-theme="dark"] {
+    --pt-borde: rgba(255, 255, 255, .20);
+    --pt-anillo: rgba(255, 255, 255, .70);
+
+    --pt-c-metales: #2b3f6b;
+    --pt-t-metales: #d6e2ff;
+    --pt-c-no-metales: #2c5a2b;
+    --pt-t-no-metales: #d3f2ce;
+    --pt-c-alcalinos: #6e2b2b;
+    --pt-t-alcalinos: #ffd9d6;
+    --pt-c-alcalinos-terreos: #7a4a1e;
+    --pt-t-alcalinos-terreos: #ffe3c7;
+    --pt-c-lantanidos: #6b2a4f;
+    --pt-t-lantanidos: #ffd6ea;
+    --pt-c-actinidos: #5c3b28;
+    --pt-t-actinidos: #f2ddcf;
+    --pt-c-metales-de-transicion: #463069;
+    --pt-t-metales-de-transicion: #e2d8ff;
+    --pt-c-otros-metales: #3d434b;
+    --pt-t-otros-metales: #dfe4ea;
+    --pt-c-metaloides: #1f5a51;
+    --pt-t-metaloides: #ccf3e9;
+    --pt-c-otros-no-metales: #4d5a1c;
+    --pt-t-otros-no-metales: #eaf5c2;
+    --pt-c-halogenos: #6b5a12;
+    --pt-t-halogenos: #fbf0c0;
+    --pt-c-gases-nobles: #1d4f66;
+    --pt-t-gases-nobles: #cfeeff;
+}
+
+/* ==========================================================================
+   2. MAPEO categoría -> celda y chip
+   La misma clase temática sirve para la celda de la grilla y para su chip
+   de leyenda, así el color siempre coincide. Si faltan las variables de tema
+   se cae a las variables de Bootstrap (modo de color activo).
+   ========================================================================== */
+.pt-celda-metales, .pt-chip-metales {
+    --pt-bg: var(--pt-c-metales, var(--bs-secondary-bg));
+    --pt-fg: var(--pt-t-metales, var(--bs-body-color));
+}
+.pt-celda-no-metales, .pt-chip-no-metales {
+    --pt-bg: var(--pt-c-no-metales, var(--bs-secondary-bg));
+    --pt-fg: var(--pt-t-no-metales, var(--bs-body-color));
+}
+.pt-celda-alcalinos, .pt-chip-alcalinos {
+    --pt-bg: var(--pt-c-alcalinos, var(--bs-secondary-bg));
+    --pt-fg: var(--pt-t-alcalinos, var(--bs-body-color));
+}
+.pt-celda-alcalinos-terreos, .pt-chip-alcalinos-terreos {
+    --pt-bg: var(--pt-c-alcalinos-terreos, var(--bs-secondary-bg));
+    --pt-fg: var(--pt-t-alcalinos-terreos, var(--bs-body-color));
+}
+.pt-celda-lantanidos, .pt-chip-lantanidos {
+    --pt-bg: var(--pt-c-lantanidos, var(--bs-secondary-bg));
+    --pt-fg: var(--pt-t-lantanidos, var(--bs-body-color));
+}
+.pt-celda-actinidos, .pt-chip-actinidos {
+    --pt-bg: var(--pt-c-actinidos, var(--bs-secondary-bg));
+    --pt-fg: var(--pt-t-actinidos, var(--bs-body-color));
+}
+.pt-celda-metales-de-transicion, .pt-chip-metales-de-transicion {
+    --pt-bg: var(--pt-c-metales-de-transicion, var(--bs-secondary-bg));
+    --pt-fg: var(--pt-t-metales-de-transicion, var(--bs-body-color));
+}
+.pt-celda-otros-metales, .pt-chip-otros-metales {
+    --pt-bg: var(--pt-c-otros-metales, var(--bs-secondary-bg));
+    --pt-fg: var(--pt-t-otros-metales, var(--bs-body-color));
+}
+.pt-celda-metaloides, .pt-chip-metaloides {
+    --pt-bg: var(--pt-c-metaloides, var(--bs-secondary-bg));
+    --pt-fg: var(--pt-t-metaloides, var(--bs-body-color));
+}
+.pt-celda-otros-no-metales, .pt-chip-otros-no-metales {
+    --pt-bg: var(--pt-c-otros-no-metales, var(--bs-secondary-bg));
+    --pt-fg: var(--pt-t-otros-no-metales, var(--bs-body-color));
+}
+.pt-celda-halogenos, .pt-chip-halogenos {
+    --pt-bg: var(--pt-c-halogenos, var(--bs-secondary-bg));
+    --pt-fg: var(--pt-t-halogenos, var(--bs-body-color));
+}
+.pt-celda-gases-nobles, .pt-chip-gases-nobles {
+    --pt-bg: var(--pt-c-gases-nobles, var(--bs-secondary-bg));
+    --pt-fg: var(--pt-t-gases-nobles, var(--bs-body-color));
+}
+
+/* ==========================================================================
+   3. GRILLA
+   18 columnas; las filas 1-7 son la tabla principal, la 8 es un separador y
+   las 9-10 el bloque f despegado (lantánidos/actínidos).
+   ========================================================================== */
+.pt-grid {
+    --pt-fila: 3.4rem;      /* alto de cada período */
+    --pt-separador: 1.1rem; /* espacio entre tabla principal y bloque f */
+    --pt-gap: 3px;
+    --pt-radio: .375rem;
+
+    display: grid;
+    grid-template-columns: repeat(18, minmax(0, 1fr));
+    grid-template-rows: repeat(7, var(--pt-fila)) var(--pt-separador) repeat(2, var(--pt-fila));
+    gap: var(--pt-gap);
+    width: 100%;
+}
+
+/* ==========================================================================
+   4. CELDA
+   El <a> es la celda completa: Z arriba a la izquierda, símbolo centrado y
+   nombre truncado abajo. Los colores salen de las variables mapeadas arriba.
+   ========================================================================== */
+.pt-celda {
+    /* Composición de filtros: honestidad (saturación) + atenuación (gris).
+       Se declaran como variables para que .pt-dim y .pt-sintetico no se pisen. */
+    --pt-gris: grayscale(0);
+    --pt-saturacion: saturate(1);
+
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-width: 0; /* permite truncar el nombre dentro de la columna */
+    padding: 2px 4px;
+    border: 1px solid var(--pt-borde, rgba(128, 128, 128, .35));
+    border-radius: var(--pt-radio);
+    background-color: var(--pt-bg, var(--bs-secondary-bg));
+    color: var(--pt-fg, var(--bs-body-color));
+    text-align: center;
+    text-decoration: none;
+    opacity: 1;
+    filter: var(--pt-gris) var(--pt-saturacion);
+    transition: opacity .15s ease, border-color .15s ease, box-shadow .15s ease, filter .15s ease;
+}
+
+.pt-celda:hover {
+    border-color: var(--pt-anillo, currentColor);
+}
+
+.pt-celda:focus-visible {
+    outline: 2px solid var(--pt-anillo, currentColor);
+    outline-offset: 1px;
+}
+
+/* Número atómico (Z): chico, en la esquina superior izquierda. */
+.pt-z {
+    position: absolute;
+    top: 1px;
+    left: 4px;
+    font-size: .5rem;
+    line-height: 1;
+    opacity: .75;
+}
+
+/* Símbolo: protagonista de la celda. */
+.pt-simbolo {
+    font-size: 1.05rem;
+    font-weight: 700;
+    line-height: 1.1;
+}
+
+/* Nombre: mínimo y truncado (el dato completo está en el detalle). */
+.pt-nombre {
+    max-width: 100%;
+    overflow: hidden;
+    font-size: .55rem;
+    line-height: 1.1;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    opacity: .9;
+}
+
+/* NOTA (.pt-fila-f): el bloque f despegado conserva el mismo aspecto que el
+   resto de las celdas, por eso no lleva regla propia. Sin conector gráfico a
+   propósito: la fila 8 (separador) y la propia posición ya comunican la
+   separación, y dibujar una línea entre filas exigiría pseudoelementos que
+   romperían el conteo de columnas de la grilla. */
+
+/* ==========================================================================
+   5. HONESTIDAD: elementos sintéticos (Z >= 104)
+   Dato teórico: borde discontinuo, color desaturado y símbolo en cursiva con
+   asterisco. Sigue siendo clickeable y legible en ambos temas.
+   ========================================================================== */
+.pt-sintetico {
+    border-style: dashed;
+    --pt-saturacion: saturate(.55);
+}
+
+.pt-sintetico .pt-simbolo {
+    font-style: italic;
+}
+
+/* Marca de dato teórico (opcional visual, no cambia el contenido). */
+.pt-sintetico .pt-simbolo::after {
+    content: "*";
+    font-size: .6em;
+    vertical-align: super;
+}
+
+/* ==========================================================================
+   6. ESTADOS DE FILTRO (los aplica el JS de T5)
+   .pt-dim atenúa sin quitar la celda de la grilla (posición = información) y
+   sin bloquear el clic: nunca se declara pointer-events.
+   ========================================================================== */
+.pt-dim {
+    --pt-gris: grayscale(.7);
+    opacity: .25;
+}
+
+.pt-destacada {
+    --pt-gris: grayscale(0);
+    border-color: var(--pt-anillo, currentColor);
+    box-shadow: 0 0 0 2px var(--pt-anillo, currentColor);
+    opacity: 1;
+}
+
+/* ==========================================================================
+   7. LEYENDA Y BARRA DE FILTROS
+   ========================================================================== */
+#pt-leyenda {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem;
+}
+
+.pt-chip {
+    display: inline-flex;
+    align-items: center;
+    padding: .2rem .6rem;
+    border: 1px solid var(--pt-borde, rgba(128, 128, 128, .35));
+    border-radius: 999px;
+    background-color: var(--pt-bg, var(--bs-secondary-bg));
+    color: var(--pt-fg, var(--bs-body-color));
+    font-size: .75rem;
+    font-weight: 600;
+    line-height: 1.25;
+    cursor: pointer;
+    transition: border-color .15s ease, box-shadow .15s ease;
+}
+
+.pt-chip:hover {
+    border-color: var(--pt-anillo, currentColor);
+}
+
+.pt-chip:focus-visible {
+    outline: 2px solid var(--pt-anillo, currentColor);
+    outline-offset: 2px;
+}
+
+/* Chip activo: el JS/T5 puede marcarlo con aria-pressed="true". */
+.pt-chip[aria-pressed="true"] {
+    border-color: var(--pt-anillo, currentColor);
+    box-shadow: 0 0 0 2px var(--pt-anillo, currentColor);
+    font-weight: 700;
+}
+
+#pt-buscar,
+#pt-peso-min {
+    max-width: 100%;
+}
+
+/* ==========================================================================
+   8. RESPONSIVE
+   Debajo de lg las celdas tendrían un ancho ilegible: se fija un ancho mínimo
+   por columna y la grilla pasa a hacer scroll horizontal (no se pierde ningún
+   elemento, consistente con la decisión didáctica de no quitar celdas).
+   ========================================================================== */
+@media (max-width: 991.98px) {
+    .pt-grid {
+        --pt-col-min: 2.6rem;
+
+        grid-template-columns: repeat(18, minmax(var(--pt-col-min), 1fr));
+        overflow-x: auto;
+        overscroll-behavior-x: contain;
+        padding-bottom: .4rem; /* lugar para la barra de scroll */
+    }
+}

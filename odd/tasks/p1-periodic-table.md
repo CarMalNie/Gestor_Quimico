@@ -68,11 +68,53 @@ Entrega 2.
         rows 1-7 + 9 + 10, lanthanides row 9 cols 4..17 (Ce..Lu), actinides
         row 10 cols 4..17 (Th..Lr), 12 chips, 15 `pt-sintetico` cells.
         Commit: pending (parent owns commit).
-- [ ] T4 CSS: static/css/periodic_table.css — category color map for all 12
+- [x] T4 CSS: static/css/periodic_table.css — category color map for all 12
       CATEGORIA_CHOICES via CSS custom properties, [data-bs-theme="light"|"dark"]
       variants, honesty styling class (dashed/muted) for Z>=104,
       .pt-dim/.pt-highlight state classes, responsive fallback (scroll or
       reduced cells on small screens; readable >= lg).
+      Naming deviation: the highlight state class is `.pt-destacada` (the T4
+      delegation contract named it that way); the T5 JS must use
+      `.pt-dim` + `.pt-destacada`.
+      + Evidence: static/css/periodic_table.css (Spanish comments, 8 sections:
+        palette, category mapping, grid, cell, synthetic honesty, filter
+        states, legend/filter bar, responsive). Grid: 18 cols via
+        `repeat(18, minmax(0, 1fr))`, explicit 10 rows (7 main + 1 separator +
+        2 detached f-block) driven by `--pt-fila`/`--pt-separador`, `gap: 3px`.
+        Cell: fixed row height, centered flex column, absolute `--pt-z`
+        top-left, bold `--pt-simbolo`, `--pt-nombre` with ellipsis; colors from
+        `--pt-bg`/`--pt-fg` mapped per category so cell and chip always match.
+        Palette: 12 `--pt-c-<slug>` + 12 `--pt-t-<slug>` pairs, pastel + dark
+        text under `[data-bs-theme="light"]` and deep desaturated + light text
+        under `[data-bs-theme="dark"]` (no `:root` declaration, so dark mode is
+        never overridden). Honesty: `.pt-sintetico` dashed border, saturation
+        0.55, italic symbol + `*` superscript, still clickable. States:
+        `.pt-dim` (grayscale .7 + opacity .25, no `pointer-events`) and
+        `.pt-destacada` (ring + full opacity) composed through `--pt-gris`/
+        `--pt-saturacion` so dim/highlight and synthetic saturation never
+        overwrite each other; transitions 0.15s ease. Responsive: below lg a
+        `minmax(2.6rem, 1fr)` track plus `overflow-x: auto` on the grid gives
+        horizontal scroll instead of unusable cells.
+      + Evidence: app_quimico/templates/.../elemento_lista.html (stylesheet
+        `<link>` at the top of `{% block content %}`; base.html has no
+        `extra_css` block and is out of scope, and a body-level stylesheet link
+        is valid HTML5). Cards branch markup otherwise unchanged.
+      + Checks: `pytest -q` -> 175 passed; focused
+        `pytest app_quimico/tests/test_elemento_lista_vistas.py -q` -> 15 passed;
+        `manage.py check` -> no issues;
+        `manage.py collectstatic --noinput -n --verbosity 2` -> pretends to copy
+        `static/css/periodic_table.css`; `manage.py findstatic
+        css/periodic_table.css` -> found in `static/`. Live render on the dev DB
+        (118 rows): `<link rel="stylesheet" href="/static/css/periodic_table.css">`
+        present in both `vista=tabla` and `vista=tarjetas`; 118 `pt-celda`, 15
+        `pt-sintetico`, 12 chips. All 12 rendered chip slugs
+        (`metales`, `no-metales`, `alcalinos`, `alcalinos-terreos`,
+        `lantanidos`, `actinidos`, `metales-de-transicion`, `otros-metales`,
+        `metaloides`, `otros-no-metales`, `halogenos`, `gases-nobles`) have a
+        matching `.pt-celda-*`/`.pt-chip-*` rule and palette pair.
+        Note: the task text's `collectstatic --dryrun` is not a valid Django
+        option (it is `-n`/`--dry-run`); the corrected form was used.
+        Commit: pending (parent owns commit).
 - [ ] T5 JS: static/js/periodic_table.js — vanilla-only: legend chip
       hover/click handlers, search input highlight (symbol/name), peso
       threshold dimming; AND-combined classes; no server round-trips.
@@ -105,6 +147,14 @@ Entrega 2.
   (grid-column/grid-row), so the CSS only defines the 18-column template and
   the look. T3 does not add the CSS/JS `<link>`/`<script>`: base.html has no
   `extra_css` block yet, so T4 must extend base.html or the template.
+- T4/T5 handoff from T4 (state hooks the JS must drive):
+  `.pt-dim` (attenuated) and `.pt-destacada` (highlight ring) on `a.pt-celda`;
+  optional `.pt-chip[aria-pressed="true"]` for the active legend chip. Both
+  states compose with the synthetic honesty filter through
+  `--pt-gris`/`--pt-saturacion`, so no combination needs extra CSS.
+  CSS/JS asset link added by T4 at the top of `{% block content %}` in
+  elemento_lista.html (base.html was NOT modified); T5 must add its `<script>`
+  the same way or use the existing `{% block extra_js %}` in base.html.
 - Position deviation (T3): the task text said `columna = Z - 57` for the
   lanthanides, but that contradicts its own expected values (Ce col 4, Lu col
   17) and is off by 3. Implemented `columna = grupo + (Z - 57)` (= Z - 54),
