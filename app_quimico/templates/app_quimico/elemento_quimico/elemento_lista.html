@@ -7,6 +7,8 @@
 {% block content %}
 {# base.html no expone un bloque extra_css: la hoja de la tabla periódica se carga acá (link en body es HTML5 válido). #}
 <link rel="stylesheet" href="{% static 'css/periodic_table.css' %}">
+{# Los filtros del cliente de la tabla periódica; defer lo hace no bloqueante. #}
+<script src="{% static 'js/periodic_table.js' %}" defer></script>
 <div class="row">
     <div class="col-12 d-flex justify-content-between align-items-center mb-4">
         <h1>⚛️ Tabla Periódica: Listado de Elementos</h1>
@@ -47,7 +49,7 @@
                     <input type="search" id="pt-buscar" class="form-control" placeholder="Buscar por símbolo o nombre" autocomplete="off">
                 </div>
                 <div class="col-md-3">
-                    <input type="number" id="pt-peso-min" class="form-control" placeholder="Peso mínimo (g/mol)" min="0" step="0.0001">
+                    <input type="number" id="pt-peso-min" class="form-control" placeholder="Peso mínimo (g/mol)" min="0" step="0.0001" value="{{ filter_form.min_peso_atomico.value|default_if_none:'' }}">
                 </div>
             </div>
         </div>
@@ -67,7 +69,8 @@
                {% if celda.fila %}style="grid-column: {{ celda.columna }}; grid-row: {{ celda.fila }};"{% endif %}
                data-categoria="{{ celda.elemento.detalleelemento.categoria_elemento }}"
                data-simbolo="{{ simbolo|lower }}"
-               data-nombre="{{ celda.elemento.nombre_elemento|lower }}">
+               data-nombre="{{ celda.elemento.nombre_elemento|lower }}"
+               data-peso="{{ celda.elemento.peso_atomico_elemento|stringformat:'s' }}">
                 <span class="pt-z">{{ celda.elemento.numero_atomico_elemento }}</span>
                 <span class="pt-simbolo">{{ simbolo }}</span>
                 <span class="pt-nombre">{{ celda.elemento.nombre_elemento }}</span>

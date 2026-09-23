@@ -115,9 +115,47 @@ Entrega 2.
         Note: the task text's `collectstatic --dryrun` is not a valid Django
         option (it is `-n`/`--dry-run`); the corrected form was used.
         Commit: pending (parent owns commit).
-- [ ] T5 JS: static/js/periodic_table.js — vanilla-only: legend chip
+- [x] T5 JS: static/js/periodic_table.js — vanilla-only: legend chip
       hover/click handlers, search input highlight (symbol/name), peso
       threshold dimming; AND-combined classes; no server round-trips.
+      + Evidence: static/js/periodic_table.js (IIFE + `readyState` guard; no-op
+        unless `#pt-tabla` exists, so tarjetas and other pages are unaffected;
+        caches every `.pt-celda` with `data-categoria`/`data-simbolo`/
+        `data-nombre`/`data-peso` parsed once; core state
+        `{categoria, busqueda, pesoMin}`; `aplicar()` AND-combines the three
+        predicates — category equality, case-insensitive symbol/name substring,
+        `peso >= threshold` — removing then adding `.pt-dim` when a cell fails
+        any active filter and `.pt-destacada` when it passes all; when no filter
+        is active every cell is neutral (no classes); cells are never removed;
+        chip `click` toggles the active category and syncs
+        `aria-pressed="true|false"`; chip `mouseover`/`mouseout` set/reset a
+        transient `categoriaPrevia` that overrides the persistent category for
+        preview without mutating it (mouseout reverts to the click state);
+        `#pt-buscar` `input` -> trim+lowercase; `#pt-peso-min` `input` ->
+        `parseFloat` or `null`; repaints batched with `requestAnimationFrame`;
+        initial state hydrates from prefilled inputs).
+      + Evidence: app_quimico/templates/.../elemento_lista.html (script tag
+        `<script src="{% static 'js/periodic_table.js' %}" defer></script>`
+        next to the stylesheet include at the top of `{% block content %}`;
+        cells gain
+        `data-peso="{{ celda.elemento.peso_atomico_elemento|stringformat:'s' }}"`
+        so the peso threshold works client-side, rendered as dot-decimal;
+        `#pt-peso-min` prefilled with
+        `{{ filter_form.min_peso_atomico.value|default_if_none:'' }}`).
+      + Checks: `pytest -q` -> 175 passed;
+        `manage.py check` -> no issues;
+        `manage.py collectstatic --noinput -n --verbosity 2` -> pretends to copy
+        `static/js/periodic_table.js`; `manage.py findstatic js/periodic_table.js`
+        -> found in `static/`; `node --check static/js/periodic_table.js` -> OK;
+        rendered via test client (ALLOWED_HOSTS overridden): `vista=tabla` ->
+        status 200, script tag present, 118 `.pt-celda`, 118 `data-peso`
+        (samples `1.0080`, `4.0026` — dot decimal, no commas), peso input
+        `value=""` by default and `value="50"` with `GET min_peso_atomico=50`;
+        `vista=tarjetas` -> no `#pt-tabla` (JS no-op).
+        Note: base.html *does* expose `{% block extra_js %}` (the T5 context
+        fact was inaccurate); the `<script>` was still placed next to the
+        stylesheet as delegated, and base.html is outside the allowed edit
+        surfaces. Commit: pending (parent owns commit).
 - [ ] T6 Full pytest suite green + evidence + work-unit commits per task;
       push + PA deploy (pull + reload + collectstatic if CSS/JS added)
       on explicit operator request; production validation with operator.
