@@ -20,9 +20,11 @@
                         de Google Authenticator (o cualquier app TOTP compatible)
                         al iniciar sesión.
                     </div>
-                    <a href="{% url 'perfil_personal' %}" class="btn btn-outline-secondary w-100">
-                        Volver a mi perfil
-                    </a>
+                    {% if not mfa_obligatorio_pendiente %}
+                        <a href="{% url 'perfil_personal' %}" class="btn btn-outline-secondary w-100">
+                            Volver a mi perfil
+                        </a>
+                    {% endif %}
                 </div>
             </div>
 
@@ -86,9 +88,11 @@
                             Activar verificación en dos pasos
                         </button>
                         <hr>
-                        <a href="{% url 'perfil_personal' %}" class="btn btn-outline-secondary w-100">
-                            Volver a mi perfil
-                        </a>
+                        {% if not mfa_obligatorio_pendiente %}
+                            <a href="{% url 'perfil_personal' %}" class="btn btn-outline-secondary w-100">
+                                Volver a mi perfil
+                            </a>
+                        {% endif %}
                     </form>
                 </div>
             </div>

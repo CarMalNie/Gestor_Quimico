@@ -36,6 +36,8 @@ from django_otp import login as otp_login
 from django_otp.plugins.otp_static.models import StaticDevice, StaticToken
 from django_otp.plugins.otp_totp.models import TOTPDevice
 
+from app_quimico.middleware import ADMIN_GROUP_NAME
+
 DEFAULT_DEVICE_NAME = "Authenticator"
 BACKUP_DEVICE_NAME = "Backup Code"
 BACKUP_CODE_COUNT = 10
@@ -99,6 +101,21 @@ class BackupCodeForm(forms.Form):
 def _confirmed_device(user):
     """Dispositivo TOTP confirmado del usuario, o ``None``."""
     return TOTPDevice.objects.filter(user=user, confirmed=True).first()
+
+
+def _mfa_obligatorio_pendiente(user):
+    """``True`` si el usuario debe MFA por política y aún no tiene TOTP confirmado.
+
+    Alimenta el flag de plantilla homónimo que oculta el enlace "Volver a mi
+    perfil": mientras ``ForceMFAAdminMiddleware`` bloquea la navegación de un
+    Administrador sin MFA, ese enlace solo redirigiría de vuelta a esta misma
+    página (callejón sin salida visual). Fuera de esa situación el enlace se
+    mantiene.
+    """
+    return (
+        user.groups.filter(name=ADMIN_GROUP_NAME).exists()
+        and not TOTPDevice.objects.filter(user=user, confirmed=True).exists()
+    )
 
 
 def _static_device(user):
@@ -219,7 +236,13 @@ def mfa_setup(request):
             return render(
                 request,
                 SETUP_TEMPLATE,
-                {"already_enrolled": True, "can_reconfigure": can_reconfigure},
+                {
+                    "already_enrolled": True,
+                    "can_reconfigure": can_reconfigure,
+                    "mfa_obligatorio_pendiente": _mfa_obligatorio_pendiente(
+                        request.user
+                    ),
+                },
             )
 
         # Rebind: se eliminan todos los TOTPDevice (confirmados y restos
@@ -269,6 +292,7 @@ def mfa_setup(request):
         "can_reconfigure": False,
         "provisioning_uri": device.config_url,
         "qr_svg": _provisioning_qr_svg(device.config_url),
+        "mfa_obligatorio_pendiente": _mfa_obligatorio_pendiente(request.user),
     }
     return render(request, SETUP_TEMPLATE, context)
 

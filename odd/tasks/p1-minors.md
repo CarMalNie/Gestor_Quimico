@@ -74,6 +74,44 @@ and live local DB).
   fix(frontend) compound edit unlocks the formula field (backend already
   recalculated PM + recomposed; readonly was frontend-only). Suite 158
   passed. Push + PA (pull + reload, no migrate/no collectstatic) pending.
+- 2026-09-21 T9 Force-MFA session-wide hardening (NOT committed; orchestrator
+  reviews and commits). Files: new `app_quimico/middleware.py`,
+  `core/settings.py` (MIDDLEWARE), `app_quimico/mfa_views.py`,
+  `mfa_setup.html`, `test_force_mfa.py` (6 -> 16 tests), this file.
+  Evidence: focused `pytest -q app_quimico/tests/test_force_mfa.py` 16 passed;
+  full `pytest -q` 187 passed (baseline 177 + 10 new); `manage.py check` clean.
+
+  T9 notes (repairs + deviations):
+
+  - Pre-existing tests repaired: NONE. No existing test logged in as an
+    Administradores member and then browsed, so the session-wide gate broke
+    nothing; the full suite went 177 -> 187 with no new failures, so no test
+    needed an MFA enrolment or a user swap. No policy test was weakened.
+  - MIDDLEWARE placement deviation. The task asked for the middleware
+    immediately after `django_otp.middleware.OTPMiddleware`. In that position
+    it runs before `MessageMiddleware`, whose `process_request` is the only
+    thing that initializes `request._messages`; `messages.warning` then raised
+    `MessageFailure` (observed: 2 focused tests failed with that exception).
+    Moved to the end of the list, after `XFrameOptionsMiddleware`: that still
+    satisfies the stated django-otp precondition (`is_verified()` meaningful)
+    and additionally lets the outer middlewares process the redirect
+    response. Reason documented in the settings comment and the middleware
+    docstring.
+  - `MEDIA_URL` empty-prefix bug found during implementation. Django's default
+    `MEDIA_URL` is `'/'`; normalizing it left an empty prefix and
+    `str.startswith('')` matches every path, which silently disabled the whole
+    gate (observed: the blocked-profile test returned 200). The asset helper
+    now strips slashes and drops empty prefixes, so only real `STATIC_URL`
+    prefixes are exempt.
+  - `mfa_verify.html` has no "Volver a mi perfil" anchor (only the backup-code
+    toggle, the logout button and the token form), so it needed no template
+    change and no `mfa_obligatorio_pendiente` context key. The task's own
+    caveat ("only where the template renders the anchor") governs; also
+    `mfa_verify` is unreachable for an Administrador without a confirmed
+    device because the middleware redirects before the view runs.
+  - Logout is `@require_POST` in this project, so the exemption test uses POST
+    and asserts the `home` destination. A GET answers 405 before the middleware
+    matters, so the task's "GET logout -> 302" wording is not applicable here.
 
 ## Session close checkpoint (agreed with operator)
 

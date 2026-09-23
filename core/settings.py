@@ -79,6 +79,14 @@ MIDDLEWARE = [
     'django_otp.middleware.OTPMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    # Política Force-MFA (grupo 'Administradores'): bloquea la navegación con
+    # sesión autenticada y sin TOTP confirmado. Va al final por dos
+    # precondiciones de orden: necesita 'request.user.is_verified()' de
+    # OTPMiddleware y usa 'messages.warning', cuyo almacenamiento solo lo
+    # inicializa MessageMiddleware. Ubicarlo antes de MessageMiddleware rompe
+    # el aviso con MessageFailure (evidencia: 2 tests fallidos), por eso no
+    # queda pegado a OTPMiddleware pese a ser su dependencia más directa.
+    'app_quimico.middleware.ForceMFAAdminMiddleware',
 ]
 
 ROOT_URLCONF = 'core.urls'
