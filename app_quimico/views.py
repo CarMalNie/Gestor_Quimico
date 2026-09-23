@@ -23,6 +23,8 @@ from django.views.generic import (
     ListView, CreateView, UpdateView, DeleteView, TemplateView, DetailView
 )
 
+from typing import NamedTuple
+
 from .models import (
     Industria, ElementoQuimico, DetalleElemento, 
     CompuestoQuimico, Aplicacion, CompuestoAplicacion, ElementoCompuesto,
@@ -236,6 +238,14 @@ class ElementoCreateView(LoginRequiredMixin, PermissionRequiredMixin, TemplateVi
         return self.render_to_response(context)
         
 # R - READ (Lista Elementos)
+class PosicionTabla(NamedTuple):
+    """Celda calculada de la grilla periódica para un elemento."""
+
+    elemento: ElementoQuimico
+    fila: int
+    columna: int
+
+
 class ElementoListView(ListView):
     # Abierto a todos (visitantes no requieren LoginRequiredMixin)
     """Muestra una lista de todos los elementos químicos registrados en formato de tarjeta."""
@@ -248,6 +258,19 @@ class ElementoListView(ListView):
     VISTA_TABLA = 'tabla'
     VISTAS_VALIDAS = (VISTA_TARJETAS, VISTA_TABLA)
 
+    # --- Geometría de la grilla periódica (18 columnas x 7 períodos) --- #
+    # Los lantánidos (Ce..Lu) y actínidos (Th..Lr) comparten el grupo 3 en la
+    # base de datos, pero se dibujan en dos filas despegadas debajo de la
+    # grilla principal (layout IUPAC clásico). La (Z=57) y Ac (Z=89) conservan
+    # su posición almacenada (P6/P7, G3), así que la fila despegada continúa la
+    # secuencia desde la columna de su ancla: Ce -> col 4, Lu -> col 17.
+    CATEGORIA_LANTANIDOS = 'Lantánidos'
+    CATEGORIA_ACTINIDOS = 'Actínidos'
+    FILA_LANTANIDOS = 9
+    FILA_ACTINIDOS = 10
+    Z_ANCLA_LANTANIDOS = 57  # La
+    Z_ANCLA_ACTINIDOS = 89  # Ac
+
     def get_vista(self):
         """Normaliza 'vista'; cualquier valor desconocido cae en tarjetas."""
         vista = self.request.GET.get('vista', self.VISTA_TARJETAS)
@@ -255,12 +278,51 @@ class ElementoListView(ListView):
             return self.VISTA_TARJETAS
         return vista
 
+    @staticmethod
+    def _posicion_celda(elemento):
+        """Devuelve ``(fila, columna)`` del elemento dentro de la grilla.
+
+        Un elemento sin DetalleElemento devuelve ``(None, None)``: la celda se
+        renderiza igual, sin posición explícita.
+        """
+        detalle = getattr(elemento, 'detalleelemento', None)
+        if detalle is None:
+            return (None, None)
+
+        grupo = detalle.grupo_elemento
+        categoria = detalle.categoria_elemento
+
+        if categoria == ElementoListView.CATEGORIA_LANTANIDOS and elemento.simbolo_elemento != 'La':
+            columna = grupo + elemento.numero_atomico_elemento - ElementoListView.Z_ANCLA_LANTANIDOS
+            return (ElementoListView.FILA_LANTANIDOS, columna)
+
+        if categoria == ElementoListView.CATEGORIA_ACTINIDOS and elemento.simbolo_elemento != 'Ac':
+            columna = grupo + elemento.numero_atomico_elemento - ElementoListView.Z_ANCLA_ACTINIDOS
+            return (ElementoListView.FILA_ACTINIDOS, columna)
+
+        return (detalle.periodo_elemento, grupo)
+
+    @staticmethod
+    def _posiciones_tabla(elementos):
+        """Mapa ``simbolo -> PosicionTabla`` para cada elemento del queryset."""
+        return {
+            elemento.simbolo_elemento: PosicionTabla(
+                elemento,
+                *ElementoListView._posicion_celda(elemento),
+            )
+            for elemento in elementos
+        }
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['filter_form'] = ElementoFilterForm(self.request.GET)
         context['vista'] = self.get_vista()
         # Categorías canónicas para renderizar la leyenda sin duplicar la tupla.
         context['categorias'] = list(CATEGORIA_CHOICES)
+        # Las posiciones de la grilla solo se necesitan en modo tabla; el modo
+        # tarjetas conserva el contexto de siempre.
+        if context['vista'] == self.VISTA_TABLA:
+            context['posiciones_tabla'] = self._posiciones_tabla(self.object_list)
         return context
 
     def get_queryset(self):

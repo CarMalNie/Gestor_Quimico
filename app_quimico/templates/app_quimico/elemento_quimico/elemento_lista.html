@@ -16,6 +16,65 @@
     </div>
 </div>
 
+{# Selector de modo: tarjetas (filtrado del servidor) o tabla periódica. #}
+<div class="row mb-4">
+    <div class="col-12 d-flex justify-content-end">
+        <div class="btn-group" role="group" aria-label="Modo de vista">
+            <a href="?vista=tarjetas" class="btn {% if vista == 'tarjetas' %}btn-primary active{% else %}btn-outline-primary{% endif %}"{% if vista == 'tarjetas' %} aria-current="page"{% endif %}>
+                <i class="fas fa-th-large"></i> Tarjetas
+            </a>
+            <a href="?vista=tabla" class="btn {% if vista == 'tabla' %}btn-primary active{% else %}btn-outline-primary{% endif %}"{% if vista == 'tabla' %} aria-current="page"{% endif %}>
+                <i class="fas fa-table"></i> Tabla periódica
+            </a>
+        </div>
+    </div>
+</div>
+
+{% if vista == 'tabla' %}
+{# Modo tabla: filtros del cliente (leyenda, búsqueda y peso mínimo). Sin submit al servidor. #}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card card-body bg-body-tertiary shadow-sm">
+            <div id="pt-leyenda" class="d-flex flex-wrap gap-2 mb-3">
+                {% for valor, etiqueta in categorias %}
+                <button type="button" class="pt-chip pt-chip-{{ valor|slugify }}" data-categoria="{{ valor }}">{{ etiqueta }}</button>
+                {% endfor %}
+            </div>
+            <div class="row g-2">
+                <div class="col-md-6">
+                    <input type="search" id="pt-buscar" class="form-control" placeholder="Buscar por símbolo o nombre" autocomplete="off">
+                </div>
+                <div class="col-md-3">
+                    <input type="number" id="pt-peso-min" class="form-control" placeholder="Peso mínimo (g/mol)" min="0" step="0.0001">
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<hr>
+
+{# Grilla periódica: 18 columnas x 7 períodos + 2 filas despegadas para el bloque f.
+   Las posiciones vienen calculadas por la vista (context 'posiciones_tabla'); el
+   aspecto de la grilla y de las categorías vive en static/css/periodic_table.css. #}
+<div class="row">
+    <div class="col-12">
+        <div id="pt-tabla" class="pt-grid">
+            {% for simbolo, celda in posiciones_tabla.items %}
+            <a href="{% url 'elemento_detalle' pk=celda.elemento.pk %}"
+               class="pt-celda pt-celda-{{ celda.elemento.detalleelemento.categoria_elemento|slugify }}{% if celda.elemento.numero_atomico_elemento >= 104 %} pt-sintetico{% endif %}{% if celda.fila > 7 %} pt-fila-f{% endif %}"
+               {% if celda.fila %}style="grid-column: {{ celda.columna }}; grid-row: {{ celda.fila }};"{% endif %}
+               data-categoria="{{ celda.elemento.detalleelemento.categoria_elemento }}"
+               data-simbolo="{{ simbolo|lower }}"
+               data-nombre="{{ celda.elemento.nombre_elemento|lower }}">
+                <span class="pt-z">{{ celda.elemento.numero_atomico_elemento }}</span>
+                <span class="pt-simbolo">{{ simbolo }}</span>
+                <span class="pt-nombre">{{ celda.elemento.nombre_elemento }}</span>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% else %}
 <div class="row mb-4">
     <div class="col-12">
         <div class="card card-body bg-body-tertiary shadow-sm">
@@ -104,4 +163,5 @@
     </div>
     {% endfor %}
 </div>
+{% endif %}
 {% endblock %}
