@@ -196,6 +196,38 @@ Entrega 2.
         'Halógenos'->'halogenos', 'Lantánidos'->'lantanidos', 'Símbolo'->'simbolo',
         'Actínidos'->'actinidos' all match; template re-scan -> no multi-line
         `{# #}` comments remain. Commit: pending (parent owns commit).
+- [x] T8 UX polish: sticky filter panels on the two list pages (CSS-only +
+      minimal wrapper markup; no JS/view logic). New `.filtro-sticky` utility
+      in static/css/periodic_table.css section 9 (`position: sticky`,
+      `top: var(--filtro-top, 64px)` compensating the fixed navbar ~56px,
+      `z-index: 1020` below `.fixed-top` 1030, solid `var(--bs-body-bg)`
+      fallback, 1px `--bs-border-color` border, `--bs-border-radius`, bottom
+      `box-shadow`). Applied to the filter card in both elemento_lista.html
+      branches (tabla card also gets the `pt-filtros-tabla` hook) and to the
+      compuesto_lista.html filter card.
+      + Deviation: the `.row.mb-4 > .col-12` scaffolding around each filter
+        panel was removed and `mb-4` moved onto the panel. Reason:
+        `position: sticky` only travels inside its parent's box, and the panel
+        was the only child of `.col-12`, so it had zero travel. Net layout
+        identical (row negative margins cancel col padding).
+      + Deviation: the tabla-mode bar already lived inside a card (the
+        delegated context described it as bare), so that card was reused as
+        the sticky container instead of nesting a second `.filtro-sticky`
+        wrapper (avoids a double frame).
+      + Deviation: `.filtro-sticky` declares no padding; `.card-body` already
+        provides 1rem and declaring padding here would override it.
+      + Note: `background-color`/`box-shadow` in `.filtro-sticky` do not
+        override the cards' `bg-body-tertiary`/`shadow-sm` because Bootstrap
+        background/shadow utilities use `!important`; the declarations act as
+        the solid-background fallback for a panel without utilities.
+      + Evidence: static/css/periodic_table.css (section 9, `.filtro-sticky`
+        at line 333); elemento_lista.html (tabla card line 40, tarjetas card
+        line 78); compuesto_lista.html (filter card line 22).
+      + Checks: `pytest -q` -> 177 passed; `manage.py check` -> no issues;
+        rendered (test client): `?vista=tabla` -> `filtro-sticky` x1 +
+        `pt-filtros-tabla` x1; `?vista=tarjetas` -> x1; `compuestos/`
+        (authenticated) -> x1. No test asserts the filter card class string,
+        so no test needed updating. Commit: pending (parent owns commit).
 
 ## Notes
 

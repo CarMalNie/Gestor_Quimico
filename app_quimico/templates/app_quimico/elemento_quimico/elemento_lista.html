@@ -36,9 +36,8 @@
 
 {% if vista == 'tabla' %}
 {# Modo tabla: filtros del cliente (leyenda, búsqueda y peso mínimo). Sin submit al servidor. #}
-<div class="row mb-4">
-    <div class="col-12">
-        <div class="card card-body bg-body-tertiary shadow-sm">
+{# Panel de filtros pegajoso: hijo directo de <main> (sin .row/.col-12) para que el sticky tenga recorrido real. #}
+<div class="card card-body bg-body-tertiary shadow-sm filtro-sticky pt-filtros-tabla mb-4">
             <div id="pt-leyenda" class="d-flex flex-wrap gap-2 mb-3">
                 {% for valor, etiqueta in categorias %}
                 <button type="button" class="pt-chip pt-chip-{{ valor|slugify }}" data-categoria="{{ valor }}">{{ etiqueta }}</button>
@@ -53,8 +52,6 @@
                 </div>
             </div>
         </div>
-    </div>
-</div>
 <hr>
 
 <div class="row">
@@ -77,9 +74,8 @@
     </div>
 </div>
 {% else %}
-<div class="row mb-4">
-    <div class="col-12">
-        <div class="card card-body bg-body-tertiary shadow-sm">
+{# Panel de filtros pegajoso: hijo directo de <main> (sin .row/.col-12) para que el sticky tenga recorrido real. #}
+<div class="card card-body bg-body-tertiary shadow-sm filtro-sticky mb-4">
             <form method="get" class="mb-0">
                 {% csrf_token %}
                 <div class="row">
@@ -106,8 +102,6 @@
                 </div>
             </form>
         </div>
-    </div>
-</div>
 <hr>
 
 <div class="row">
