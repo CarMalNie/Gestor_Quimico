@@ -163,6 +163,39 @@ Entrega 2.
       Push + PA deploy (pull + reload + collectstatic — new CSS/JS assets
       REQUIRE collectstatic) pending explicit operator request; then
       production validation in both themes with operator.
+- [x] T7 Entrega 1 feedback fixes (operator review of the local render).
+      (1) Visible-comment bug: the tabla branch carried a multi-line
+      `{# ... #}` block ('Grilla periódica: 18 columnas x 7 períodos' +
+      'posiciones_tabla' / 'periodic_table.css'); Django `{# #}` only spans
+      one line, so it leaked as literal text. Removed the block entirely
+      (the CSS documents itself; the remaining `{# #}` comments in the file
+      are all single-line, re-scanned programmatically).
+      (2) Header `<h1>` shortened from 'Tabla Periódica: Listado de Elementos'
+      to 'Tabla Periódica' (shared by both view modes; Registrar button and
+      the rest of the header row untouched).
+      (3) Accent-insensitive client search in the tabla view: added a
+      `normalizar()` helper (toLowerCase -> NFD -> strip U+0300-U+036F) in
+      static/js/periodic_table.js and applied it once to the cached
+      `data-simbolo`/`data-nombre` values and to the search term (input
+      handler + initial hydration), so 'quimica' matches 'Química',
+      'halogenos' matches 'Halógenos'. Click/hover/peso logic unchanged.
+      + Evidence: app_quimico/templates/.../elemento_lista.html (comment
+        block removed at old lines 60-62; `<h1>` at line 14);
+        static/js/periodic_table.js (`normalizar` helper at lines 8-16;
+        cache at lines 33-34; search term at lines 131 and 147).
+      + Evidence: app_quimico/tests/test_elemento_lista_vistas.py (2 new
+        template tests -> 17 tests in the file:
+        `test_vista_tabla_no_filtra_comentarios_multilinea_al_html` and
+        `test_encabezado_compartido_usa_el_titulo_corto_en_ambas_vistas`).
+      + Checks (RED first, then GREEN): focused
+        `pytest app_quimico/tests/test_elemento_lista_vistas.py -q` -> 2 failed
+        pre-fix (leaked comment present; `h1` old title), 17 passed post-fix;
+        full `pytest -q` -> 177 passed (175 baseline + 2 new);
+        `manage.py check` -> no issues; `node --check static/js/periodic_table.js`
+        -> OK; ad-hoc node normalizer check -> 'Química'->'quimica',
+        'Halógenos'->'halogenos', 'Lantánidos'->'lantanidos', 'Símbolo'->'simbolo',
+        'Actínidos'->'actinidos' all match; template re-scan -> no multi-line
+        `{# #}` comments remain. Commit: pending (parent owns commit).
 
 ## Notes
 
@@ -173,6 +206,10 @@ Entrega 2.
 - Grid position is information: never remove cells from the grid, only
   dim/attenuate (didactic decision, obs #527).
 - Suite baseline: 160 passed (local = 5f895a5 + gitignore commit).
+- T7 observation (not fixed): the shared `<h1>` was shortened, but
+  `{% block title %}` (browser tab title) still reads 'Tabla Periódica:
+  Listado de Elementos'. Out of the delegated scope (the contract named the
+  `<h1>` only); flagged for the operator to decide.
 - Work-unit commits, Conventional Commits; push/PA only on explicit
   operator request.
 - T4/T5 handoff from T3 (exact hooks the CSS/JS must target):

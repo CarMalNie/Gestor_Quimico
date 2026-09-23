@@ -2,7 +2,7 @@
 {% load static %}
 {% load crispy_forms_tags %}
 
-{% block title %}Tabla Periódica: Listado de Elementos{% endblock %}
+{% block title %}Tabla Periódica{% endblock %}
 
 {% block content %}
 {# base.html no expone un bloque extra_css: la hoja de la tabla periódica se carga acá (link en body es HTML5 válido). #}
@@ -11,7 +11,7 @@
 <script src="{% static 'js/periodic_table.js' %}" defer></script>
 <div class="row">
     <div class="col-12 d-flex justify-content-between align-items-center mb-4">
-        <h1>⚛️ Tabla Periódica: Listado de Elementos</h1>
+        <h1>⚛️ Tabla Periódica</h1>
         {% if 'app_quimico.add_elementoquimico' in perms %}
         <a href="{% url 'elemento_crear' %}" class="btn btn-success">
             ➕ Registrar Nuevo Elemento
@@ -57,9 +57,6 @@
 </div>
 <hr>
 
-{# Grilla periódica: 18 columnas x 7 períodos + 2 filas despegadas para el bloque f.
-   Las posiciones vienen calculadas por la vista (context 'posiciones_tabla'); el
-   aspecto de la grilla y de las categorías vive en static/css/periodic_table.css. #}
 <div class="row">
     <div class="col-12">
         <div id="pt-tabla" class="pt-grid">

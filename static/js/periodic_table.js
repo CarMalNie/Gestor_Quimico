@@ -5,6 +5,16 @@
 (function () {
     "use strict";
 
+    // Normaliza texto para buscar sin distinguir mayúsculas ni diacríticos:
+    // 'quimica' debe encontrar 'Química'. NFD separa la letra del acento y el
+    // rango de combining marks (U+0300-U+036F) los elimina.
+    function normalizar(texto) {
+        return texto
+            .toLowerCase()
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "");
+    }
+
     function initTabla() {
         var tabla = document.getElementById("pt-tabla");
         // La grilla solo existe en la vista tabla: en tarjetas y en otras
@@ -20,8 +30,8 @@
                 return {
                     el: celda,
                     categoria: celda.getAttribute("data-categoria") || "",
-                    simbolo: (celda.getAttribute("data-simbolo") || "").toLowerCase(),
-                    nombre: (celda.getAttribute("data-nombre") || "").toLowerCase(),
+                    simbolo: normalizar(celda.getAttribute("data-simbolo") || ""),
+                    nombre: normalizar(celda.getAttribute("data-nombre") || ""),
                     peso: parseFloat(celda.getAttribute("data-peso")),
                 };
             });
@@ -118,7 +128,7 @@
 
         if (inputBuscar) {
             inputBuscar.addEventListener("input", function () {
-                estado.busqueda = inputBuscar.value.trim().toLowerCase();
+                estado.busqueda = normalizar(inputBuscar.value.trim());
                 programar();
             });
         }
@@ -134,7 +144,7 @@
         // Estado inicial: recupera valores ya presentes en los inputs
         // (p. ej. el peso mínimo precargado desde el GET).
         if (inputBuscar && inputBuscar.value.trim() !== "") {
-            estado.busqueda = inputBuscar.value.trim().toLowerCase();
+            estado.busqueda = normalizar(inputBuscar.value.trim());
         }
         if (inputPeso && inputPeso.value.trim() !== "") {
             var inicial = parseFloat(inputPeso.value);

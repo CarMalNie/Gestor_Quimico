@@ -170,3 +170,27 @@ def test_vista_tarjetas_mantiene_el_formulario_del_servidor(client, elementos_ca
     assert 'id="pt-tabla"' not in html
     assert 'id="pt-buscar"' not in html
     assert '?vista=tarjetas' in html and '?vista=tabla' in html
+
+
+def test_vista_tabla_no_filtra_comentarios_multilinea_al_html(
+    client, elementos_cargados
+):
+    """Django {# #} comenta una sola linea: el bloque multilinea no debe renderizarse."""
+    respuesta = client.get(reverse("elemento_lista"), {"vista": "tabla"})
+
+    html = respuesta.content.decode()
+
+    assert "Grilla peri\u00f3dica: 18 columnas" not in html
+    assert "posiciones_tabla" not in html
+
+
+def test_encabezado_compartido_usa_el_titulo_corto_en_ambas_vistas(
+    client, elementos_cargados
+):
+    titulo = "<h1>\u269b\ufe0f Tabla Peri\u00f3dica</h1>"
+
+    tabla = client.get(reverse("elemento_lista"), {"vista": "tabla"})
+    tarjetas = client.get(reverse("elemento_lista"))
+
+    assert titulo in tabla.content.decode()
+    assert titulo in tarjetas.content.decode()
