@@ -321,28 +321,4 @@
     }
 }
 
-/* ==========================================================================
-   9. PANELES DE FILTRO PEGAJOSOS
-   El panel de filtros se pega debajo del navbar fijo (~56px de alto). El
-   offset vive en --filtro-top para poder ajustarlo en un solo lugar; el
-   navbar sigue siendo fijo en mobile, así que el mismo valor sirve en todos
-   los anchos. z-index 1020 queda por debajo del navbar (.fixed-top = 1030).
-   Requisito de 'sticky': el panel debe ser hijo directo de una caja alta
-   (<main>), porque solo se mueve dentro de la caja de su padre.
-   ========================================================================== */
-.filtro-sticky {
-    --filtro-top: 64px;
-
-    position: sticky;
-    top: var(--filtro-top);
-    z-index: 1020;
-    /* Fondo sólido del tema activo: el contenido no se lee por debajo.
-       No pisa bg-body-tertiary (esa utilidad usa !important); queda como
-       respaldo para un panel que no traiga su propia utilidad de fondo. */
-    background-color: var(--bs-body-bg);
-    border: 1px solid var(--bs-border-color);
-    border-radius: var(--bs-border-radius);
-    /* Sombra inferior sutil para separar el panel del contenido que pasa. */
-    box-shadow: 0 .25rem .5rem rgba(0, 0, 0, .08);
-    /* Sin padding propio: .card-body ya aporta 1rem y declararlo acá lo pisaría. */
-}
+/* 9. PANELES DE FILTRO PEGAJOSOS — movido a static/css/styles.css (la usa también compuesto_lista.html, que no carga esta hoja). */
