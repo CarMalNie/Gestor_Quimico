@@ -25,7 +25,8 @@ from django.views.generic import (
 
 from .models import (
     Industria, ElementoQuimico, DetalleElemento, 
-    CompuestoQuimico, Aplicacion, CompuestoAplicacion, ElementoCompuesto
+    CompuestoQuimico, Aplicacion, CompuestoAplicacion, ElementoCompuesto,
+    CATEGORIA_CHOICES
 )
 
 from .forms import (
@@ -242,13 +243,34 @@ class ElementoListView(ListView):
     template_name = 'app_quimico/elemento_quimico/elemento_lista.html' 
     context_object_name = 'elementos'
 
+    # Modos de vista soportados por el parámetro GET 'vista'.
+    VISTA_TARJETAS = 'tarjetas'
+    VISTA_TABLA = 'tabla'
+    VISTAS_VALIDAS = (VISTA_TARJETAS, VISTA_TABLA)
+
+    def get_vista(self):
+        """Normaliza 'vista'; cualquier valor desconocido cae en tarjetas."""
+        vista = self.request.GET.get('vista', self.VISTA_TARJETAS)
+        if vista not in self.VISTAS_VALIDAS:
+            return self.VISTA_TARJETAS
+        return vista
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['filter_form'] = ElementoFilterForm(self.request.GET)
+        context['vista'] = self.get_vista()
+        # Categorías canónicas para renderizar la leyenda sin duplicar la tupla.
+        context['categorias'] = list(CATEGORIA_CHOICES)
         return context
 
     def get_queryset(self):
         queryset = ElementoQuimico.objects.select_related('detalleelemento').all()
+
+        # En modo tabla se muestran los 118 elementos y el filtrado ocurre en el
+        # cliente: los parámetros GET no se aplican en el servidor.
+        if self.get_vista() == self.VISTA_TABLA:
+            return queryset.order_by('numero_atomico_elemento')
+
         form = ElementoFilterForm(self.request.GET)
         
         if form.is_valid():
