@@ -156,9 +156,13 @@ Entrega 2.
         fact was inaccurate); the `<script>` was still placed next to the
         stylesheet as delegated, and base.html is outside the allowed edit
         surfaces. Commit: pending (parent owns commit).
-- [ ] T6 Full pytest suite green + evidence + work-unit commits per task;
-      push + PA deploy (pull + reload + collectstatic if CSS/JS added)
-      on explicit operator request; production validation with operator.
+- [x] T6 Full pytest suite green (175 passed) + independent verify PASS
+      (all 6 checks, report in session log). Work-unit commits:
+      7f97d87 (T2), 9c7dcad (T3), 92b9bbc (T4), b2c347c (T5).
+      Local main = 5 commits ahead of origin/main (incl. 5f895a5 gitignore).
+      Push + PA deploy (pull + reload + collectstatic — new CSS/JS assets
+      REQUIRE collectstatic) pending explicit operator request; then
+      production validation in both themes with operator.
 
 ## Notes
 
