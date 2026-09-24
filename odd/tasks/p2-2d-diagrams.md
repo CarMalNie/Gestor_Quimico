@@ -40,7 +40,7 @@ honesty), always-visible structure section, PubChem (Entrega 2).
         194 passed after (no regressions); manage.py check clean;
         makemigrations --check --dry-run: no changes detected.
       + Commit: parent owns (work-unit commit below).
-- [ ] T3 Validation + form + views: pysmiles added to requirements.txt;
+- [x] T3 Validation + form + views: pysmiles added to requirements.txt;
       `clean_smiles` on CompuestoQuimicoForm (empty is valid = opt-out;
       invalid SMILES -> form error, Spanish message); form Meta.fields adds
       `smiles`; CompuestoCreateView.post and CompuestoUpdateView.post must
@@ -49,6 +49,26 @@ honesty), always-visible structure section, PubChem (Entrega 2).
       through the same is_valid/saved path as formula). Tests: valid SMILES
       accepted (CCO), invalid rejected with error, empty accepted (no
       diagram), persisted on create and update.
+      + Evidence: requirements.txt L8-9 (networkx==3.7, pysmiles==2.1.0,
+        installed in .venv).
+      + Evidence: app_quimico/forms.py L14 import, L18-20 SMILES_ERROR,
+        L117 Meta.fields + smiles, L125-128 widget, L141 crispy fieldset,
+        L145-172 clean_smiles (empty->None opt-out, outer strip, internal
+        whitespace rejected, read_smiles try/except).
+      + Evidence: views.py NOT edited — persistence rides the existing
+        path: create save(commit=False) L462 -> save() L476; update L635 ->
+        L649/L655 (construct_instance writes smiles before save). Tests
+        assert create persists CCO, opt-out stores None, update sets/clears.
+      + Evidence: test_compuesto_smiles.py +10 tests (17 in file: form
+        field wiring, valid/strip/empty, invalid, internal whitespace,
+        create persists/opt-out, update new/clear).
+      + Checks: pytest -q full suite 194 -> 204 passed; manage.py check
+        clean; makemigrations --check clean. RED first: 9 failed, 8 passed
+        pre-implementation; GREEN 17/17 focused.
+      + Follow-up flagged: pysmiles lenient — 'XYZ' yields 0-node graph
+        without raising; 0-atom graphs must be rejected (hardening folded
+        into T4 scope).
+      + Commit: parent owns (work-unit commit below).
 - [ ] T4 Staged form UX: compuesto_form.html — Bootstrap collapse entry
       button "¿Agregar estructura 2D?" wrapping the smiles field; opt-out
       button "No — mejor sin estructura" collapses and clears the input;

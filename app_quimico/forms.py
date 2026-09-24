@@ -11,6 +11,14 @@ from .models import (
 )
 from decimal import Decimal
 
+from pysmiles import read_smiles
+
+
+# User-facing message shared by every SMILES validation failure.
+SMILES_ERROR = (
+    "La notación SMILES no es válida. Ejemplo válido: CCO (etanol)."
+)
+
 
 # ================ #
 # Elemento Químico #
@@ -106,13 +114,17 @@ class CompuestoQuimicoForm(forms.ModelForm):
     class Meta:
         model = CompuestoQuimico
         # PM incluido para persistencia
-        fields = ['nombre_compuesto', 'formula_compuesto'] #'peso_molecular_compuesto'
+        fields = ['nombre_compuesto', 'formula_compuesto', 'smiles']
         widgets = {
             'formula_compuesto': forms.TextInput(attrs={
                 'placeholder': 'Ej: H2O, Ca(OH)2 o [Co(NH3)6]Cl3',
                 'class': 'form-control', 
                 'readonly': False, 
                 'disabled': False,
+            }),
+            'smiles': forms.TextInput(attrs={
+                'placeholder': 'Ej.: CCO (etanol)',
+                'class': 'form-control',
             }),
             'peso_molecular_compuesto': forms.HiddenInput(),
         }
@@ -126,8 +138,37 @@ class CompuestoQuimicoForm(forms.ModelForm):
                 'Datos del Compuesto',
                 'nombre_compuesto', 
                 'formula_compuesto', 
+                'smiles',
             ),
         )
+
+    def clean_smiles(self):
+        """Validate the optional SMILES notation.
+
+        Empty input is a valid opt-out (the diagram is simply not rendered) and
+        is normalized to ``None`` so the DB stores NULL instead of an empty
+        string. A non-empty value is parsed with pysmiles; malformed notation
+        raises a user-facing Spanish error. Internal whitespace is rejected
+        explicitly because pysmiles parses ``"C C"`` as two disconnected atoms
+        instead of failing.
+        """
+        value = self.cleaned_data.get('smiles')
+        if value is None:
+            return None
+
+        value = value.strip()
+        if not value:
+            return None
+
+        if any(char.isspace() for char in value):
+            raise forms.ValidationError(SMILES_ERROR)
+
+        try:
+            read_smiles(value)
+        except Exception:
+            raise forms.ValidationError(SMILES_ERROR)
+
+        return value
 
 
 # ======================================= #
