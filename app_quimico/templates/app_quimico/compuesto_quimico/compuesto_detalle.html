@@ -65,7 +65,14 @@
                 <button class="nav-link" id="applications-tab" data-bs-toggle="tab" data-bs-target="#applications" type="button" role="tab">
                     Usos y Aplicaciones
                 </button>
-            </li>
+            </li>{% if compuesto.smiles %}
+            {# p2-2d-diagrams T5: la pestaña Estructura 2D solo existe cuando hay
+               SMILES; sin SMILES la fila de pestañas queda idéntica. #}
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="estructura2d-tab" data-bs-toggle="tab" data-bs-target="#estructura2d" type="button" role="tab">
+                    Estructura 2D
+                </button>
+            </li>{% endif %}
         </ul>
         
         <div class="tab-content border border-top-0 p-3 bg-body" id="compuestoTabsContent">
@@ -139,7 +146,14 @@
                 <p class="alert alert-info">Este compuesto no tiene aplicaciones industriales registradas.</p>
                 {% endif %}
                 {% endwith %}
-            </div>
+            </div>{% if compuesto.smiles %}
+
+            <div class="tab-pane fade" id="estructura2d" role="tabpanel">
+                <p class="lead text-muted small">Representación 2D generada a partir de la notación SMILES:</p>
+                <div class="estructura-2d" data-smiles="{{ compuesto.smiles }}">
+                    <span class="estructura-2d__caption">Estructura 2D (SMILES)</span>
+                </div>
+            </div>{% endif %}
             
         </div>
         
@@ -148,3 +162,11 @@
     </div>
 </div>
 {% endblock %}
+
+{# SmilesDrawer se carga solo cuando este compuesto tiene SMILES: sin
+   estructura la página queda sin scripts extra y el bloque rinde exactamente
+   lo mismo que el default de base.html. El renderer inyecta el SVG sobre
+   [data-smiles]. ?v=1 cache-bustea el asset nuevo. #}
+{% block extra_js %}
+{% if compuesto.smiles %}<script src="{% static 'vendor/smilesdrawer/smiles-drawer.min.js' %}"></script>
+<script src="{% static 'js/smiles_render.js' %}?v=1"></script>{% endif %}    {% endblock %}

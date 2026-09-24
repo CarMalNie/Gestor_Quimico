@@ -488,3 +488,160 @@ def test_form_template_autopens_the_section_when_smiles_has_errors(client, owner
     assert 'class="collapse show"' in html
     assert 'aria-expanded="true"' in html
     assert ERROR_SMILES in html
+
+
+# ========================================================================= #
+# T5 — Render de la estructura 2D (SmilesDrawer) en lista y detalle
+# ========================================================================= #
+
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+COMPUESTO_LISTA_TEMPLATE = (
+    PROJECT_ROOT
+    / "app_quimico"
+    / "templates"
+    / "app_quimico"
+    / "compuesto_quimico"
+    / "compuesto_lista.html"
+)
+COMPUESTO_DETALLE_TEMPLATE = (
+    PROJECT_ROOT
+    / "app_quimico"
+    / "templates"
+    / "app_quimico"
+    / "compuesto_quimico"
+    / "compuesto_detalle.html"
+)
+SMILES_RENDER_JS = PROJECT_ROOT / "static" / "js" / "smiles_render.js"
+SMILESDRAWER_VENDOR = (
+    PROJECT_ROOT
+    / "static"
+    / "vendor"
+    / "smilesdrawer"
+    / "smiles-drawer.min.js"
+)
+BASE_TEMPLATE = PROJECT_ROOT / "templates" / "base.html"
+
+
+@pytest.fixture
+def compuesto_sin_smiles(owner, industria):
+    """A saved compound owned by ``owner`` whose SMILES is empty."""
+    return CompuestoQuimico.objects.create(
+        nombre_compuesto="Metano",
+        formula_compuesto="CH4",
+        id_industria=industria,
+        usuario=owner,
+        peso_molecular_compuesto=Decimal("16.0430"),
+    )
+
+
+def _lista_html(client, user):
+    _login(client, user)
+    response = client.get(reverse("compuesto_lista"))
+    assert response.status_code == 200
+    return response.content.decode()
+
+
+def _detalle_html(client, user, compuesto):
+    _login(client, user)
+    response = client.get(
+        reverse("compuesto_detalle", kwargs={"pk": compuesto.pk})
+    )
+    assert response.status_code == 200
+    return response.content.decode()
+
+
+# --- Lista de compuestos (tarjetas) ---
+
+
+def test_lista_without_smiles_keeps_the_card_unchanged(
+    client, owner, compuesto_sin_smiles
+):
+    html = _lista_html(client, owner)
+
+    assert compuesto_sin_smiles.nombre_compuesto in html
+    # Sin SMILES no hay bloque de estructura ni atributo de render.
+    assert "estructura-2d" not in html
+    assert 'data-smiles="' not in html
+    # La tarjeta existente sigue intacta.
+    assert "card h-100 shadow-sm border-primary" in html
+    assert "Detalles Químicos:" in html
+    assert "CH4" in html
+
+
+def test_lista_with_smiles_renders_the_estructura_2d_block(
+    client, owner, compuesto
+):
+    html = _lista_html(client, owner)
+
+    assert "estructura-2d" in html
+    assert f'data-smiles="{SMILES_ETANOL}"' in html
+    assert "Estructura 2D (SMILES)" in html
+    # Scripts self-hosted con cache-bust, solo en esta página.
+    assert "vendor/smilesdrawer/smiles-drawer.min.js" in html
+    assert "js/smiles_render.js" in html
+    assert "?v=1" in html
+
+
+# --- Detalle del compuesto ---
+
+
+def test_detalle_without_smiles_is_untouched(client, owner, compuesto_sin_smiles):
+    html = _detalle_html(client, owner, compuesto_sin_smiles)
+
+    assert "estructura-2d" not in html
+    assert "estructura2d-tab" not in html
+    assert 'data-smiles="' not in html
+    # Pestañas existentes intactas y sin scripts extra.
+    assert 'id="composition-tab"' in html
+    assert 'id="applications-tab"' in html
+    assert "smiles-drawer.min.js" not in html
+    assert "smiles_render.js" not in html
+
+
+def test_detalle_with_smiles_renders_the_estructura_2d_tab(
+    client, owner, compuesto
+):
+    html = _detalle_html(client, owner, compuesto)
+
+    assert 'id="estructura2d-tab"' in html
+    assert 'data-bs-target="#estructura2d"' in html
+    assert 'id="estructura2d"' in html
+    assert f'data-smiles="{SMILES_ETANOL}"' in html
+    assert "Estructura 2D (SMILES)" in html
+    assert "vendor/smilesdrawer/smiles-drawer.min.js" in html
+    assert "smiles_render.js?v=1" in html
+
+
+# --- Assets y contrato del renderer (sin runner JS) ---
+
+
+def test_vendored_smilesdrawer_asset_is_present():
+    assert SMILESDRAWER_VENDOR.exists()
+    assert SMILESDRAWER_VENDOR.stat().st_size > 0
+
+
+def test_smiles_render_js_uses_the_vendored_svg_drawer_api():
+    source = SMILES_RENDER_JS.read_text(encoding="utf-8")
+
+    # Batch sobre los contenedores, API v2 del bundle vendoreado.
+    assert "[data-smiles]" in source
+    assert "SmilesDrawer.SvgDrawer" in source
+    assert "SmilesDrawer.parse" in source
+    # Fail-soft si el global no está disponible.
+    assert 'typeof SmilesDrawer === "undefined"' in source
+    assert 'drawer.draw(tree, svg, "light")' in source
+
+
+def test_smiles_scripts_are_not_loaded_globally_in_base():
+    base = BASE_TEMPLATE.read_text(encoding="utf-8")
+
+    assert "smiles-drawer.min.js" not in base
+    assert "smiles_render.js" not in base
+
+
+def test_base_stylesheet_cache_bust_was_bumped():
+    # styles.css cambió (sección .estructura-2d): el ?v sube para invalidar
+    # la caché del navegador (convención del proyecto: bump al editar assets).
+    source = BASE_TEMPLATE.read_text(encoding="utf-8")
+
+    assert "css/styles.css' %}?v=3" in source

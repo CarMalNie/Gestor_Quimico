@@ -133,3 +133,37 @@
     background-color: var(--bs-tertiary-bg);
     color: var(--deep-space-blue);
 }
+
+/* ==========================================================================
+   ESTRUCTURA 2D (SMILES) — p2-2d-diagrams T5
+   El diagrama lo inyecta static/js/smiles_render.js como SVG dentro de
+   [data-smiles]. El fondo claro es FIJO a propósito: SmilesDrawer dibuja con
+   su tema "light" y la estructura debe seguir siendo legible aunque la página
+   use data-bs-theme="dark". Por eso el fondo y el borde NO dependen del tema.
+   ========================================================================== */
+.estructura-2d {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: .25rem;
+    padding: .5rem;
+    max-width: 240px;
+    margin-inline: auto;
+    background-color: #ffffff;
+    border: 1px solid rgba(0, 0, 0, .15);
+    border-radius: var(--bs-border-radius);
+}
+
+.estructura-2d__caption {
+    font-size: .75rem;
+    line-height: 1.2;
+    color: #495057;
+}
+
+/* El SVG conserva su relación de aspecto dentro de la tarjeta/pestaña. */
+.estructura-2d svg {
+    display: block;
+    width: 100%;
+    height: auto;
+    max-width: 200px;
+}

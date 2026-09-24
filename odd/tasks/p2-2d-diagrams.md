@@ -91,12 +91,38 @@ honesty), always-visible structure section, PubChem (Entrega 2).
       + Known limit: opt-out JS not covered by pytest (no JS runner; tiny
         guarded vanilla script).
       + Commit: parent owns (work-unit commit below).
-- [ ] T5 Render: vendor smiles-drawer.min.js under static/vendor/
+- [x] T5 Render: vendor smiles-drawer.min.js under static/vendor/
       smilesdrawer/ (downloaded by parent, not pip); card list render in
       compuesto_lista.html inside `{% if compuesto.smiles %}` (cards
       byte-identical without SMILES); detail render in compuesto_detalle;
       fixed light canvas independent of data-bs-theme (documented choice);
       CSS scoped additions; `?v=1` cache-bust on new asset.
+      + Evidence: static/vendor/smilesdrawer/smiles-drawer.min.js (v2.0.3
+        unpkg, 183KB, node --check OK; bundle exposes window.SmilesDrawer
+        with SvgDrawer/parse).
+      + Evidence: compuesto_lista.html L67-74 diagram block after formula
+        badge ({% if %} glued to existing tags: zero whitespace shift when
+        no SMILES) + extra_js block L182-188 (vendor + smiles_render.js?v=1
+        only there).
+      + Evidence: compuesto_detalle.html — new tab "Estructura 2D" in the
+        existing nav-tabs row (L68-76) + pane L149-157; extra_js guarded
+        by {% if compuesto.smiles %} (L166-173).
+      + Evidence: static/js/smiles_render.js — IIFE, no-op without
+        [data-smiles] (L72) or missing global (L77-83); per element:
+        SmilesDrawer.parse -> new SvgDrawer({width,height}) -> draw(tree,
+        svg, 'light'); fixed light bg documented in header.
+      + Evidence: static/css/styles.css L137-166 sección estructura-2d
+        (max-width 240px, bg #ffffff fijo, caption, svg responsive);
+        templates/base.html L29 styles.css ?v=2 -> ?v=3 (bump por edición).
+      + Evidence: test_compuesto_smiles.py L494-648 — 8 tests (lista/detalle
+        con y sin SMILES, asset vendoreado, contrato estático del JS,
+        scripts no globales en base, bump ?v=3).
+      + Checks: pytest -q full suite 212 -> 220 passed; focused file 33
+        passed; manage.py check + makemigrations --check clean;
+        node --check smiles_render.js OK; byte-identity verified via SHA
+        (Django render HEAD vs worktree, card loop and detail content block
+        without SMILES identical).
+      + Commit: parent owns (work-unit commit below).
 - [ ] T6 Full pytest suite green + manage.py check + makemigrations --check
       clean; PA deploy notes (pip install pysmiles + collectstatic +
       migrate); work-unit commits.
