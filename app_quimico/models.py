@@ -144,6 +144,12 @@ class CompuestoQuimico(models.Model):
         auto_now_add=True,
         verbose_name="Fecha de Registro"
     )
+    smiles = models.TextField(
+        blank=True,
+        null=True,
+        verbose_name='Estructura SMILES',
+        help_text='Notación SMILES opcional para mostrar la estructura 2D'
+    )
 
     class Meta:
         verbose_name = "Compuesto Químico"
