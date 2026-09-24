@@ -206,6 +206,28 @@ def test_form_rejects_internal_whitespace_in_smiles():
     assert ERROR_SMILES in str(form.errors["smiles"])
 
 
+def test_form_rejects_smiles_that_parse_to_an_atomless_graph():
+    """pysmiles is lenient: 'XYZ' raises nothing and yields an empty graph,
+    so an atom-less result must be rejected explicitly."""
+    form = CompuestoQuimicoForm(data=_form_data(smiles="XYZ"))
+
+    assert not form.is_valid()
+    assert "smiles" in form.errors
+    assert ERROR_SMILES in str(form.errors["smiles"])
+
+
+def test_form_still_accepts_empty_smiles_as_opt_out_after_atomless_hardening():
+    """The empty/whitespace opt-out path is resolved before parsing and stays
+    valid even though 0-node graphs are now rejected."""
+    vacio = CompuestoQuimicoForm(data=_form_data(smiles=""))
+    espacios = CompuestoQuimicoForm(data=_form_data(smiles="   "))
+
+    assert vacio.is_valid(), vacio.errors
+    assert vacio.cleaned_data["smiles"] is None
+    assert espacios.is_valid(), espacios.errors
+    assert espacios.cleaned_data["smiles"] is None
+
+
 # --- View persistence ---
 
 
@@ -364,3 +386,105 @@ def test_update_view_clears_smiles_to_none(
 
     compuesto.refresh_from_db()
     assert compuesto.smiles is None
+
+
+# ========================================================================= #
+# T4 — Staged "¿Agregar estructura 2D?" form UX (compuesto_form.html)
+# ========================================================================= #
+
+COMPUESTO_FORM_TEMPLATE = (
+    Path(__file__).resolve().parents[1]
+    / "templates"
+    / "app_quimico"
+    / "compuesto_quimico"
+    / "compuesto_form.html"
+)
+
+
+def _crear_form_html(client, user):
+    _login(client, user)
+    response = client.get(reverse("compuesto_crear"))
+    assert response.status_code == 200
+    return response.content.decode()
+
+
+def test_form_template_uses_a_shared_staged_flow(client, owner, compuesto, relacion):
+    """Create and edit render the same template, so the staged flow is shared."""
+    assert COMPUESTO_FORM_TEMPLATE.exists()
+
+    crear = _crear_form_html(client, owner)
+    editar = client.get(
+        reverse("compuesto_actualizar", kwargs={"pk": compuesto.pk})
+    )
+    assert editar.status_code == 200
+    html = editar.content.decode()
+
+    for marker in (
+        "¿Agregar estructura 2D?",
+        'id="estructura2d"',
+        'id="smiles-ayuda"',
+        'id="smiles-opt-out"',
+    ):
+        assert marker in crear, marker
+        assert marker in html, marker
+
+
+def test_form_template_starts_with_a_collapsed_entry_button(client, owner):
+    html = _crear_form_html(client, owner)
+
+    assert "¿Agregar estructura 2D?" in html
+    assert 'data-bs-toggle="collapse"' in html
+    assert 'data-bs-target="#estructura2d"' in html
+    assert 'aria-expanded="false"' in html
+    assert 'id="estructura2d"' in html
+    # Nothing chemical is visible until the entry button is clicked.
+    assert 'class="collapse show"' not in html
+
+
+def test_form_template_keeps_the_smiles_input_inside_the_collapsed_section(
+    client, owner
+):
+    html = _crear_form_html(client, owner)
+
+    section_at = html.index('id="estructura2d"')
+    input_at = html.index('id="id_smiles"')
+    assert section_at < input_at
+    assert 'name="smiles"' in html
+
+
+def test_form_template_has_the_didactic_help_accordion(client, owner):
+    html = _crear_form_html(client, owner)
+
+    assert "¿Qué es esto?" in html
+    assert 'id="smiles-ayuda"' in html
+    assert "Simplified Molecular Input Line Entry Specification" in html
+    # Ethanol vs dimethyl ether: same atoms, different connectivity.
+    assert "CH3-CH2-OH" in html
+    assert "CH3-O-CH3" in html
+
+
+def test_form_template_has_the_opt_out_button_wired_to_the_input(client, owner):
+    html = _crear_form_html(client, owner)
+
+    assert "No — mejor sin estructura" in html
+    assert 'id="smiles-opt-out"' in html
+    assert 'id="id_smiles"' in html
+
+
+def test_form_template_autopens_the_section_when_smiles_has_errors(client, owner):
+    _login(client, owner)
+
+    response = client.post(
+        reverse("compuesto_crear"),
+        data={
+            "nombre_compuesto": "Etanol",
+            "formula_compuesto": FORMULA_ETANOL,
+            "smiles": "XYZ",
+        },
+    )
+    html = response.content.decode()
+
+    assert response.status_code == 200
+    assert 'class="collapse show"' in html
+    assert 'aria-expanded="true"' in html
+    assert ERROR_SMILES in html

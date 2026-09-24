@@ -41,7 +41,58 @@
                             </div>
                         {% endif %}
                     </div>
-                    
+
+                    <div class="mb-3">
+                        <button class="btn btn-outline-success btn-sm" type="button"
+                                data-bs-toggle="collapse" data-bs-target="#estructura2d"
+                                aria-expanded="{% if compuesto_form.smiles.errors %}true{% else %}false{% endif %}"
+                                aria-controls="estructura2d">
+                            ➕ ¿Agregar estructura 2D?
+                        </button>
+
+                        <div class="collapse{% if compuesto_form.smiles.errors %} show{% endif %}" id="estructura2d">
+                            <div class="border rounded p-3 mt-2">
+                                <label for="{{ compuesto_form.smiles.id_for_label }}" class="form-label">
+                                    Estructura SMILES <span class="text-muted">(opcional)</span>
+                                </label>
+                                {{ compuesto_form.smiles }}
+
+                                <small class="form-text text-muted d-block">
+                                    Escriba la conectividad de los átomos en notación SMILES. Es opcional: si la deja vacía, el compuesto funciona igual que siempre.
+                                </small>
+
+                                {% if compuesto_form.smiles.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in compuesto_form.smiles.errors %}{{ error }}{% endfor %}
+                                    </div>
+                                {% endif %}
+
+                                <button class="btn btn-link btn-sm p-0 mt-2" type="button"
+                                        data-bs-toggle="collapse" data-bs-target="#smiles-ayuda"
+                                        aria-expanded="false" aria-controls="smiles-ayuda">
+                                    ¿Qué es esto?
+                                </button>
+                                <div class="collapse" id="smiles-ayuda">
+                                    <div class="alert alert-light border mt-2 mb-0 small">
+                                        <p class="mb-2">
+                                            <strong>SMILES</strong> (<em>Simplified Molecular Input Line Entry Specification</em>) es una notación de texto que describe la conectividad de los átomos de una molécula.
+                                        </p>
+                                        <p class="mb-2">
+                                            Por ejemplo, <code>CCO</code> es etanol (<code>CH3-CH2-OH</code>) y <code>COC</code> es éter dimetílico (<code>CH3-O-CH3</code>): tienen los mismos átomos y los mismos pesos, pero la conectividad es distinta.
+                                        </p>
+                                        <p class="mb-0">
+                                            Es opcional: sin ella el compuesto funciona igual que siempre.
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <button class="btn btn-outline-secondary btn-sm mt-2" type="button" id="smiles-opt-out">
+                                    No — mejor sin estructura
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
                     {{ compuesto_form.peso_molecular_compuesto }} 
 
                 </div>
@@ -90,4 +141,24 @@
 {% for a in relacion_form.fields.id_aplicacion.queryset %}"{{ a.pk }}": {{ a.id_industria_id }}{% if not forloop.last %},{% endif %}
 {% endfor %}}</script>
 <script src="{% static 'js/compuesto_cascade.js' %}"></script>
+<script>
+    // Opt-out of the optional 2D structure: collapse the section and clear the
+    // SMILES input so the compound is saved without a structure, as before.
+    (function () {
+        var optOut = document.getElementById('smiles-opt-out');
+        var section = document.getElementById('estructura2d');
+        var input = document.getElementById('id_smiles');
+        if (!optOut || !section || !input) {
+            return;
+        }
+        optOut.addEventListener('click', function () {
+            input.value = '';
+            if (window.bootstrap && window.bootstrap.Collapse) {
+                window.bootstrap.Collapse.getOrCreateInstance(section).hide();
+            } else {
+                section.classList.remove('show');
+            }
+        });
+    })();
+</script>
 {% endblock %}

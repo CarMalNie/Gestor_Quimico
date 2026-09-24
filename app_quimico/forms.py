@@ -150,7 +150,9 @@ class CompuestoQuimicoForm(forms.ModelForm):
         string. A non-empty value is parsed with pysmiles; malformed notation
         raises a user-facing Spanish error. Internal whitespace is rejected
         explicitly because pysmiles parses ``"C C"`` as two disconnected atoms
-        instead of failing.
+        instead of failing. pysmiles is also lenient with unknown tokens
+        (``"XYZ"`` parses into an empty graph without raising), so an atom-less
+        result is rejected as well.
         """
         value = self.cleaned_data.get('smiles')
         if value is None:
@@ -164,8 +166,13 @@ class CompuestoQuimicoForm(forms.ModelForm):
             raise forms.ValidationError(SMILES_ERROR)
 
         try:
-            read_smiles(value)
+            mol = read_smiles(value)
         except Exception:
+            raise forms.ValidationError(SMILES_ERROR)
+
+        # ``read_smiles`` returns a networkx Graph; an empty graph means the
+        # notation described no atoms at all, so it is not a usable structure.
+        if mol is None or len(mol.nodes) == 0:
             raise forms.ValidationError(SMILES_ERROR)
 
         return value
