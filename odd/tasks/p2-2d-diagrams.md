@@ -207,7 +207,17 @@ honesty), always-visible structure section, PubChem (Entrega 2).
         pre-implementation; 3 structural failures mid-cycle corrected
         (isolating written [H] via _h_sobre_heteroatomos).
       + Commit: parent owns (work-unit commit below).
-- [ ] T10 Final suite + checks after T9; PA deploy notes unchanged.
+- [x] T10 Final suite + checks after T9; PA deploy notes unchanged.
+      + Independent verify (gentle-ai-verify) 5/5 PASS: pytest -q 266
+        passed (291s); check + makemigrations clean; structural readback
+        (no explicitHydrogens experiment left, node --check OK, both
+        templates data-smiles=smiles_para_render + ?v=1 + guards intact,
+        utils helper with isotope='' + '[H]' guard + 4 fallbacks, models
+        method, form disclaimer, loud pin-contract test present); tree
+        fully clean; commits 4dd21c0 + 0061bc9 verified.
+      + Functional spot-check: 'O' -> data-smiles '[H]O[H]' + caption
+        'Enlace covalente'; '[Na+].[Cl-]' -> caption 'Estructura iónica'
+        with Na⁺ · Cl⁻ labels. PA deploy notes unchanged (T6).
 
 ## Notes
 
