@@ -65,10 +65,6 @@
                     <span class="badge bg-secondary p-2">Fórmula:</span> 
                     <span class="h4 text-primary ms-2">{{ compuesto.formula_compuesto }}</span>
                 </div>{% if compuesto.smiles %}
-                {# Estructura 2D opcional (p2-2d-diagrams T5). El diagrama SVG lo
-                   inyecta static/js/smiles_render.js sobre [data-smiles]; sin
-                   SMILES no se emite ni este bloque ni el atributo, así que la
-                   tarjeta queda idéntica a la de siempre. #}
                 <div class="estructura-2d mb-3" data-smiles="{{ compuesto.smiles }}">
                     <span class="estructura-2d__caption">Estructura 2D (SMILES)</span>
                 </div>{% endif %}
@@ -180,9 +176,6 @@
 {% endblock %}
 
 {% block extra_js %}
-{# SmilesDrawer solo se carga en las páginas que pueden mostrar una estructura
-   2D (lista + detalle), no en base.html. El renderer es no-op si no hay
-   [data-smiles] en la página. ?v=1 cache-bustea el asset nuevo. #}
 <script src="{% static 'vendor/smilesdrawer/smiles-drawer.min.js' %}"></script>
 <script src="{% static 'js/smiles_render.js' %}?v=1"></script>
 {% endblock %}

@@ -66,8 +66,6 @@
                     Usos y Aplicaciones
                 </button>
             </li>{% if compuesto.smiles %}
-            {# p2-2d-diagrams T5: la pestaña Estructura 2D solo existe cuando hay
-               SMILES; sin SMILES la fila de pestañas queda idéntica. #}
             <li class="nav-item" role="presentation">
                 <button class="nav-link" id="estructura2d-tab" data-bs-toggle="tab" data-bs-target="#estructura2d" type="button" role="tab">
                     Estructura 2D
@@ -163,10 +161,6 @@
 </div>
 {% endblock %}
 
-{# SmilesDrawer se carga solo cuando este compuesto tiene SMILES: sin
-   estructura la página queda sin scripts extra y el bloque rinde exactamente
-   lo mismo que el default de base.html. El renderer inyecta el SVG sobre
-   [data-smiles]. ?v=1 cache-bustea el asset nuevo. #}
 {% block extra_js %}
 {% if compuesto.smiles %}<script src="{% static 'vendor/smilesdrawer/smiles-drawer.min.js' %}"></script>
 <script src="{% static 'js/smiles_render.js' %}?v=1"></script>{% endif %}    {% endblock %}

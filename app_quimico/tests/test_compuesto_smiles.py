@@ -612,6 +612,40 @@ def test_detalle_with_smiles_renders_the_estructura_2d_tab(
     assert "smiles_render.js?v=1" in html
 
 
+# --- Regresión: comentarios multilinea {# #} ---
+#
+# Django {# #} comenta una sola línea: un bloque que abre y cierra en líneas
+# distintas no es un comentario y se renderiza como texto visible. Mismo
+# defecto que p1-periodic-table T7; los bloques se eliminan en vez de
+# convertirlos en comentarios de una línea.
+
+
+def test_lista_with_smiles_does_not_leak_multiline_template_comments(
+    client, owner, compuesto
+):
+    """La tarjeta con SMILES no debe mostrar el texto de los {# #} multilinea."""
+    html = _lista_html(client, owner)
+
+    assert "Estructura 2D opcional" not in html
+    assert "SmilesDrawer solo se carga" not in html
+    # El bloque real de estructura sigue renderizado (no se borró de más).
+    assert "Estructura 2D (SMILES)" in html
+    assert f'data-smiles="{SMILES_ETANOL}"' in html
+
+
+def test_detalle_with_smiles_does_not_leak_multiline_template_comments(
+    client, owner, compuesto
+):
+    """La página de detalle con SMILES no debe mostrar esos comentarios."""
+    html = _detalle_html(client, owner, compuesto)
+
+    assert "pestaña Estructura 2D solo existe" not in html
+    assert "SmilesDrawer se carga solo cuando" not in html
+    # La pestaña real de estructura sigue renderizada.
+    assert 'id="estructura2d-tab"' in html
+    assert f'data-smiles="{SMILES_ETANOL}"' in html
+
+
 # --- Assets y contrato del renderer (sin runner JS) ---
 
 
