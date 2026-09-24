@@ -123,9 +123,28 @@ honesty), always-visible structure section, PubChem (Entrega 2).
         (Django render HEAD vs worktree, card loop and detail content block
         without SMILES identical).
       + Commit: parent owns (work-unit commit below).
-- [ ] T6 Full pytest suite green + manage.py check + makemigrations --check
+- [x] T6 Full pytest suite green + manage.py check + makemigrations --check
       clean; PA deploy notes (pip install pysmiles + collectstatic +
       migrate); work-unit commits.
+      + Checks: full pytest -q -> 220 passed (observed by writer and by
+        independent verify, 296s); manage.py check clean;
+        makemigrations --check --dry-run: no changes detected.
+      + Independent verify (gentle-ai-verify): 15/15 PASS — suite, checks,
+        structural readback of all T2-T5 surfaces (models L147, migration
+        0010, forms clean_smiles guards L169-175, staged UX template,
+        guarded list/detail blocks, smiles_render.js node-check, vendor
+        bundle 183KB, base.html ?v=3), tree clean, 5 work-unit commits
+        present, requirements pinned.
+      + Work-unit commits: 8299943 (T2), d6976ad (T3), d92ac30 (T4),
+        6af6fc0 (docs T4), 08ab546 (T5).
+      + PA deploy notes (operator-owned steps, at deploy time):
+        1) git pull; 2) pip install -r requirements.txt inside the venv
+        (pysmiles + networkx NEW deps); 3) python manage.py migrate
+        (0010 adds smiles column); 4) collectstatic --noinput (REQUIRED:
+        new smiles_render.js + vendor smiles-drawer + styles.css edit);
+        5) reload web app.
+      + Local dev env: .venv already has pysmiles 2.1.0/networkx 3.7
+        installed by T3.
 
 ## Notes
 
