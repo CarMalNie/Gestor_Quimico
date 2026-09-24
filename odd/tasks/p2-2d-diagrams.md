@@ -146,6 +146,33 @@ honesty), always-visible structure section, PubChem (Entrega 2).
       + Local dev env: .venv already has pysmiles 2.1.0/networkx 3.7
         installed by T3.
 
+- [x] T7 Bond-type didactic caption (agreed B+ design, operator request:
+      NaCl case showed the card cannot say "ionic" alone for mixed
+      compounds like NaClO): helper classifies the parsed SMILES graph —
+      multiple fragments or nonzero net charge -> "Estructura iónica" with
+      the separated species listed (Na⁺ · Cl⁻, Na⁺ · ClO⁻ — the internal
+      covalent bonds are visible in the drawing itself, never re-stated);
+      single connected neutral fragment -> "Enlace covalente"; orientative
+      nature confessed in the "¿Qué es esto?" help (zwitterion caveat).
+      Caption REPLACED-AGREED: heading kept, classified caption added
+      below (parent task wording wins over doc's 'replaces' phrasing).
+      + Evidence: (worker T7 fills here).
+      + Evidence: app_quimico/models.py — clasificar_enlace_smiles() +
+        _etiqueta_especie/_superindice_carga (Hill order, implicit-H
+        aware, dedup, defensive None); KEY: pysmiles read_smiles joins
+        '.' fragments with zero-order bonds by default (networkx sees 1
+        component) -> zero_order_bonds=False required for the fragment
+        rule. compuesto_lista.html/compuesto_detalle.html caption line
+        below the heading (kept heading + added caption per parent task;
+        doc text reconciled by parent). compuesto_form.html orientative
+        paragraph in #smiles-ayuda. Tests +25 (classification units,
+        negatives never raise, dedupe, implicit-H labels, captions,
+        no-caption regressions, help copy).
+      + Checks: pytest -q 222 -> 247 passed; focused file 60 passed;
+        check + makemigrations clean. RED: 22 failed, 3 passed pre-fix.
+      + Commit: parent owns (work-unit commit below).
+- [ ] T8 Final suite + checks after T7; PA deploy notes unchanged.
+
 ## Notes
 
 - Create/Update views are TemplateView with manual two-form post() handling

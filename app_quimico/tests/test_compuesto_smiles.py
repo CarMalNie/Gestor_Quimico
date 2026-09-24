@@ -679,3 +679,175 @@ def test_base_stylesheet_cache_bust_was_bumped():
     source = BASE_TEMPLATE.read_text(encoding="utf-8")
 
     assert "css/styles.css' %}?v=3" in source
+
+
+# ========================================================================= #
+# T7 — Didactic bond-type caption (model classification + templates)
+# ========================================================================= #
+#
+# Agreed B+ design: the parsed SMILES graph decides the caption. Multiple
+# disconnected fragments ('.') or a nonzero net charge over the whole graph
+# mean the declared species is ionic, and every fragment is listed as a
+# species label with its net charge as a unicode superscript (Hill order:
+# C, H, then alphabetical). A single neutral fragment is covalent, even when
+# it carries internal formal charges (zwitterion) — the classification is
+# orientative and the form help confesses it. The internal covalent bonds of
+# a polyatomic ion stay visible in the drawing and are never restated here.
+
+CAPTION_IONICA_NACL = "Estructura iónica: Na⁺ · Cl⁻"
+CAPTION_IONICA_NACLO = "Estructura iónica: Na⁺ · ClO⁻"
+CAPTION_IONICA_CLO = "Estructura iónica: ClO⁻"
+CAPTION_COVALENTE = "Enlace covalente"
+
+
+def _clasificar(smiles):
+    """Classification is pure over ``self.smiles``: no DB row needed."""
+    return CompuestoQuimico(smiles=smiles).clasificar_enlace_smiles()
+
+
+# --- Clasificación (unidad) ---
+
+
+def test_ionic_multi_fragment_lists_each_species():
+    assert _clasificar("[Na+].[Cl-]") == CAPTION_IONICA_NACL
+
+
+def test_ionic_polyatomic_ion_lists_only_the_species_not_its_internal_bond():
+    # NaClO: Na⁺ plus the hypochlorite ion. The Cl-O bond belongs to the
+    # drawing; the caption only names the separated species.
+    assert _clasificar("[Na+].[O-]Cl") == CAPTION_IONICA_NACLO
+
+
+def test_ionic_repeated_species_are_deduplicated():
+    assert _clasificar("[Na+].[Cl-].[Na+]") == CAPTION_IONICA_NACL
+
+
+def test_ionic_single_fragment_with_nonzero_net_charge_is_still_ionic():
+    # Declared alone, a net -1 fragment honestly describes an ion.
+    assert _clasificar("[O-]Cl") == CAPTION_IONICA_CLO
+
+
+def test_ionic_species_label_includes_implicit_hydrogens():
+    # Hydroxide must read HO⁻ (Hill order, no carbon) instead of a misleading
+    # bare O⁻ (which would describe an oxide).
+    assert _clasificar("[Na+].[OH-]") == "Estructura iónica: Na⁺ · HO⁻"
+
+
+def test_covalent_single_neutral_fragment():
+    assert _clasificar("CCO") == CAPTION_COVALENTE
+
+
+def test_covalent_single_atom():
+    assert _clasificar("O") == CAPTION_COVALENTE
+
+
+def test_zwitterion_is_reported_as_covalent():
+    # Net charge 0 on one connected fragment: documented orientative rule.
+    assert _clasificar("[NH3+]CC(=O)[O-]") == CAPTION_COVALENTE
+
+
+@pytest.mark.parametrize("valor", [None, "", "   ", "\t\n "])
+def test_missing_smiles_has_no_caption(valor):
+    assert _clasificar(valor) is None
+
+
+@pytest.mark.parametrize("valor", ["XYZ", "C1CC", "(", "[Na+].[", "1"])
+def test_unparsable_smiles_has_no_caption_and_never_raises(valor):
+    assert _clasificar(valor) is None
+
+
+# --- Template: tarjeta de la lista ---
+
+
+@pytest.fixture
+def compuesto_ionico(owner, industria):
+    """A saved ionic compound (table salt) owned by ``owner``."""
+    return CompuestoQuimico.objects.create(
+        nombre_compuesto="Cloruro de sodio",
+        formula_compuesto="NaCl",
+        id_industria=industria,
+        usuario=owner,
+        smiles="[Na+].[Cl-]",
+    )
+
+
+def test_lista_shows_the_ionic_caption(client, owner, compuesto_ionico):
+    html = _lista_html(client, owner)
+
+    # La sección sigue identificándose y debajo aparece la clasificación.
+    assert "Estructura 2D (SMILES)" in html
+    assert CAPTION_IONICA_NACL in html
+
+
+def test_lista_shows_the_covalent_caption(client, owner, compuesto):
+    html = _lista_html(client, owner)
+
+    assert "Estructura 2D (SMILES)" in html
+    assert CAPTION_COVALENTE in html
+
+
+def test_lista_without_smiles_shows_no_bond_caption(
+    client, owner, compuesto_sin_smiles
+):
+    html = _lista_html(client, owner)
+
+    assert CAPTION_COVALENTE not in html
+    assert "Estructura iónica" not in html
+
+
+def test_lista_with_unparsable_smiles_shows_the_diagram_without_caption(
+    client, owner, industria
+):
+    # El form no permite guardar esto, pero una fila vieja/manual no debe
+    # romper el render: el diagrama sigue y la clasificación se omite.
+    CompuestoQuimico.objects.create(
+        nombre_compuesto="Roto",
+        formula_compuesto="CH4",
+        id_industria=industria,
+        usuario=owner,
+        smiles="C1CC",
+    )
+    html = _lista_html(client, owner)
+
+    assert 'data-smiles="C1CC"' in html
+    assert "Estructura 2D (SMILES)" in html
+    assert CAPTION_COVALENTE not in html
+    assert "Estructura iónica" not in html
+
+
+# --- Template: detalle ---
+
+
+def test_detalle_shows_the_ionic_caption(client, owner, compuesto_ionico):
+    html = _detalle_html(client, owner, compuesto_ionico)
+
+    assert "Estructura 2D (SMILES)" in html
+    assert CAPTION_IONICA_NACL in html
+
+
+def test_detalle_shows_the_covalent_caption(client, owner, compuesto):
+    html = _detalle_html(client, owner, compuesto)
+
+    assert "Estructura 2D (SMILES)" in html
+    assert CAPTION_COVALENTE in html
+
+
+def test_detalle_without_smiles_shows_no_bond_caption(
+    client, owner, compuesto_sin_smiles
+):
+    html = _detalle_html(client, owner, compuesto_sin_smiles)
+
+    assert CAPTION_COVALENTE not in html
+    assert "Estructura iónica" not in html
+
+
+# --- Template: ayuda orientativa del form ---
+
+
+def test_form_help_confesses_the_orientative_nature(client, owner):
+    html = _crear_form_html(client, owner)
+
+    assert "La clasificación del enlace es orientativa" in html
+    assert "zwitterion" in html.lower()
+    # La ayuda previa sigue presente (no se reemplazó copy existente).
+    assert "Es opcional: sin ella el compuesto funciona igual que siempre." in html

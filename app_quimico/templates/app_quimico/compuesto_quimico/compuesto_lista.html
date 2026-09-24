@@ -67,6 +67,7 @@
                 </div>{% if compuesto.smiles %}
                 <div class="estructura-2d mb-3" data-smiles="{{ compuesto.smiles }}">
                     <span class="estructura-2d__caption">Estructura 2D (SMILES)</span>
+                    {% if compuesto.clasificar_enlace_smiles %}<span class="estructura-2d__caption">{{ compuesto.clasificar_enlace_smiles }}</span>{% endif %}
                 </div>{% endif %}
                 
                 <h6 class="text-muted">Detalles Químicos:</h6>

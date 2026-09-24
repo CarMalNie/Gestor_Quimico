@@ -4,6 +4,9 @@ from django.core.validators import MinValueValidator, MaxValueValidator
 from decimal import Decimal
 from django.contrib.auth import get_user_model
 
+import networkx as nx
+from pysmiles import read_smiles
+
 # Obtener el modelo de usuario activo
 User = get_user_model() 
 
@@ -105,6 +108,58 @@ class ElementoQuimico(models.Model):
 
 
 # (3) Tabla compuestos_quimicos
+
+# ==================================================================== #
+# CLASIFICACIÓN DIDÁCTICA DEL ENLACE A PARTIR DEL SMILES (T7)
+# ==================================================================== #
+
+# Cargas pequeñas como superíndice unicode; una carga fuera de este rango
+# simplemente no se muestra (la clasificación es orientativa, no un dato
+# estructural).
+_CARGA_SUPERINDICE = {
+    1: '⁺', -1: '⁻',
+    2: '²⁺', -2: '²⁻',
+    3: '³⁺', -3: '³⁻',
+}
+
+
+def _superindice_carga(carga):
+    """Superíndice unicode para una carga entera pequeña (0 -> '')."""
+    if not carga:
+        return ''
+    return _CARGA_SUPERINDICE.get(carga, '')
+
+
+def _etiqueta_especie(mol, nodos):
+    """Resumen de una especie (un fragmento SMILES) en orden de Hill.
+
+    Orden de Hill: C primero, H después, y el resto alfabético. Los hidrógenos
+    implícitos que calcula pysmiles se cuentan para que un ion como OH⁻ no se
+    muestre como un O⁻ engañoso. La carga neta del fragmento va como superíndice.
+    """
+    conteos = {}
+    carga_neta = 0
+    for nodo in nodos:
+        datos = mol.nodes[nodo]
+        elemento = datos.get('element')
+        if elemento:
+            conteos[elemento] = conteos.get(elemento, 0) + 1
+        hidrogenos = datos.get('hcount') or 0
+        if hidrogenos:
+            conteos['H'] = conteos.get('H', 0) + hidrogenos
+        carga_neta += datos.get('charge') or 0
+
+    orden = sorted(
+        conteos,
+        key=lambda simbolo: (simbolo != 'C', simbolo != 'H', simbolo),
+    )
+    formula = ''.join(
+        simbolo + (str(conteos[simbolo]) if conteos[simbolo] > 1 else '')
+        for simbolo in orden
+    )
+    return formula + _superindice_carga(carga_neta)
+
+
 class CompuestoQuimico(models.Model):
     nombre_compuesto = models.CharField(
         max_length=255, 
@@ -163,6 +218,51 @@ class CompuestoQuimico(models.Model):
 
     def __str__(self):
         return f"{self.formula_compuesto} ({self.nombre_compuesto})"
+
+    def clasificar_enlace_smiles(self):
+        """Caption didáctico del tipo de enlace derivado del SMILES.
+
+        Devuelve ``None`` cuando no hay SMILES usable (vacío o no parseable),
+        de modo que la plantilla no renderiza nada y nunca levanta excepción.
+        Varios fragmentos desconectados (``.``) o una carga neta distinta de
+        cero describen una especie iónica, y cada fragmento se lista como una
+        etiqueta de especie deduplicada; un único fragmento neutro es
+        covalente (aunque tenga cargas internas: zwitterión). Los enlaces
+        covalentes internos de un ion poliatómico se ven en el propio dibujo y
+        no se repiten acá. Sin caché a propósito: son unas pocas moléculas
+        chicas por render, y así el modelo no acumula estado.
+        """
+        valor = (self.smiles or '').strip()
+        if not valor:
+            return None
+
+        try:
+            # ``zero_order_bonds=False`` mantiene los separadores '.' como
+            # desconexiones reales; con el default pysmiles los une con un
+            # enlace de orden 0 y todo fragmento parecería conectado.
+            mol = read_smiles(valor, zero_order_bonds=False)
+        except Exception:
+            return None
+
+        if mol is None or len(mol.nodes) == 0:
+            return None
+
+        fragmentos = sorted(nx.connected_components(mol), key=min)
+        carga_neta = sum(
+            (datos.get('charge') or 0) for _, datos in mol.nodes(data=True)
+        )
+
+        if len(fragmentos) > 1 or carga_neta != 0:
+            especies = []
+            for fragmento in fragmentos:
+                etiqueta = _etiqueta_especie(mol, fragmento)
+                if etiqueta and etiqueta not in especies:
+                    especies.append(etiqueta)
+            if not especies:
+                return None
+            return 'Estructura iónica: ' + ' · '.join(especies)
+
+        return 'Enlace covalente'
 
 
 # =========================== #
