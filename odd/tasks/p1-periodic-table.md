@@ -159,10 +159,12 @@ Entrega 2.
 - [x] T6 Full pytest suite green (175 passed) + independent verify PASS
       (all 6 checks, report in session log). Work-unit commits:
       7f97d87 (T2), 9c7dcad (T3), 92b9bbc (T4), b2c347c (T5).
-      Local main = 5 commits ahead of origin/main (incl. 5f895a5 gitignore).
-      Push + PA deploy (pull + reload + collectstatic — new CSS/JS assets
-      REQUIRE collectstatic) pending explicit operator request; then
-      production validation in both themes with operator.
+      Deployed: pushed to origin (0cafdad..e4d1410), CI green on e4d1410,
+      PA pull (fast-forward 3e30495..e4d1410) + collectstatic (3 static
+      files copied) + web app reload (2026-09-24). Production validation:
+      operator confirmed periodic table visual OK in production (both
+      view modes, legend, dark mode). MFA middleware validated locally
+      by operator; accepted for production. Feature Entrega 1 CLOSED.
 - [x] T7 Entrega 1 feedback fixes (operator review of the local render).
       (1) Visible-comment bug: the tabla branch carried a multi-line
       `{# ... #}` block ('Grilla periódica: 18 columnas x 7 períodos' +
@@ -238,10 +240,10 @@ Entrega 2.
 - Grid position is information: never remove cells from the grid, only
   dim/attenuate (didactic decision, obs #527).
 - Suite baseline: 160 passed (local = 5f895a5 + gitignore commit).
-- T7 observation (not fixed): the shared `<h1>` was shortened, but
-  `{% block title %}` (browser tab title) still reads 'Tabla Periódica:
-  Listado de Elementos'. Out of the delegated scope (the contract named the
-  `<h1>` only); flagged for the operator to decide.
+- T7: fixed in fc5b6f2 — both the shared <h1> AND {% block title %} read
+  'Tabla Periódica'; the browser-tab title pending-decision note below was
+  stale (verified: elemento_lista.html line 5).
+- (Stale note removed 2026-09-24: block title was already updated in T7.)
 - Work-unit commits, Conventional Commits; push/PA only on explicit
   operator request.
 - T4/T5 handoff from T3 (exact hooks the CSS/JS must target):
