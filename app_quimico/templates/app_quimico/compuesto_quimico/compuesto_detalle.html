@@ -148,7 +148,7 @@
 
             <div class="tab-pane fade" id="estructura2d" role="tabpanel">
                 <p class="lead text-muted small">Representación 2D generada a partir de la notación SMILES:</p>
-                <div class="estructura-2d" data-smiles="{{ compuesto.smiles }}">
+                <div class="estructura-2d" data-smiles="{{ compuesto.smiles_para_render }}">
                     <span class="estructura-2d__caption">Estructura 2D (SMILES)</span>
                     {% if compuesto.clasificar_enlace_smiles %}<span class="estructura-2d__caption">{{ compuesto.clasificar_enlace_smiles }}</span>{% endif %}
                 </div>

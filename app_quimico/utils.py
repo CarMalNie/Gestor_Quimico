@@ -1,5 +1,7 @@
 import re
 
+from pysmiles import read_smiles, write_smiles
+
 from app_quimico.models import ElementoQuimico
 
 # Brackets and their matching pairs.
@@ -38,6 +40,74 @@ def invalidar_cache_pesos():
     """
     global _cache_pesos
     _cache_pesos = None
+
+
+# Elementos cuyos hidrógenos implícitos se explicitan para el dibujo 2D.
+# Decisión de diseño (p2-2d-diagrams T9, opción C): solo O/N/S; el H unido a
+# carbono, fósforo o halógeno queda condensado.
+_ELEMENTOS_H_EXPLICITOS = frozenset({'O', 'N', 'S'})
+
+
+def expandir_heteroatomos(smiles):
+    """Devuelve ``smiles`` con los H implícitos de O/N/S como átomos ``[H]``.
+
+    Pensado para alimentar el render 2D (SmilesDrawer dibuja los ``[H]``
+    escritos), no para almacenar: el SMILES guardado y la clasificación de
+    enlace (T7) siguen usando el valor original.
+
+    Defensivo por contrato: ante entrada vacía/None, SMILES no parseable o
+    cualquier fallo de escritura devuelve la entrada tal cual, sin levantar,
+    de modo que el render nunca se rompe. Sin caché a propósito: son unas
+    pocas tarjetas chicas por página.
+
+    Nota de implementación: ``pysmiles.write_smiles`` NO puede emitir ``[H]``
+    por sí solo (``write_smiles_component`` llama a
+    ``remove_explicit_hydrogens``, que pliega los H simples en ``hcount``).
+    Por eso los nodos H agregados llevan ``isotope=''``: con la clave
+    ``isotope`` presente, la condición de borrado de
+    ``remove_explicit_hydrogens`` no se cumple y el H sobrevive hasta
+    ``format_atom``, que lo escribe como ``[H]``. Esto depende de un detalle
+    interno de pysmiles 2.1.0 (pineada en requirements.txt); la guarda de
+    abajo (si falta ``[H]``, se devuelve el original) y el test de contrato
+    lo cubren ante una actualización.
+    """
+    if not smiles:
+        return smiles
+
+    try:
+        mol = read_smiles(smiles, zero_order_bonds=False)
+    except Exception:
+        return smiles
+
+    if mol is None or len(mol.nodes) == 0:
+        return smiles
+
+    try:
+        siguiente = max(mol) + 1
+        agregados = 0
+        for idx in list(mol.nodes):
+            nodo = mol.nodes[idx]
+            if nodo.get('element') not in _ELEMENTOS_H_EXPLICITOS:
+                continue
+            cantidad = nodo.get('hcount', 0) or 0
+            if cantidad <= 0:
+                continue
+            for _ in range(cantidad):
+                mol.add_node(siguiente, element='H', charge=0, hcount=0, isotope='')
+                mol.add_edge(idx, siguiente, order=1)
+                siguiente += 1
+                agregados += 1
+            # Los H ya son átomos: el hcount implícito debe quedar en cero
+            # para que el writer no los cuente dos veces.
+            nodo['hcount'] = 0
+        resultado = write_smiles(mol)
+    except Exception:
+        return smiles
+
+    if agregados and '[H]' not in resultado:
+        return smiles
+
+    return resultado
 
 
 class CalculadoraPM:

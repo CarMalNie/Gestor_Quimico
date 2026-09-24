@@ -18,6 +18,7 @@ from pathlib import Path
 
 import pytest
 from axes.models import AccessAttempt
+from pysmiles import read_smiles
 from django.contrib.auth.models import User
 from django.core.management import call_command
 from django.db import connection
@@ -33,12 +34,16 @@ from app_quimico.models import (
     Industria,
 )
 from app_quimico.services import calcular_pm, registrar_elementos_compuesto
+from app_quimico.utils import expandir_heteroatomos
 
 pytestmark = pytest.mark.django_db
 
 MIGRATION_NAME = "0010_compuestoquimico_smiles"
 MIGRATIONS_DIR = Path(__file__).resolve().parents[1] / "migrations"
 SMILES_ETANOL = "CCO"
+# T9: el SMILES que alimenta el dibujo ya no es el almacenado, sino el
+# expandido (los H de O/N/S pasan a ser [H] explícitos).
+EXPANDIDO_ETANOL = "[H]OCC"
 
 
 @pytest.fixture
@@ -574,7 +579,7 @@ def test_lista_with_smiles_renders_the_estructura_2d_block(
     html = _lista_html(client, owner)
 
     assert "estructura-2d" in html
-    assert f'data-smiles="{SMILES_ETANOL}"' in html
+    assert f'data-smiles="{EXPANDIDO_ETANOL}"' in html
     assert "Estructura 2D (SMILES)" in html
     # Scripts self-hosted con cache-bust, solo en esta página.
     assert "vendor/smilesdrawer/smiles-drawer.min.js" in html
@@ -606,7 +611,7 @@ def test_detalle_with_smiles_renders_the_estructura_2d_tab(
     assert 'id="estructura2d-tab"' in html
     assert 'data-bs-target="#estructura2d"' in html
     assert 'id="estructura2d"' in html
-    assert f'data-smiles="{SMILES_ETANOL}"' in html
+    assert f'data-smiles="{EXPANDIDO_ETANOL}"' in html
     assert "Estructura 2D (SMILES)" in html
     assert "vendor/smilesdrawer/smiles-drawer.min.js" in html
     assert "smiles_render.js?v=1" in html
@@ -630,7 +635,7 @@ def test_lista_with_smiles_does_not_leak_multiline_template_comments(
     assert "SmilesDrawer solo se carga" not in html
     # El bloque real de estructura sigue renderizado (no se borró de más).
     assert "Estructura 2D (SMILES)" in html
-    assert f'data-smiles="{SMILES_ETANOL}"' in html
+    assert f'data-smiles="{EXPANDIDO_ETANOL}"' in html
 
 
 def test_detalle_with_smiles_does_not_leak_multiline_template_comments(
@@ -643,7 +648,7 @@ def test_detalle_with_smiles_does_not_leak_multiline_template_comments(
     assert "SmilesDrawer se carga solo cuando" not in html
     # La pestaña real de estructura sigue renderizada.
     assert 'id="estructura2d-tab"' in html
-    assert f'data-smiles="{SMILES_ETANOL}"' in html
+    assert f'data-smiles="{EXPANDIDO_ETANOL}"' in html
 
 
 # --- Assets y contrato del renderer (sin runner JS) ---
@@ -851,3 +856,185 @@ def test_form_help_confesses_the_orientative_nature(client, owner):
     assert "zwitterion" in html.lower()
     # La ayuda previa sigue presente (no se reemplazó copy existente).
     assert "Es opcional: sin ella el compuesto funciona igual que siempre." in html
+
+
+# ========================================================================= #
+# T9 — Expansión selectiva de H de O/N/S a [H] para el dibujo 2D
+# ========================================================================= #
+#
+# Agreed option C: server-side, only the implicit hydrogens attached to
+# O/N/S become explicit ``[H]`` atoms so the drawer shows H-O-H for water
+# while C-bound H stays condensed. The stored SMILES and the T7 caption logic
+# are untouched; only ``data-smiles`` is fed the expanded string. pysmiles
+# cannot emit ``[H]`` through its public writer (``write_smiles`` strips them
+# via ``remove_explicit_hydrogens``), so the helper tags the added H nodes
+# with ``isotope=''`` and a post-write guard falls back to the original
+# SMILES whenever ``[H]`` is missing.
+
+SMILES_AGUA = "O"
+EXPANDIDO_AGUA = "[H]O[H]"
+SMILES_GLUCOSA = "OCC1OC(O)C(O)C(O)C1O"
+
+
+def _grafo_explicito(smiles):
+    """Re-parse keeping explicit ``[H]`` as real nodes for structural asserts."""
+    return read_smiles(smiles, zero_order_bonds=False, explicit_hydrogen=True)
+
+
+def _nodos_h(grafo):
+    return [n for n, d in grafo.nodes(data=True) if d.get('element') == 'H']
+
+
+def _h_sobre_heteroatomos(grafo):
+    """H (en el re-parse) unidos a un O/N/S.
+
+    Los H escritos explícitamente cuelgan de un heteroátomo (al que la
+    expansión le dejó ``hcount`` en cero, así que el re-parse no agrega H
+    implícito ahí); los H implícitos de carbono sí aparecen como nodos con
+    ``explicit_hydrogen=True``, pero cuelgan de un C y quedan fuera.
+    """
+    hetero = {
+        n for n, d in grafo.nodes(data=True)
+        if d.get('element') in {'O', 'N', 'S'}
+    }
+    return [h for h in _nodos_h(grafo) if next(iter(grafo[h])) in hetero]
+
+
+# --- Unidad: expansión ---
+
+
+def test_expandir_heteroatomos_expande_el_agua_a_dos_h():
+    resultado = expandir_heteroatomos(SMILES_AGUA)
+    grafo = _grafo_explicito(resultado)
+
+    assert resultado.count('[H]') == 2
+    assert grafo.number_of_nodes() == 3
+    oxigenos = [n for n, d in grafo.nodes(data=True) if d.get('element') == 'O']
+    assert len(oxigenos) == 1
+    hidrogenos = _nodos_h(grafo)
+    assert len(hidrogenos) == 2
+    enlaces_oh = list(grafo.edges(oxigenos[0]))
+    assert len(enlaces_oh) == 2
+    assert all(grafo.edges[e].get('order') == 1 for e in enlaces_oh)
+
+
+def test_expandir_heteroatomos_expande_los_cinco_oh_de_la_glucosa():
+    resultado = expandir_heteroatomos(SMILES_GLUCOSA)
+    grafo = _grafo_explicito(resultado)
+
+    # 5 OH (el O del éter de anillo no aporta H); el enunciado "6" era off-by-one.
+    assert resultado.count('[H]') == 5
+    # Todos los [H] escritos cuelgan de un O/N/S; ninguno de un carbono.
+    assert len(_h_sobre_heteroatomos(grafo)) == 5
+    carbonos = [n for n, d in grafo.nodes(data=True) if d.get('element') == 'C']
+    assert len(carbonos) == 6
+
+
+def test_expandir_heteroatomos_no_agrega_h_al_hipoclorito_con_carga():
+    # O⁻: la carga consume el electrón que si no sería un H.
+    resultado = expandir_heteroatomos("[Na+].[O-]Cl")
+    grafo = _grafo_explicito(resultado)
+
+    assert _nodos_h(grafo) == []
+    oxigenos = [n for n, d in grafo.nodes(data=True) if d.get('element') == 'O']
+    assert len(oxigenos) == 1
+    assert grafo.nodes[oxigenos[0]].get('charge') == -1
+    elementos = {d.get('element') for _, d in grafo.nodes(data=True)}
+    assert {'Na', 'O', 'Cl'} <= elementos
+
+
+def test_expandir_heteroatomos_expande_el_oh_del_etanol_y_deja_los_c_condensados():
+    resultado = expandir_heteroatomos(SMILES_ETANOL)
+    grafo = _grafo_explicito(resultado)
+
+    assert resultado.count('[H]') == 1
+    assert len(_h_sobre_heteroatomos(grafo)) == 1
+    carbonos = [n for n, d in grafo.nodes(data=True) if d.get('element') == 'C']
+    assert len(carbonos) == 2
+
+
+def test_expandir_heteroatomos_no_toca_los_hidrogenos_del_carbono():
+    resultado = expandir_heteroatomos("c1ccccc1")
+    grafo = _grafo_explicito(resultado)
+
+    assert resultado.count('[H]') == 0
+    assert sum(1 for _, d in grafo.nodes(data=True) if d.get('element') == 'C') == 6
+
+
+def test_expandir_heteroatomos_no_expande_el_n_de_valencia_completa():
+    # N con dos dobles enlaces (orden 4 > valencia 3): no admite H.
+    resultado = expandir_heteroatomos("O=N(=O)O")
+    grafo = _grafo_explicito(resultado)
+
+    assert len(_nodos_h(grafo)) == 1  # solo el O terminal con H
+    n_nodo = [n for n, d in grafo.nodes(data=True) if d.get('element') == 'N'][0]
+    assert all(grafo.nodes[v].get('element') != 'H' for v in grafo[n_nodo])
+
+
+@pytest.mark.parametrize("valor", [None, "", "   ", "XYZ", "C1CC", "(", "[Na+].["])
+def test_expandir_heteroatomos_devuelve_la_entrada_sin_usar(valor):
+    # Defensivo: entrada vacía/None o no parseable se devuelve tal cual,
+    # nunca levanta y nunca devuelve None inesperado.
+    assert expandir_heteroatomos(valor) == valor
+
+
+def test_contrato_de_expansion_emite_h_explicito_o_falla_ruidosamente():
+    """Guarda anti-upgrade de pysmiles.
+
+    La expansión depende de que ``remove_explicit_hydrogens`` de pysmiles
+    2.1.0 no borre los H marcados con ``isotope=''``. Si una actualización
+    cambia esa condición, la guarda interna devuelve el SMILES original y
+    este test falla de forma visible en lugar de degradar en silencio.
+    """
+    assert "[H]" in expandir_heteroatomos(SMILES_AGUA)
+
+
+# --- Modelo: smiles_para_render ---
+
+
+def test_smiles_para_render_expande_los_heteroatomos():
+    compuesto = CompuestoQuimico(smiles=SMILES_AGUA)
+
+    assert "[H]" in compuesto.smiles_para_render()
+
+
+def test_smiles_para_render_sin_smiles_devuelve_cadena_vacia():
+    assert CompuestoQuimico(smiles=None).smiles_para_render() == ""
+    assert CompuestoQuimico(smiles="").smiles_para_render() == ""
+
+
+def test_smiles_para_render_devuelve_el_original_si_no_es_parseable():
+    # Una fila vieja/manual no debe romper el render.
+    compuesto = CompuestoQuimico(smiles="C1CC")
+
+    assert compuesto.smiles_para_render() == "C1CC"
+
+
+# --- Plantillas: data-smiles expandido + caption T7 intacto ---
+
+
+@pytest.fixture
+def compuesto_agua(owner, industria):
+    """Agua: un único heteroátomo con hidrógenos implícitos."""
+    return CompuestoQuimico.objects.create(
+        nombre_compuesto="Agua",
+        formula_compuesto="H2O",
+        id_industria=industria,
+        usuario=owner,
+        smiles=SMILES_AGUA,
+    )
+
+
+def test_lista_renderiza_el_agua_con_h_explicitos(client, owner, compuesto_agua):
+    html = _lista_html(client, owner)
+
+    assert f'data-smiles="{EXPANDIDO_AGUA}"' in html
+    # La clasificación T7 sigue leyendo el SMILES original: agua = covalente.
+    assert CAPTION_COVALENTE in html
+
+
+def test_detalle_renderiza_el_agua_con_h_explicitos(client, owner, compuesto_agua):
+    html = _detalle_html(client, owner, compuesto_agua)
+
+    assert f'data-smiles="{EXPANDIDO_AGUA}"' in html
+    assert CAPTION_COVALENTE in html

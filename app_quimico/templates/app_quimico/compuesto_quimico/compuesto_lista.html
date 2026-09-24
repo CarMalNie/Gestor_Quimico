@@ -65,7 +65,7 @@
                     <span class="badge bg-secondary p-2">Fórmula:</span> 
                     <span class="h4 text-primary ms-2">{{ compuesto.formula_compuesto }}</span>
                 </div>{% if compuesto.smiles %}
-                <div class="estructura-2d mb-3" data-smiles="{{ compuesto.smiles }}">
+                <div class="estructura-2d mb-3" data-smiles="{{ compuesto.smiles_para_render }}">
                     <span class="estructura-2d__caption">Estructura 2D (SMILES)</span>
                     {% if compuesto.clasificar_enlace_smiles %}<span class="estructura-2d__caption">{{ compuesto.clasificar_enlace_smiles }}</span>{% endif %}
                 </div>{% endif %}

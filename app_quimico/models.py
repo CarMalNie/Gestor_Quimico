@@ -264,6 +264,22 @@ class CompuestoQuimico(models.Model):
 
         return 'Enlace covalente'
 
+    def smiles_para_render(self):
+        """SMILES para el dibujo 2D, con los H de O/N/S explicitados.
+
+        Solo alimenta ``data-smiles`` en las plantillas. El SMILES
+        almacenado y ``clasificar_enlace_smiles`` no se tocan: la
+        clasificación didáctica sigue leyendo el valor original. Sin SMILES
+        devuelve cadena vacía (la plantilla no renderiza nada).
+        """
+        if not self.smiles:
+            return ''
+        # Import local: ``app_quimico.utils`` importa este módulo a nivel
+        # superior, así que un import de módulo acá sería circular.
+        from app_quimico.utils import expandir_heteroatomos
+
+        return expandir_heteroatomos(self.smiles)
+
 
 # =========================== #
 # TABLAS DEPENDIENTES / HIJAS #

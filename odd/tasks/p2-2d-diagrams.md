@@ -171,7 +171,43 @@ honesty), always-visible structure section, PubChem (Entrega 2).
       + Checks: pytest -q 222 -> 247 passed; focused file 60 passed;
         check + makemigrations clean. RED: 22 failed, 3 passed pre-fix.
       + Commit: parent owns (work-unit commit below).
-- [ ] T8 Final suite + checks after T7; PA deploy notes unchanged.
+- [x] T8 Final suite + checks after T7; PA deploy notes unchanged.
+- [x] T9 Heteroatom-H expansion (agreed option C, didactic): server-side
+      helper expands implicit hydrogens attached ONLY to O/N/S into explicit
+      [H] atoms (pysmiles graph -> add H vertices per default valence minus
+      bond order minus |charge| -> write_smiles), so water 'O' renders
+      H-O-H and glucose OH renders H-O-C while C-bonded H stays condensed.
+      data-smiles in both templates uses the expanded SMILES (stored SMILES
+      and T7 caption logic unchanged); defensive fallback to original
+      SMILES on any failure. Revert the T-experiment explicitHydrogens
+      toggle in smiles_render.js (drawer default already draws written
+      [H] atoms). Tests: expansion units (water 2 H, glucose 5 OH — ring
+      ether O gets 0 H, hypochlorite O- gets 0 H, carbon H untouched),
+      template wiring, failure fallback.
+      + Blocked-then-unblocked: pysmiles write_smiles strips [H] via
+        remove_explicit_hydrogens -> parent chose strategy A (H nodes
+        tagged isotope='' skip the strip; post-write '[H]' guard falls
+        back to original; pinned-dep contract test fails loudly on upgrade).
+      + Evidence: static/js/smiles_render.js reverted byte-identical to
+        committed; templates ?v=1 restored.
+      + Evidence: app_quimico/utils.py L48-107 (_ELEMENTOS_H_EXPLICITOS,
+        expandir_heteroatomos, isotope='' marker L96, '[H]' guard L107,
+        4 fallback paths); app_quimico/models.py L267-281 smiles_para_render
+        (local import anti-circularity, '' when no smiles, original on
+        unparsable); compuesto_lista.html L68 + compuesto_detalle.html L151
+        data-smiles="{{ compuesto.smiles_para_render }}"; T7 caption and
+        {% if compuesto.smiles %} untouched.
+      + Evidence: test_compuesto_smiles.py +19 tests (L862+): water 2 H,
+        glucose 5 H + 0 H on carbons, hypochlorite unchanged, ethanol
+        [H]OCC, benzene 0, nitric-acid N 0 H, negatives never raise,
+        template wiring, loud upgrade-contract test; 4 CCO assertions
+        updated to expanded form.
+      + Checks: pytest -q 247 -> 266 passed; focused file 79 passed;
+        check + makemigrations clean; node --check OK. RED: ImportError
+        pre-implementation; 3 structural failures mid-cycle corrected
+        (isolating written [H] via _h_sobre_heteroatomos).
+      + Commit: parent owns (work-unit commit below).
+- [ ] T10 Final suite + checks after T9; PA deploy notes unchanged.
 
 ## Notes
 
