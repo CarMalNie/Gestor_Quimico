@@ -93,8 +93,17 @@
   byte-idénticos). Commit de T8: 586e707.
 - [x] T9 — cierre: suite verde, commits c466223 / 3c13863 / edf3007 (T1-T6) + 586e707 (T8),
   árbol limpio.
+- [x] T10 — feedback del operador tras revisión local: (a) select "Por Categoría" de tarjetas
+  ahora ofrece las familias ("Metales (todos: 92)" / "No metales (todos: 20)", sentinels
+  familia_metales/familia_no_metales, server-side __in=FAMILIA_*, else __exact); (b) leyenda de
+  tabla: chips de familia renombrados "Todos los metales"/"Todos los no metales" con estilo
+  propio (.pt-chip-familia dashed+uppercase, paleta por tema). Causa raíz del "duplicado":
+  slugify colisionaba el slug de familia "No metales" con el fino "No Metales" (misma clase
+  de color). Suite 292 passed (+9); verificación independiente 6/6 PASS.
 
 ## Commits de work-unit
+
+- (T10) feat(elementos): familias en el filtro de tarjetas + labels de familia desduplicados
 
 - c466223 feat(elementos): reclasificar Po + convenciones + nota superpesados + migración 0011
 - 3c13863 feat(elementos): leyenda con filtros de familia y chips finos (views/template/JS/tests)
