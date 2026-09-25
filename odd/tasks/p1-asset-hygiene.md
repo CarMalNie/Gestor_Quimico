@@ -1,7 +1,7 @@
 # Feature: p1-asset-hygiene — CSS muerto + cache-busting de compuesto_cascade.js
 
-Status: IN PROGRESS (backlog punto 1 de la sesión 2026-09-25, post-cierre
-p1-categoria-filtros + p2-2d-diagrams Entrega 1)
+Status: DONE (commit e2e0cba en main local; push/deploy solo con pedido
+explícito del operador)
 
 ## Scope
 
@@ -24,19 +24,31 @@ touch -> behavior.
 
 ## Tasks
 
-- [ ] T1 Limpieza CSS muerto + comentario de sección 2 alineado con realidad
+- [x] T1 Limpieza CSS muerto + comentario de sección 2 alineado con realidad
       (familias = solo chips). Mantener paleta --pt-c/t-metales y
       --pt-c/t-no-metales (los chips de familia la reusan).
-- [ ] T2 Cache-busting compuesto_cascade.js: `?v=1` en compuesto_form.html.
-- [ ] T3 Tests: (a) afirmar que la plantilla tabla no emite celdas con slug
-      de familia / que el CSS ya no tiene `.pt-celda-metales` ni
-      `.pt-celda-no-metales` muertos SOLO si se pueden formular de forma
-      estable — preferir test directo sobre el CSS (selectores muertos fuera)
-      + test de chips de familia presentes; (b) test de cache-busting de
-      compuesto_cascade.js análogo al de smiles_render.js (?v=1 en form).
-- [ ] T4 Suite completa verde + work-unit commit (Conventional Commit).
-      Push/deploy: solo con pedido explícito del operador.
+- [x] T2 Cache-busting compuesto_cascade.js: `?v=1` en compuesto_form.html.
+- [x] T3 Tests: (a) CSS sin selectores muertos (match acotado por límite de
+      token: '.pt-celda-metales' no es 'pt-celda-metales-de-transicion', sobre
+      CSS sin comentarios) + chips de familia presentes + guard renderizado
+      (ninguna celda con slug de familia, regex con lookahead);
+      (b) test "compuesto_cascade.js?v=1" en compuesto_form.html.
+- [x] T4 Suite completa verde (300 passed, era 297) + manage.py check limpio
+      + work-unit commit e2e0cba (chore). Push/deploy: solo con pedido
+      explícito del operador.
 
 ## Evidence
 
-(completa a medida que se ejecutan)
+- periodic_table.css: reglas duales .pt-celda+N.pt-chip de familia
+  reducidas a .pt-chip (T1); comentario sección 2 explica por qué no hay
+  celdas de familia; comentario de chips de familia actualizado.
+- compuesto_form.html L146: script ?v=1.
+- app_quimico/tests/test_elemento_lista_vistas.py: +2 tests
+  (test_css_no_conserva_celdas_de_familia,
+  test_ningun_celda_lleva_slug_de_familia).
+- app_quimico/tests/test_compuesto_smiles.py: +1 test
+  (test_form_template_cache_busts_the_cascade_script).
+- FIXED durante T3: substring matches falsos ('pt-celda-metales' es
+  substring de 'pt-celda-metales-de-transicion' en CSS y HTML renderizado)
+  → regex con límite de token (?![\w-]); comentario del CSS mención
+  literal del selector muerto → evaluar CSS sin comentarios.
