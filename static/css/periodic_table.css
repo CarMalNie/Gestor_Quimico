@@ -82,12 +82,16 @@
    La misma clase temática sirve para la celda de la grilla y para su chip
    de leyenda, así el color siempre coincide. Si faltan las variables de tema
    se cae a las variables de Bootstrap (modo de color activo).
+
+   Los chips de familia "Metales" / "No metales" NO tienen celda propia:
+   la familia agrupa varias categorías finas y nunca se dibuja en la grilla,
+   por eso no existen .pt-celda-metales ni .pt-celda-no-metales.
    ========================================================================== */
-.pt-celda-metales, .pt-chip-metales {
+.pt-chip-metales {
     --pt-bg: var(--pt-c-metales, var(--bs-secondary-bg));
     --pt-fg: var(--pt-t-metales, var(--bs-body-color));
 }
-.pt-celda-no-metales, .pt-chip-no-metales {
+.pt-chip-no-metales {
     --pt-bg: var(--pt-c-no-metales, var(--bs-secondary-bg));
     --pt-fg: var(--pt-t-no-metales, var(--bs-body-color));
 }
@@ -132,12 +136,10 @@
     --pt-fg: var(--pt-t-gases-nobles, var(--bs-body-color));
 }
 
-/* Chips de familia ("Metales" / "No metales"): la familia no es una celda de
-   la grilla, asi que solo mapea chips. Reusa la paleta de su categoría
+/* Chips de familia: ya mapeados arriba, reusan la paleta de su categoría
    representativa (--pt-c-metales / --pt-c-no-metales) para conservar la
-   relación de color con la tabla. Las reglas `.pt-chip-metales` y
-   `.pt-chip-no-metales` de arriba ya cumplen ese mapeo; la categoría fina
-   renombrada usa `.pt-chip-otros-no-metales` (paleta propia). */
+   relación de color con la tabla; la categoría fina 'Otros No Metales'
+   usa su propia paleta (.pt-chip-otros-no-metales) y no colisiona. */
 
 /* ==========================================================================
    3. GRILLA

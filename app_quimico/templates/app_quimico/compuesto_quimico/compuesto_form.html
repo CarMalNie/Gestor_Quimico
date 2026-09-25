@@ -143,7 +143,7 @@
 <script type="application/json" id="compuesto-cascade-data">{
 {% for a in relacion_form.fields.id_aplicacion.queryset %}"{{ a.pk }}": {{ a.id_industria_id }}{% if not forloop.last %},{% endif %}
 {% endfor %}}</script>
-<script src="{% static 'js/compuesto_cascade.js' %}"></script>
+<script src="{% static 'js/compuesto_cascade.js' %}?v=1"></script>
 <script>
     // Opt-out of the optional 2D structure: collapse the section and clear the
     // SMILES input so the compound is saved without a structure, as before.

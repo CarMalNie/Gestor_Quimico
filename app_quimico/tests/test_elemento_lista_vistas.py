@@ -450,3 +450,33 @@ def test_css_no_conserva_clases_de_agrupaciones_inventadas():
     assert "pt-chip-todos-los-metales" not in css
     assert "pt-chip-todos-los-no-metales" not in css
     assert "Todos los" not in css
+
+
+def test_css_no_conserva_celdas_de_familia():
+    """Las familias solo son chips: nunca se dibujan como celdas de la grilla.
+
+    '.pt-celda-metales' y '.pt-celda-no-metales' quedaron muertos al poner los
+    chips de familia (views.py solo emite chips para ellas) y se removieron.
+    """
+    css_sin_comentarios = re.sub(
+        r"/\*.*?\*/", "", PERIODIC_TABLE_CSS.read_text(encoding="utf-8"), flags=re.S
+    )
+
+    # Límite de token: '.pt-celda-metales' no es 'pt-celda-metales-de-transicion'.
+    for muerto in ("pt-celda-metales", "pt-celda-no-metales"):
+        assert not re.search(rf"\.{re.escape(muerto)}(?![\w-])", css_sin_comentarios)
+    # Los chips de familia sí siguen estilizados (reusan la paleta fina).
+    assert ".pt-chip-metales" in css_sin_comentarios
+    assert ".pt-chip-no-metales" in css_sin_comentarios
+
+
+def test_ningun_celda_lleva_slug_de_familia(client, elementos_cargados):
+    """La grilla renderizada nunca emite clases pt-celda-<familia>."""
+    response = client.get(reverse("elemento_lista"), {"vista": "tabla"})
+    html = response.content.decode()
+
+    slugs_familia = {slugify(f) for f in ("Metales", "No metales")}
+    for slug in slugs_familia:
+        # Límite de token: 'pt-celda-metales' no es substring de
+        # 'pt-celda-metales-de-transicion' ni de la clase de otros slugs.
+        assert not re.search(rf"pt-celda-{re.escape(slug)}(?![\w-])", html)

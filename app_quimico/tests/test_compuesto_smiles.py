@@ -587,6 +587,12 @@ def test_lista_with_smiles_renders_the_estructura_2d_block(
     assert "?v=2" in html
 
 
+def test_form_template_cache_busts_the_cascade_script(client, owner):
+    """compuesto_cascade.js se sirve con version cache-bust en el form."""
+    html = _crear_form_html(client, owner)
+
+    assert "compuesto_cascade.js?v=1" in html
+
 # --- Detalle del compuesto ---
 
 
