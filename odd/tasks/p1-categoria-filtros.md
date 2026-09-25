@@ -93,7 +93,11 @@
   byte-idénticos). Commit de T8: 586e707.
 - [x] T9 — cierre: suite verde, commits c466223 / 3c13863 / edf3007 (T1-T6) + 586e707 (T8),
   árbol limpio.
-- [ ] T11 — el operador corrigió el enfoque: NO inventar agrupaciones ("Todos los..."); usar
+- [x] T11 — verificación independiente 7/7 PASS (suite 297 passed): diffs exactos (solo los 7
+  elementos renombrados), labels sin 'Todos los', CSS ?v=4 con slugs estilizados en ambos temas,
+  filtro de familias intacto (92/20/exacto), seed idempotente confirma la adopción.
+  Commits: f38fd26 (docs), b96fd0f (feat).
+- [ ] (historia) El operador corrigió el enfoque: NO inventar agrupaciones ("Todos los..."); usar
   solo terminología bibliográfica. Fix: renombrar la categoría fina 'No Metales' (7 elementos:
   H, C, N, O, P, S, Se) a **'Otros No Metales'** (su nombre estándar en la bibliografía; así
   estaba en el modelo original de la cátedra). Chips de familia vuelven a llamarse 'Metales' y
