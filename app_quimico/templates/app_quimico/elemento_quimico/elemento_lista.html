@@ -131,7 +131,7 @@
                 <div class="card-body text-center">
                     <h1 class="card-title display-4 fw-bold text-primary">{{ elemento.simbolo_elemento }}</h1>
                     <h5 class="mt-2">{{ elemento.nombre_elemento }}</h5>
-                    <p class="mb-0">Peso Atómico: <strong>{{ elemento.peso_atomico_elemento|floatformat:4 }} g/mol</strong></p>
+                    <p class="mb-0">Peso Atómico: <strong>{{ elemento.peso_atomico_para_mostrar }}{% if not elemento.peso_atomico_es_masico %} g/mol{% endif %}</strong></p>
                 </div>
 
                 <div class="card-footer bg-body d-flex justify-content-between align-items-center">

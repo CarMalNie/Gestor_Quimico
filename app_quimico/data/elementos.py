@@ -46,7 +46,10 @@ ELEMENTOS_IUPAC_2021 = [
     (37, "Rb", "Rubidio", "85.4680"),
     (38, "Sr", "Estroncio", "87.6200"),
     (39, "Y", "Itrio", "88.9060"),
-    (40, "Zr", "Circonio", "91.2240"),
+    # CIAAW 2024 revised Zr to 91.222 (rounded here to 5 significant digits).
+    # Gd (157.25) and Lu (174.97) stay unchanged at this precision: CIAAW 2024
+    # gives 157.249 and 174.9669, which round to the same 5-digit values.
+    (40, "Zr", "Circonio", "91.2220"),
     (41, "Nb", "Niobio", "92.9060"),
     (42, "Mo", "Molibdeno", "95.9500"),
     (43, "Tc", "Tecnecio", "98.0000"),

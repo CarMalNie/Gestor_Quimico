@@ -35,6 +35,16 @@ CATEGORIA_CHOICES = [
     ('Gases Nobles', 'Gases Nobles'),
 ]
 
+# CIAAW does not define a standard atomic weight for these 34 elements: the
+# tabulated value is the mass number of a representative isotope and is shown
+# in brackets (CIAAW, "Standard atomic weights", 2021/2024).
+ELEMENTOS_SIN_PESO_ESTANDAR = (
+    'Tc', 'Pm', 'Po', 'At', 'Rn', 'Fr', 'Ra', 'Ac',
+    'Np', 'Pu', 'Am', 'Cm', 'Bk', 'Cf', 'Es', 'Fm', 'Md', 'No', 'Lr',
+    'Rf', 'Db', 'Sg', 'Bh', 'Hs', 'Mt', 'Ds', 'Rg', 'Cn',
+    'Nh', 'Fl', 'Mc', 'Lv', 'Ts', 'Og',
+)
+
 # Familia didáctica "Metales": agrupa las categorías metálicas (los metaloides
 # NO cuentan como metales). Debe coincidir exactamente con los valores de
 # categoria_elemento usados en app_quimico/data/detalles_elementos.py.
@@ -123,6 +133,23 @@ class ElementoQuimico(models.Model):
 
     def __str__(self):
         return f"{self.simbolo_elemento} - {self.nombre_elemento}"
+
+    @property
+    def peso_atomico_para_mostrar(self):
+        """Atomic weight for display.
+
+        The 34 elements without a CIAAW standard atomic weight show the mass
+        number of their representative isotope in brackets; the rest show the
+        plain value.
+        """
+        if self.simbolo_elemento in ELEMENTOS_SIN_PESO_ESTANDAR:
+            return f"[{self.peso_atomico_elemento.quantize(Decimal('1'))}]"
+        return self.peso_atomico_elemento
+
+    @property
+    def peso_atomico_es_masico(self):
+        """True when the shown weight is a bracketed mass number, not a weight."""
+        return self.simbolo_elemento in ELEMENTOS_SIN_PESO_ESTANDAR
 
 
 # (3) Tabla compuestos_quimicos
@@ -389,15 +416,15 @@ class DetalleElemento(models.Model):
         verbose_name="Energía de Ionización"
     )
     
-    # Radio Covalente: [0.32, 2.98]
+    # Radio Covalente (Cordero et al. 2008): [28, 350] pm
     radio_covalente = models.DecimalField(
-        max_digits=5, 
+        max_digits=6, 
         decimal_places=3, 
         null=True, 
         blank=True,
         validators=[
-            MinValueValidator(Decimal('0.32'), message="El valor mínimo es 0.32 Å."),
-            MaxValueValidator(Decimal('2.98'), message="El valor máximo es 2.98 Å.")
+            MinValueValidator(Decimal('28'), message="El valor mínimo es 28 pm."),
+            MaxValueValidator(Decimal('350'), message="El valor máximo es 350 pm.")
         ],
         verbose_name="Radio Covalente"
     )
@@ -414,6 +441,13 @@ class DetalleElemento(models.Model):
 
     def __str__(self):
         return f"Detalles de {self.id_elemento.simbolo_elemento}"
+
+    @property
+    def afinidad_electronica_liberada(self):
+        """Energy released on electron attachment: abs() of the ΔE value."""
+        if self.afinidad_electronica is None:
+            return None
+        return abs(self.afinidad_electronica)
 
 
 # (6) Tabla elementos_compuestos (Tabla intermedia M:N)

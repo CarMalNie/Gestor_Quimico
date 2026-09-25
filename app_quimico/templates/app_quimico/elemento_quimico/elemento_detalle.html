@@ -17,7 +17,7 @@
                     <div class="col-md-4 text-center border-end">
                         <h1 class="display-1 fw-bold text-primary">{{ elemento.simbolo_elemento }}</h1>
                         <p class="lead"><strong>N° Atómico (Z):</strong> {{ elemento.numero_atomico_elemento }}</p>
-                        <p class="mb-0"><strong>Peso Atómico:</strong> {{ elemento.peso_atomico_elemento|floatformat:4 }} g/mol</p>
+                        <p class="mb-0"><strong>Peso Atómico:</strong> {{ elemento.peso_atomico_para_mostrar }}{% if not elemento.peso_atomico_es_masico %} g/mol{% endif %}</p>
                     </div>
 
                     {% with detalle=elemento.detalleelemento %}
@@ -28,9 +28,9 @@
                             <li><strong>Grupo / Período:</strong> {{ detalle.grupo_elemento }} / {{ detalle.periodo_elemento }}</li>
                             <hr class="my-2">
                             <li><strong>Electronegatividad:</strong> {{ detalle.electronegatividad|default:"N/D" }} (Escala Pauling)</li>
-                            <li><strong>Afinidad Electrónica:</strong> {{ detalle.afinidad_electronica|default:"N/D" }} kJ/mol</li>
+                            <li><strong>Afinidad Electrónica:</strong> {% if detalle.afinidad_electronica %}{{ detalle.afinidad_electronica }} kJ/mol (ΔE; se liberan {{ detalle.afinidad_electronica_liberada }} kJ/mol al captar un electrón){% else %}N/D{% endif %}</li>
                             <li><strong>Energía de Ionización:</strong> {{ detalle.energia_de_ionizacion|default:"N/D" }} kJ/mol</li>
-                            <li><strong>Radio Covalente:</strong> {{ detalle.radio_covalente|default:"N/D" }} Å</li>
+                            <li><strong>Radio Covalente:</strong> {% if detalle.radio_covalente is not None %}{{ detalle.radio_covalente|floatformat:"-3" }} pm{% else %}N/D{% endif %}</li>
                         </ul>
                     </div>
                     {% endwith %}

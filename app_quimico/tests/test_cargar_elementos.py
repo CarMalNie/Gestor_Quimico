@@ -6,7 +6,11 @@ import pytest
 from django.core.management import call_command
 
 from app_quimico.data.elementos import ELEMENTOS_IUPAC_2021
-from app_quimico.models import DetalleElemento, ElementoQuimico
+from app_quimico.models import (
+    ELEMENTOS_SIN_PESO_ESTANDAR,
+    DetalleElemento,
+    ElementoQuimico,
+)
 
 pytestmark = pytest.mark.django_db
 
@@ -19,6 +23,10 @@ def test_cargar_elementos_crea_los_118():
     assert hidrogeno.nombre_elemento == "Hidrógeno"
     assert hidrogeno.numero_atomico_elemento == 1
     assert hidrogeno.peso_atomico_elemento == Decimal("1.0080")
+
+    # CIAAW 2024 revisó el peso del circonio a 91.222 (5 cifras significativas).
+    circonio = ElementoQuimico.objects.get(simbolo_elemento="Zr")
+    assert circonio.peso_atomico_elemento == Decimal("91.2220")
 
     oganesson = ElementoQuimico.objects.get(simbolo_elemento="Og")
     assert oganesson.numero_atomico_elemento == 118
@@ -49,7 +57,7 @@ def test_cargar_elementos_detalles_spot_checks():
     assert hidrogeno.electronegatividad == Decimal("2.20")
     assert hidrogeno.afinidad_electronica == Decimal("-72.80")
     assert hidrogeno.energia_de_ionizacion == Decimal("1312.00")
-    assert hidrogeno.radio_covalente == Decimal("0.370")
+    assert hidrogeno.radio_covalente == Decimal("31")
 
     cloro = DetalleElemento.objects.get(id_elemento__simbolo_elemento="Cl")
     assert cloro.afinidad_electronica == Decimal("-348.60")
@@ -98,7 +106,7 @@ def test_cargar_elementos_detalles_dentro_de_limites_de_validadores():
                 <= Decimal("2372.30")
             )
         if detalle.radio_covalente is not None:
-            assert Decimal("0.32") <= detalle.radio_covalente <= Decimal("2.98")
+            assert Decimal("28") <= detalle.radio_covalente <= Decimal("350")
 
 
 def test_cargar_elementos_clasifica_polonio_como_otro_metal():
@@ -119,4 +127,116 @@ def test_cargar_elementos_superpesados_incluyen_nota_de_prediccion():
             id_elemento__numero_atomico_elemento=numero
         )
         assert "predicciones" in detalle.descripcion_elemento.lower(), detalle
+
+
+# Radios covalentes de Cordero et al. 2008 (pm): spot-checks del dataset.
+RADIOS_CORDERO_ESPERADOS = {"H": "31", "Cs": "244", "Au": "136"}
+
+# Afinidades electrónicas medidas (ΔE negativo) que estaban en NULL.
+AFINIDADES_MEDIDAS_NUEVAS = {
+    "Sr": "-5.00",
+    "Ba": "-14.00",
+    "Hf": "-17.00",
+    "La": "-54.00",
+    "Ce": "-58.00",
+    "Pr": "-11.00",
+    "Nd": "-9.00",
+    "Pm": "-12.00",
+    "Sm": "-16.00",
+    "Eu": "-11.00",
+    "Gd": "-21.00",
+    "Tb": "-13.00",
+    "Dy": "-1.00",
+    "Ho": "-33.00",
+    "Er": "-30.00",
+    "Tm": "-99.00",
+    "Lu": "-23.00",
+    "Re": "-6.00",
+    "Os": "-104.00",
+    "Ir": "-151.00",
+    "Pt": "-205.00",
+}
+
+# Afinidades en disputa entre tablas publicadas: se dejan como están.
+AFINIDADES_EN_DISPUTA = {
+    "Mo": "-92.00",
+    "In": "-29.00",
+    "Tl": "-19.00",
+    "Po": "-183.00",
+    "At": "-270.00",
+}
+
+
+def test_cargar_elementos_radios_covalentes_cordero_2008_en_pm():
+    call_command("cargar_elementos")
+
+    for simbolo, valor in RADIOS_CORDERO_ESPERADOS.items():
+        detalle = DetalleElemento.objects.get(id_elemento__simbolo_elemento=simbolo)
+        assert detalle.radio_covalente == Decimal(valor), simbolo
+
+
+def test_cargar_elementos_solo_cordero_2008_tiene_radios():
+    """Los 95 elementos de Cordero 2008 tienen radio; He/Bk/Cf y Z>=104 no."""
+    call_command("cargar_elementos")
+
+    con_radio = {
+        detalle.id_elemento.simbolo_elemento
+        for detalle in DetalleElemento.objects.exclude(radio_covalente=None)
+    }
+
+    assert len(con_radio) == 95
+    assert {"He", "Bk", "Cf"}.isdisjoint(con_radio)
+
+
+def test_cargar_elementos_afinidades_medidas_rellenadas():
+    call_command("cargar_elementos")
+
+    for simbolo, valor in AFINIDADES_MEDIDAS_NUEVAS.items():
+        detalle = DetalleElemento.objects.get(id_elemento__simbolo_elemento=simbolo)
+        assert detalle.afinidad_electronica == Decimal(valor), simbolo
+
+
+def test_cargar_elementos_afinidades_en_disputa_sin_cambios():
+    call_command("cargar_elementos")
+
+    for simbolo, valor in AFINIDADES_EN_DISPUTA.items():
+        detalle = DetalleElemento.objects.get(id_elemento__simbolo_elemento=simbolo)
+        assert detalle.afinidad_electronica == Decimal(valor), simbolo
+
+
+def test_cargar_elementos_correcciones_de_en_e_ionizacion():
+    call_command("cargar_elementos")
+
+    americio = DetalleElemento.objects.get(id_elemento__simbolo_elemento="Am")
+    assert americio.electronegatividad == Decimal("1.30")
+
+    esperados = {"Tc": "686.90", "At": "899.00", "No": "639.00"}
+    for simbolo, valor in esperados.items():
+        detalle = DetalleElemento.objects.get(id_elemento__simbolo_elemento=simbolo)
+        assert detalle.energia_de_ionizacion == Decimal(valor), simbolo
+
+
+def test_peso_atomico_para_mostrar_usa_corchetes_sin_peso_estandar():
+    call_command("cargar_elementos")
+
+    polonio = ElementoQuimico.objects.get(simbolo_elemento="Po")
+    hidrogeno = ElementoQuimico.objects.get(simbolo_elemento="H")
+
+    assert polonio.peso_atomico_para_mostrar == "[209]"
+    assert polonio.peso_atomico_es_masico is True
+    assert hidrogeno.peso_atomico_para_mostrar == Decimal("1.0080")
+    assert hidrogeno.peso_atomico_es_masico is False
+
+
+def test_peso_atomico_para_mostrar_cubre_los_34_sin_peso_estandar():
+    call_command("cargar_elementos")
+
+    con_corchetes = {
+        elemento.simbolo_elemento
+        for elemento in ElementoQuimico.objects.all()
+        if elemento.peso_atomico_es_masico
+    }
+
+    assert con_corchetes == set(ELEMENTOS_SIN_PESO_ESTANDAR)
+    assert len(con_corchetes) == 34
 

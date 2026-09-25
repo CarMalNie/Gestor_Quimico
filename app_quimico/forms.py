@@ -64,7 +64,7 @@ class DetalleElementoForm(forms.ModelForm):
                 'placeholder': 'kJ/mol'
             }),
             'radio_covalente': forms.NumberInput(attrs={
-                'placeholder': 'Å (Angstroms)'
+                'placeholder': 'pm (picómetros)'
             }),
         }
         

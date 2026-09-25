@@ -254,3 +254,21 @@ def test_encabezado_compartido_usa_el_titulo_corto_en_ambas_vistas(
 
     assert titulo in tabla.content.decode()
     assert titulo in tarjetas.content.decode()
+
+
+def test_tarjetas_muestran_peso_en_corchetes_sin_peso_estandar(
+    client, elementos_cargados
+):
+    """Po (sin peso estándar CIAAW) va entre corchetes; H muestra el valor plano."""
+    html = client.get(reverse("elemento_lista")).content.decode()
+
+    assert "[209]" in html  # Po, masa del isótopo representativo
+    assert "1,0080" in html  # H, peso estándar sin corchetes
+
+
+def test_grilla_periodica_mantiene_data_peso_numerico(client, elementos_cargados):
+    """La celda de la grilla no debe llevar corchetes en data-peso."""
+    html = client.get(reverse("elemento_lista"), {"vista": "tabla"}).content.decode()
+
+    assert 'data-peso="209.0000"' in html
+    assert 'data-peso="[209]"' not in html
