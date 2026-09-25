@@ -1,7 +1,8 @@
 # Feature: p1-password-change — gestor_quimico
 
-Status: IN PROGRESS — approved 2026-09-20 (operator pick: credentials cycle
-before MFA).
+Status: DONE — fully shipped to production (commit fa468bb, deployed and
+operator-validated). Header closed 2026-09-25 in the stale-tracker housekeeping
+(batch with p1-brevo-api-email and p1-mfa-totp).
 
 Goal: self-service password change for authenticated users, complementing the
 already-shipped email reset (p1-password-recovery) and the native admin change

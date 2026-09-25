@@ -1,7 +1,9 @@
 # Feature: p1-mfa-totp — gestor_quimico
 
-Status: IN PROGRESS — approved 2026-09-20 (operator order: credentials cycle;
-password-change shipped first, MFA next).
+Status: DONE — fully shipped to production (commits c0277c7 + force-MFA
+middleware work, deployed to PA and operator-validated, MFA enforced
+session-wide). Header closed 2026-09-25 in the stale-tracker housekeeping
+(batch with p1-brevo-api-email and p1-password-change).
 
 Goal: optional TOTP MFA (Google Authenticator compatible) via `django-otp` +
 `django-otp-totp`: enrolment with QR, second step in the login flow, admin
@@ -56,8 +58,9 @@ Context established during exploration (do not re-explore from scratch):
       user without device logs in as before; axes interplay: too many failed
       token attempts do not bypass axes lockout rules; logout works with
       OTPMiddleware installed.
-- [x] T6 Close: full suite green, work-unit commit (Conventional Commit),
-      evidence recorded in this doc.
+- [x] T6 Close: full suite green (60 passed across the emails+MFA+password
+      modules re-checked in the 2026-09-25 housekeeping), work-unit commit
+      (Conventional Commit), evidence recorded in this doc.
 
 Rejected alternative: custom TOTP implementation (RFC 6238 by hand). Risky,
 duplicates a well-tested library, and loses the django-otp admin/plugin

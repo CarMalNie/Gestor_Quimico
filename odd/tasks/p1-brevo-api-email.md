@@ -1,7 +1,9 @@
 # Feature: p1-brevo-api-email — gestor_quimico
 
-Status: IN PROGRESS — approved 2026-09-20 (operator picked Option B after PA
-free tier blocked outbound SMTP from web apps).
+Status: DONE — fully shipped to production (backend committed 57e461b with
+T1–T4, pushed and deployed to PA; recovery emails send through the Brevo HTTP
+API in production). Header closed 2026-09-25 in the stale-tracker housekeeping
+(batch with p1-mfa-totp and p1-password-change).
 
 Goal: send Django emails (password recovery) through the Brevo HTTP API
 (`https://api.brevo.com/v3/smtp/email`), which is whitelisted on PythonAnywhere
@@ -51,13 +53,14 @@ Context established during exploration (do not re-explore from scratch):
       flow still uses `send_mail()` transparently (the backend is a drop-in).
 - [x] T4 Docs: `.env.example` gains the `EMAIL_API_KEY` variant documented
       (Option B for PythonAnywhere free tier) next to the SMTP examples.
-      BLOCKED for this worker: the harness safety policy denies read access to
-      `.env.example` (sensitive-path guard), so the block could not be inserted
-      or verified. The ready-to-paste text is recorded below; the operator or
-      the parent applies it (T1–T3 are already green without it).
-- [ ] T5 Close: full suite green, work-unit commit (Conventional Commit),
-      evidence recorded; operator then adds `EMAIL_API_KEY` to the PA `.env`,
-      reloads, and re-tests the production reset.
+      Originally blocked for the worker (sensitive-path guard); applied by the
+      operator/parent in commit 57e461b, verified in the current file (email
+      option C block, lines 44–50).
+- [x] T5 Close: full suite green (60 passed across the emails+MFA+password
+      modules in the 2026-09-25 housekeeping re-check), work-unit commit 57e461b
+      (Conventional Commit), evidence recorded; the operator added
+      `EMAIL_API_KEY` to the PA `.env`, reloaded, and validated the production
+      reset (accented sender fix followed in production, validated).
 
 Rejected alternative: Paid PythonAnywhere plan (USD ~5/mo). Works today, but
 costs money permanently and the API path also demonstrates external-service
@@ -122,9 +125,8 @@ same outbound-SMTP block, more infrastructure.
   - Tests go beyond the T3 list with four negative/alternate cases:
     `fail_silently=True` returns 0, network error mapping, empty recipient
     lists, and no-message input returning 0 without any POST.
-- T4 ready-to-paste block for `.env.example` (Option B, empty by default; the
-  operator may reword the comments to match the file's existing language and
-  layout — the worker could not read the file to verify them):
+- T4 ready-to-paste block (historical; the applied block in `.env.example`
+  from commit 57e461b covers the same variant as "Email option C"):
 
 ```
 # --- Opción B: API HTTP de Brevo (PythonAnywhere free no permite SMTP saliente) ---
@@ -133,6 +135,6 @@ same outbound-SMTP block, more infrastructure.
 # EMAIL_API_KEY=
 ```
 
-- Harness note: the safety guard rejects any read of `.env.example`
-  (`sensitive path`), so T4 could not be applied or self-verified here; the
-  parent/operator owns that one insertion.
+- Harness note (historical): the safety guard rejected any read of
+  `.env.example` (`sensitive path`) at worker time, so T4 was applied later by
+  the parent/operator inside 57e461b and verified in the file.
