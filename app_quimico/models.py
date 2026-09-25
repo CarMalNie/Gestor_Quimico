@@ -20,9 +20,9 @@ GRUPO_CHOICES = [(i, str(i)) for i in range(1, 19)]
 # Opciones para Períodos (1 al 7)
 PERIODO_CHOICES = [(i, str(i)) for i in range(1, 8)]
 
-# Opciones para Categoría
+# Opciones para Categoría (10 categorías reales: sin choices muertos como
+# 'Metales' u 'Otros No Metales', que no tenían ningún elemento asignado).
 CATEGORIA_CHOICES = [
-    ('Metales', 'Metales'),
     ('No Metales', 'No Metales'),
     ('Alcalinos', 'Alcalinos'),
     ('Alcalinos-térreos', 'Alcalinos-térreos'),
@@ -31,10 +31,28 @@ CATEGORIA_CHOICES = [
     ('Metales de Transición', 'Metales de Transición'),
     ('Otros Metales', 'Otros Metales'),
     ('Metaloides', 'Metaloides'),
-    ('Otros No Metales', 'Otros No Metales'),
     ('Halógenos', 'Halógenos'),
     ('Gases Nobles', 'Gases Nobles'),
 ]
+
+# Familia didáctica "Metales": agrupa las categorías metálicas (los metaloides
+# NO cuentan como metales). Debe coincidir exactamente con los valores de
+# categoria_elemento usados en app_quimico/data/detalles_elementos.py.
+FAMILIA_METALES = (
+    'Alcalinos',
+    'Alcalinos-térreos',
+    'Metales de Transición',
+    'Otros Metales',
+    'Lantánidos',
+    'Actínidos',
+)
+
+# Familia didáctica "No metales": No Metales + Halógenos + Gases Nobles.
+FAMILIA_NO_METALES = (
+    'No Metales',
+    'Halógenos',
+    'Gases Nobles',
+)
 
 # Opciones para Tipos de Concentración
 CONCENTRACION_CHOICES = [

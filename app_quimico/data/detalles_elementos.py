@@ -16,6 +16,19 @@ Source conventions:
   predictions with large uncertainty, so they are left NULL.
 - descripcion: short educational text in Spanish.
 
+Classification conventions (IUPAC-style 10-category didactic scheme):
+- f-block layout: the complete rows La-Lu and Ac-Lr are placed at group 3,
+  matching the IUPAC Periodic Table PDF layout (28 Nov 2016).
+- Group 12 (Zn, Cd, Hg, Cn) is classified as transition metals following the
+  standard table convention; the stricter d-incomplete definition would
+  exclude them (Wikipedia, "Group 12 element").
+- Po is a post-transition metal ("Otros Metales") per modern consensus
+  (RSC Chemistry World; Wikipedia, "Polonium").
+- At is a halogen by its group-17 position; sources differ on whether it is a
+  nonmetal, a metalloid or a metal (Wikipedia, "Astatine").
+- Z >= 104 (Rf-Og) categories are assigned by position; the IUPAC colored
+  table marks their properties as unknown/predicted.
+
 The 10 elements of the cátedra reference tables reproduce its exact values.
 """
 
@@ -187,7 +200,7 @@ DETALLES_ELEMENTOS = {
            "Denso y maleable: baterías de autos y blindaje radiológico; tóxico a largo plazo."),
     "Bi": (15, 6, "Otros Metales", "2.02", "-91.00", "703.00", "1.460",
            "Cristales iridiscentes de colores; sustituye al plomo en soldaduras y medicamentos gástricos."),
-    "Po": (16, 6, "Metaloides", "2.00", "-183.00", "812.10", "1.460",
+    "Po": (16, 6, "Otros Metales", "2.00", "-183.00", "812.10", "1.460",
            "Altamente radiactivo; emisor alfa histórico, notorio por su extrema toxicidad."),
     "At": (17, 6, "Halógenos", "2.20", "-270.00", "890.00", "1.450",
            "El elemento natural más raro de la Tierra: se estima que existen menos de 30 gramos en total."),
@@ -228,33 +241,33 @@ DETALLES_ELEMENTOS = {
     "Lr": (3, 7, "Actínidos", "1.30", None, "478.80", None,
            "El último actínido; honra a Ernest Lawrence, inventor del ciclotrón."),
     "Rf": (4, 7, "Metales de Transición", None, None, None, None,
-           "Elemento sintético ultrapesado honrando a Ernest Rutherford; pocos átomos producidos."),
+           "Propiedades químicas aún desconocidas para la ciencia; los valores aquí listados son predicciones. Elemento sintético ultrapesado honrando a Ernest Rutherford; pocos átomos producidos."),
     "Db": (5, 7, "Metales de Transición", None, None, None, None,
-           "Elemento sintético nombrado por el laboratorio ruso de Dubna, codescubridor de varios ultrapesados."),
+           "Propiedades químicas aún desconocidas para la ciencia; los valores aquí listados son predicciones. Elemento sintético nombrado por el laboratorio ruso de Dubna, codescubridor de varios ultrapesados."),
     "Sg": (6, 7, "Metales de Transición", None, None, None, None,
-           "Elemento sintético honrando a Glenn Seaborg, pionero de la química de actínidos."),
+           "Propiedades químicas aún desconocidas para la ciencia; los valores aquí listados son predicciones. Elemento sintético honrando a Glenn Seaborg, pionero de la química de actínidos."),
     "Bh": (7, 7, "Metales de Transición", None, None, None, None,
-           "Elemento sintético honrando a Niels Bohr; química apenas explorada."),
+           "Propiedades químicas aún desconocidas para la ciencia; los valores aquí listados son predicciones. Elemento sintético honrando a Niels Bohr; química apenas explorada."),
     "Hs": (8, 7, "Metales de Transición", None, None, None, None,
-           "Elemento sintético nombrado por la región alemana de Hesse."),
+           "Propiedades químicas aún desconocidas para la ciencia; los valores aquí listados son predicciones. Elemento sintético nombrado por la región alemana de Hesse."),
     "Mt": (9, 7, "Metales de Transición", None, None, None, None,
-           "Elemento sintético honrando a Lise Meitner, codescubridora de la fisión nuclear."),
+           "Propiedades químicas aún desconocidas para la ciencia; los valores aquí listados son predicciones. Elemento sintético honrando a Lise Meitner, codescubridora de la fisión nuclear."),
     "Ds": (10, 7, "Metales de Transición", None, None, None, None,
-           "Elemento sintético nombrado por Darmstadt, sede del laboratorio GSI."),
+           "Propiedades químicas aún desconocidas para la ciencia; los valores aquí listados son predicciones. Elemento sintético nombrado por Darmstadt, sede del laboratorio GSI."),
     "Rg": (11, 7, "Metales de Transición", None, None, None, None,
-           "Elemento sintético honrando a Wilhelm Röntgen, descubridor de los rayos X."),
+           "Propiedades químicas aún desconocidas para la ciencia; los valores aquí listados son predicciones. Elemento sintético honrando a Wilhelm Röntgen, descubridor de los rayos X."),
     "Cn": (12, 7, "Metales de Transición", None, None, None, None,
-           "Elemento sintético honrando a Copérnico; se predice un comportamiento de gas noble relativista."),
+           "Propiedades químicas aún desconocidas para la ciencia; los valores aquí listados son predicciones. Elemento sintético honrando a Copérnico; se predice un comportamiento de gas noble relativista."),
     "Nh": (13, 7, "Otros Metales", None, None, None, None,
-           "Elemento sintético nombrado Nihon (Japón), país de su codescubrimiento."),
+           "Propiedades químicas aún desconocidas para la ciencia; los valores aquí listados son predicciones. Elemento sintético nombrado Nihon (Japón), país de su codescubrimiento."),
     "Fl": (14, 7, "Otros Metales", None, None, None, None,
-           "Elemento sintético honrando al laboratorio Flerov de Rusia."),
+           "Propiedades químicas aún desconocidas para la ciencia; los valores aquí listados son predicciones. Elemento sintético honrando al laboratorio Flerov de Rusia."),
     "Mc": (15, 7, "Otros Metales", None, None, None, None,
-           "Elemento sintético nombrado por la región rusa de Moscú."),
+           "Propiedades químicas aún desconocidas para la ciencia; los valores aquí listados son predicciones. Elemento sintético nombrado por la región rusa de Moscú."),
     "Lv": (16, 7, "Otros Metales", None, None, None, None,
-           "Elemento sintético honrando al laboratorio Livermore de EE. UU."),
+           "Propiedades químicas aún desconocidas para la ciencia; los valores aquí listados son predicciones. Elemento sintético honrando al laboratorio Livermore de EE. UU."),
     "Ts": (17, 7, "Halógenos", None, None, None, None,
-           "Elemento sintético nombrado por Tennessee; química estimada similar a los halógenos."),
+           "Propiedades químicas aún desconocidas para la ciencia; los valores aquí listados son predicciones. Elemento sintético nombrado por Tennessee; química estimada similar a los halógenos."),
     "Og": (18, 7, "Gases Nobles", None, None, None, None,
-           "Elemento sintético honrando a Yuri Oganesi; el más pesado de la tabla periódica."),
+           "Propiedades químicas aún desconocidas para la ciencia; los valores aquí listados son predicciones. Elemento sintético honrando a Yuri Oganesi; el más pesado de la tabla periódica."),
 }

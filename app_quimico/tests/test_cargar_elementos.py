@@ -99,3 +99,24 @@ def test_cargar_elementos_detalles_dentro_de_limites_de_validadores():
             )
         if detalle.radio_covalente is not None:
             assert Decimal("0.32") <= detalle.radio_covalente <= Decimal("2.98")
+
+
+def test_cargar_elementos_clasifica_polonio_como_otro_metal():
+    """Po es post-transición/Otros Metales por consenso moderno (RSC, Wikipedia)."""
+    call_command("cargar_elementos")
+
+    polonio = DetalleElemento.objects.get(id_elemento__simbolo_elemento="Po")
+
+    assert polonio.categoria_elemento == "Otros Metales"
+
+
+def test_cargar_elementos_superpesados_incluyen_nota_de_prediccion():
+    """Z >= 104: la descripción advierte que las propiedades son predicciones."""
+    call_command("cargar_elementos")
+
+    for numero in range(104, 119):
+        detalle = DetalleElemento.objects.get(
+            id_elemento__numero_atomico_elemento=numero
+        )
+        assert "predicciones" in detalle.descripcion_elemento.lower(), detalle
+
