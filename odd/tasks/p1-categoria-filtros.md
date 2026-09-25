@@ -81,10 +81,25 @@
   corregir a ciegas) + ~30 faltantes con valor medido; radio covalente usa tabla vieja en Å →
   reemplazar por Cordero 2008 en pm; 34 elementos sin peso estándar → presentación [nº masa];
   refresco CIAAW 2024 Gd/Lu/Zr.
-- [ ] T8 — correcciones de datos con fuentes (worker, tras commits de T6).
-- [ ] T9 — cierre: suite + commits de T8 + reporte final.
+- [x] T8 — correcciones aplicadas por writer (suite 283 passed; migración 0012 state-only):
+  Zr 91.224→91.222 (CIAAW 2024); Am EN 1.13→1.30; IE Tc 686.9 / At 899.0 / No 639 (NIST);
+  radios covalentes → Cordero 2008 en pm (95 elementos; Bk/Cf → None: Cordero no los cubre,
+  decisión honesta aprobada por el parent) + migración campo max_digits 6, límites 28–350 pm;
+  21 afinidades medidas completadas (ΔE negativa); 34 elementos sin peso estándar se muestran
+  [nº masa] (helper peso_atomico_para_mostrar + ELEMENTOS_SIN_PESO_ESTANDAR); EA label con
+  aclaración ΔE; placeholder del form corregido a "pm" (fix inline del parent).
+  VERIFICACIÓN INDEPENDIENTE: 6/6 PASS (283 tests; diffs exactos vs HEAD: solo EN 1, IE 3,
+  EA 21 fills, radio 93 sobrescritos + Ne/Ar nuevos + Bk/Cf a None; descriptores/categorías
+  byte-idénticos). Commit de T8: 586e707.
+- [x] T9 — cierre: suite verde, commits c466223 / 3c13863 / edf3007 (T1-T6) + 586e707 (T8),
+  árbol limpio.
 
-## Commits de work-unit (T6)
+## Commits de work-unit
+
+- c466223 feat(elementos): reclasificar Po + convenciones + nota superpesados + migración 0011
+- 3c13863 feat(elementos): leyenda con filtros de familia y chips finos (views/template/JS/tests)
+- edf3007 chore(tasks): cierre p1-categoria-filtros T1-T6
+- 586e707 feat(elementos): datos corregidos contra fuentes oficiales (T8 auditoría)
 
 - feat(elementos): reclasificar Po + convenciones + nota superpesados + migración 0011
 - feat(elementos): leyenda con filtros de familia y chips finos (views/template/JS/tests)
