@@ -584,7 +584,7 @@ def test_lista_with_smiles_renders_the_estructura_2d_block(
     # Scripts self-hosted con cache-bust, solo en esta página.
     assert "vendor/smilesdrawer/smiles-drawer.min.js" in html
     assert "js/smiles_render.js" in html
-    assert "?v=1" in html
+    assert "?v=2" in html
 
 
 # --- Detalle del compuesto ---
@@ -614,7 +614,7 @@ def test_detalle_with_smiles_renders_the_estructura_2d_tab(
     assert f'data-smiles="{EXPANDIDO_ETANOL}"' in html
     assert "Estructura 2D (SMILES)" in html
     assert "vendor/smilesdrawer/smiles-drawer.min.js" in html
-    assert "smiles_render.js?v=1" in html
+    assert "smiles_render.js?v=2" in html
 
 
 # --- Regresión: comentarios multilinea {# #} ---

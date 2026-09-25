@@ -31,6 +31,47 @@
     return isNaN(raw) || raw <= 0 ? fallback : raw;
   }
 
+  // SmilesDrawer centers molecules by their atom coordinates only; bracket
+  // atom labels such as "Na+"/"Cl−" render as text wider than the coordinate
+  // bounds, which visually shifts multi-fragment diagrams (e.g. [Na+].[Cl-])
+  // to one side. After drawing, the drawer overwrites the svg viewBox with
+  // the drawing bounds ("minX minY width height") in its own coordinate
+  // space. Recenter the whole ink within THAT viewBox: wrap the content in a
+  // group and translate it so the true bounding box (getBBox includes text
+  // geometry) sits at the center of the viewBox. Fail soft: without a
+  // readable viewBox or getBBox, keep the drawing as produced.
+  function centrarContenido(svg) {
+    var viewBox = svg.getAttribute("viewBox");
+    if (!viewBox) {
+      return;
+    }
+    var partes = viewBox.trim().split(/[\s,]+/).map(Number);
+    if (partes.length !== 4 || partes.some(isNaN) || partes[2] <= 0 || partes[3] <= 0) {
+      return;
+    }
+    var contenido;
+    try {
+      contenido = document.createElementNS(SVG_NS, "g");
+      while (svg.firstChild) {
+        contenido.appendChild(svg.firstChild);
+      }
+      svg.appendChild(contenido);
+      var caja = contenido.getBBox();
+      if (!caja || !isFinite(caja.width) || caja.width <= 0) {
+        return;
+      }
+      var centroVbX = partes[0] + partes[2] / 2;
+      var centroVbY = partes[1] + partes[3] / 2;
+      var dx = centroVbX - (caja.x + caja.width / 2);
+      var dy = centroVbY - (caja.y + caja.height / 2);
+      if (isFinite(dx) && isFinite(dy)) {
+        contenido.setAttribute("transform", "translate(" + dx + " " + dy + ")");
+      }
+    } catch (error) {
+      return;
+    }
+  }
+
   function renderOne(container, smiles) {
     var width = readSize(container, "data-smiles-width", DEFAULT_WIDTH);
     var height = readSize(container, "data-smiles-height", DEFAULT_HEIGHT);
@@ -53,6 +94,7 @@
             height: height,
           });
           drawer.draw(tree, svg, "light");
+          centrarContenido(svg);
         } catch (error) {
           // Drawing failed: leave the container empty instead of a half-drawn
           // SVG. The server-side pysmiles validation should prevent this, so
