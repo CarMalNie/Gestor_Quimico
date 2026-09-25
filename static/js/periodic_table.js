@@ -36,13 +36,44 @@
                 };
             });
 
-        var chips = Array.prototype.slice.call(document.querySelectorAll("#pt-leyenda .pt-chip"));
+        // Cada chip puede representar una categoría fina (data-categoria) o una
+        // familia (data-categorias, categorías separadas por "|"). El chip
+        // activo filtra por el conjunto completo de categorías que representa.
+        function categoriasDeChip(chip) {
+            var multi = chip.getAttribute("data-categorias");
+            if (multi) {
+                return multi.split("|").filter(function (valor) {
+                    return valor !== "";
+                });
+            }
+            var simple = chip.getAttribute("data-categoria");
+            return simple ? [simple] : [];
+        }
+
+        var chips = Array.prototype.slice
+            .call(document.querySelectorAll("#pt-leyenda .pt-chip"))
+            .map(function (chip) {
+                return {
+                    el: chip,
+                    // Identidad estable del chip para el estado del click.
+                    valor:
+                        chip.getAttribute("data-categoria") ||
+                        chip.getAttribute("data-categorias") ||
+                        "",
+                    categorias: categoriasDeChip(chip),
+                };
+            });
         var inputBuscar = document.getElementById("pt-buscar");
         var inputPeso = document.getElementById("pt-peso-min");
 
-        // Estado persistente (click) y categoría de vista previa (hover).
-        var estado = { categoria: null, busqueda: "", pesoMin: null };
-        var categoriaPrevia = null;
+        // Estado persistente (click) y categorías de vista previa (hover).
+        var estado = {
+            valorCategoria: null,
+            categorias: null,
+            busqueda: "",
+            pesoMin: null,
+        };
+        var categoriasPrevias = null;
 
         // rAF para agrupar varios eventos seguidos en un solo repintado.
         var raf = window.requestAnimationFrame || function (cb) {
@@ -65,7 +96,10 @@
         // siguen activos (los tres se combinan con AND).
         function filtroEfectivo() {
             return {
-                categoria: categoriaPrevia !== null ? categoriaPrevia : estado.categoria,
+                categorias:
+                    categoriasPrevias !== null
+                        ? categoriasPrevias
+                        : estado.categorias,
                 busqueda: estado.busqueda,
                 pesoMin: estado.pesoMin,
             };
@@ -73,14 +107,15 @@
 
         function aplicar(filtro) {
             var buscando = filtro.busqueda;
-            var hayCategoria = filtro.categoria !== null && filtro.categoria !== "";
+            var hayCategoria =
+                filtro.categorias !== null && filtro.categorias.length > 0;
             var hayBusqueda = buscando !== "";
             var hayPeso = filtro.pesoMin !== null;
             var hayFiltro = hayCategoria || hayBusqueda || hayPeso;
 
             celdas.forEach(function (celda) {
                 var pasa = true;
-                if (hayCategoria && celda.categoria !== filtro.categoria) {
+                if (hayCategoria && filtro.categorias.indexOf(celda.categoria) === -1) {
                     pasa = false;
                 }
                 if (pasa && hayBusqueda) {
@@ -103,25 +138,29 @@
         // Marca el chip activo para el estilo [aria-pressed="true"] del CSS.
         function actualizarChips() {
             chips.forEach(function (chip) {
-                var activo = chip.getAttribute("data-categoria") === estado.categoria;
-                chip.setAttribute("aria-pressed", activo ? "true" : "false");
+                var activo =
+                    chip.valor !== "" && chip.valor === estado.valorCategoria;
+                chip.el.setAttribute("aria-pressed", activo ? "true" : "false");
             });
         }
 
         chips.forEach(function (chip) {
-            chip.addEventListener("click", function () {
-                var valor = chip.getAttribute("data-categoria");
-                estado.categoria = estado.categoria === valor ? null : valor;
+            chip.el.addEventListener("click", function () {
+                var mismo =
+                    estado.valorCategoria !== null &&
+                    estado.valorCategoria === chip.valor;
+                estado.valorCategoria = mismo ? null : chip.valor;
+                estado.categorias = mismo ? null : chip.categorias;
                 actualizarChips();
                 programar();
             });
             // Vista previa temporal: no toca el estado del click.
-            chip.addEventListener("mouseover", function () {
-                categoriaPrevia = chip.getAttribute("data-categoria");
+            chip.el.addEventListener("mouseover", function () {
+                categoriasPrevias = chip.categorias;
                 programar();
             });
-            chip.addEventListener("mouseout", function () {
-                categoriaPrevia = null;
+            chip.el.addEventListener("mouseout", function () {
+                categoriasPrevias = null;
                 programar();
             });
         });

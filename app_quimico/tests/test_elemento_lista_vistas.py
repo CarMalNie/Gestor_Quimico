@@ -4,7 +4,13 @@ import pytest
 from django.core.management import call_command
 from django.urls import reverse
 
-from app_quimico.models import CATEGORIA_CHOICES, ElementoQuimico
+from app_quimico.models import (
+    CATEGORIA_CHOICES,
+    FAMILIA_METALES,
+    FAMILIA_NO_METALES,
+    DetalleElemento,
+    ElementoQuimico,
+)
 
 pytestmark = pytest.mark.django_db
 
@@ -71,12 +77,60 @@ def test_vista_desconocida_cae_en_tarjetas(client, elementos_cargados):
     assert respuesta.context["vista"] == "tarjetas"
 
 
-def test_contexto_expone_las_categorias_canonicas(client, elementos_cargados):
+def test_leyenda_expone_dos_familias_y_diez_categorias_finas(client, elementos_cargados):
     respuesta = client.get(reverse("elemento_lista"), {"vista": "tabla"})
 
-    categorias = list(respuesta.context["categorias"])
-    assert len(categorias) == 12
-    assert [valor for valor, _ in categorias] == [valor for valor, _ in CATEGORIA_CHOICES]
+    leyenda = respuesta.context["leyenda"]
+    familias = [chip for chip in leyenda if chip["tipo"] == "familia"]
+    finas = [chip for chip in leyenda if chip["tipo"] == "fina"]
+
+    assert len(familias) == 2
+    assert len(finas) == 10
+    # Las familias van primero, en este orden exacto.
+    assert [chip["valor"] for chip in familias] == ["Metales", "No metales"]
+    assert familias[0]["categorias"] == list(FAMILIA_METALES)
+    assert familias[1]["categorias"] == list(FAMILIA_NO_METALES)
+    assert [chip["valor"] for chip in finas] == [valor for valor, _ in CATEGORIA_CHOICES]
+
+
+def test_familias_de_la_leyenda_cubren_los_conjuntos_esperados(
+    client, elementos_cargados
+):
+    respuesta = client.get(reverse("elemento_lista"), {"vista": "tabla"})
+
+    familias = {
+        chip["valor"]: chip["categorias"]
+        for chip in respuesta.context["leyenda"]
+        if chip["tipo"] == "familia"
+    }
+    conteos = {
+        categoria: DetalleElemento.objects.filter(
+            categoria_elemento=categoria
+        ).count()
+        for categoria in FAMILIA_METALES + FAMILIA_NO_METALES
+    }
+
+    # 92 metales tras mover Po a "Otros Metales" (la auditoría citaba 91,
+    # calculado cuando Po todavía era Metaloides); los 6 metaloides no cuentan
+    # como metales. La familia no metálica reúne 20 elementos.
+    assert sum(conteos[categoria] for categoria in familias["Metales"]) == 92
+    assert sum(conteos[categoria] for categoria in familias["No metales"]) == 20
+
+
+def test_leyenda_no_tiene_chips_muertos(client, elementos_cargados):
+    respuesta = client.get(reverse("elemento_lista"), {"vista": "tabla"})
+
+    leyenda = respuesta.context["leyenda"]
+    categorias_en_uso = {
+        detalle.categoria_elemento for detalle in DetalleElemento.objects.all()
+    }
+
+    assert leyenda
+    for chip in leyenda:
+        assert chip["valor"] != ""
+        assert chip["categorias"], f"chip sin categorías: {chip}"
+        # Ningún chip apunta a una categoría sin elementos en la base.
+        assert set(chip["categorias"]) <= categorias_en_uso, chip
 
 
 def test_posiciones_tabla_ubican_el_bloque_f_fuera_de_la_grilla_principal(
@@ -154,8 +208,14 @@ def test_vista_tabla_renderiza_grilla_leyenda_y_filtros_del_cliente(
     assert "pt-sintetico" in html  # hook de honestidad para Z >= 104
     assert 'id="pt-buscar"' in html
     assert 'id="pt-peso-min"' in html
-    assert html.count('class="pt-chip') == len(CATEGORIA_CHOICES)
-    assert 'data-categoria="Lant\u00e1nidos"' in html
+    assert html.count('class="pt-chip') == 12
+    assert html.count('class="pt-chip pt-chip-familia') == 2
+    assert (
+        'data-categorias="Alcalinos|Alcalinos-térreos|Metales de Transición|'
+        'Otros Metales|Lantánidos|Actínidos"'
+    ) in html
+    assert 'data-categorias="No Metales|Halógenos|Gases Nobles"' in html
+    assert 'data-categoria="Lantánidos"' in html
     # Sin formulario del servidor en modo tabla (los filtros son del cliente).
     assert 'name="busqueda_nombre"' not in html
     assert '?vista=tarjetas' in html and '?vista=tabla' in html

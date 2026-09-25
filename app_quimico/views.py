@@ -28,7 +28,7 @@ from typing import NamedTuple
 from .models import (
     Industria, ElementoQuimico, DetalleElemento, 
     CompuestoQuimico, Aplicacion, CompuestoAplicacion, ElementoCompuesto,
-    CATEGORIA_CHOICES
+    CATEGORIA_CHOICES, FAMILIA_METALES, FAMILIA_NO_METALES
 )
 
 from .forms import (
@@ -317,8 +317,24 @@ class ElementoListView(ListView):
         context = super().get_context_data(**kwargs)
         context['filter_form'] = ElementoFilterForm(self.request.GET)
         context['vista'] = self.get_vista()
-        # Categorías canónicas para renderizar la leyenda sin duplicar la tupla.
-        context['categorias'] = list(CATEGORIA_CHOICES)
+        # Leyenda de la tabla: primero los 2 chips de familia (agrupan varias
+        # categorías finas) y después las 10 categorías reales en el orden
+        # canónico. Nunca incluye chips muertos sin elementos.
+        context['leyenda'] = [
+            {
+                'tipo': 'familia',
+                'valor': 'Metales',
+                'categorias': list(FAMILIA_METALES),
+            },
+            {
+                'tipo': 'familia',
+                'valor': 'No metales',
+                'categorias': list(FAMILIA_NO_METALES),
+            },
+        ] + [
+            {'tipo': 'fina', 'valor': valor, 'categorias': [valor]}
+            for valor, _ in CATEGORIA_CHOICES
+        ]
         # Las posiciones de la grilla solo se necesitan en modo tabla; el modo
         # tarjetas conserva el contexto de siempre.
         if context['vista'] == self.VISTA_TABLA:
