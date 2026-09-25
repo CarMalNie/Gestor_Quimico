@@ -93,6 +93,13 @@
   byte-idénticos). Commit de T8: 586e707.
 - [x] T9 — cierre: suite verde, commits c466223 / 3c13863 / edf3007 (T1-T6) + 586e707 (T8),
   árbol limpio.
+- [ ] T11 — el operador corrigió el enfoque: NO inventar agrupaciones ("Todos los..."); usar
+  solo terminología bibliográfica. Fix: renombrar la categoría fina 'No Metales' (7 elementos:
+  H, C, N, O, P, S, Se) a **'Otros No Metales'** (su nombre estándar en la bibliografía; así
+  estaba en el modelo original de la cátedra). Chips de familia vuelven a llamarse 'Metales' y
+  'No metales' (conceptos reales, sin "Todos los"). Slugs resultantes sin colisión: familia
+  metales/no-metales vs fina otros-no-metales. En tarjetas, select: 'Metales', 'No metales' +
+  10 finas. Migración state-only (0013) + cargar_elementos adopta el renombre (idempotente).
 - [x] T10 — feedback del operador tras revisión local: (a) select "Por Categoría" de tarjetas
   ahora ofrece las familias ("Metales (todos: 92)" / "No metales (todos: 20)", sentinels
   familia_metales/familia_no_metales, server-side __in=FAMILIA_*, else __exact); (b) leyenda de
