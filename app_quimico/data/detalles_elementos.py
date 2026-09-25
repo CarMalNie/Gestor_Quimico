@@ -29,6 +29,10 @@ Classification conventions (IUPAC-style 10-category didactic scheme):
   (RSC Chemistry World; Wikipedia, "Polonium").
 - At is a halogen by its group-17 position; sources differ on whether it is a
   nonmetal, a metalloid or a metal (Wikipedia, "Astatine").
+- The non-metal category is named 'Otros No Metales' ("other nonmetals"), its
+  standard name in the bibliography; it holds H, C, N, O, P, S and Se. This
+  avoids the collision with the didactic family 'No metales' (which also
+  includes Halógenos and Gases Nobles).
 - Z >= 104 (Rf-Og) categories are assigned by position; the IUPAC colored
   table marks their properties as unknown/predicted.
 
@@ -40,7 +44,7 @@ The 10 elements of the cátedra reference tables reproduce its exact values.
 
 DETALLES_ELEMENTOS = {
     # simbolo: (grupo, periodo, categoria, EN, afinidad, ionizacion, radio, descripcion)
-    "H":  (1, 1, "No Metales", "2.20", "-72.80", "1312.00", "31",
+    "H":  (1, 1, "Otros No Metales", "2.20", "-72.80", "1312.00", "31",
            "El elemento más abundante del universo; forma parte del agua y de todos los compuestos orgánicos."),
     "He": (18, 1, "Gases Nobles", None, None, "2372.30", None,
            "Gas noble ultraligero; se usa en globos científicos y para enfriar imanes superconductores de MRI."),
@@ -50,11 +54,11 @@ DETALLES_ELEMENTOS = {
            "Metal rígido y ligero; se usa en aleaciones aeroespaciales y ventanas de equipos de rayos X."),
     "B":  (13, 2, "Metaloides", "2.04", "-26.70", "800.60", "84",
            "Metaloide esencial para las plantas; el vidrio borosilicato resiste el calor gracias al boro."),
-    "C":  (14, 2, "No Metales", "2.55", "-122.00", "1086.50", "76",
+    "C":  (14, 2, "Otros No Metales", "2.55", "-122.00", "1086.50", "76",
            "Base de toda la química orgánica y de la vida; forma diamante, grafito y grafeno."),
-    "N":  (15, 2, "No Metales", "3.04", "-7.00", "1402.30", "71",
+    "N":  (15, 2, "Otros No Metales", "3.04", "-7.00", "1402.30", "71",
            "Compone el 78% de la atmósfera; constituye los aminoácidos y la base de los fertilizantes."),
-    "O":  (16, 2, "No Metales", "3.44", "-140.98", "1313.90", "66",
+    "O":  (16, 2, "Otros No Metales", "3.44", "-140.98", "1313.90", "66",
            "El elemento más abundante de la corteza terrestre; sostiene la respiración y la combustión."),
     "F":  (17, 2, "Halógenos", "3.98", "-328.00", "1681.00", "57",
            "El elemento más electronegativo; los fluoruros protegen el esmalte dental y forman teflón."),
@@ -68,9 +72,9 @@ DETALLES_ELEMENTOS = {
            "El metal más abundante de la corteza; ligero, reciclable y resistente a la corrosión."),
     "Si": (14, 3, "Metaloides", "1.90", "-133.60", "786.50", "111",
            "Metaloide semiconductor; es la base de los chips y de toda la era digital."),
-    "P":  (15, 3, "No Metales", "2.19", "-72.00", "1011.80", "107",
+    "P":  (15, 3, "Otros No Metales", "2.19", "-72.00", "1011.80", "107",
            "Esencial en el ADN y el ATP; sus fosfatos son el corazón de los fertilizantes agrícolas."),
-    "S":  (16, 3, "No Metales", "2.58", "-200.00", "999.60", "105",
+    "S":  (16, 3, "Otros No Metales", "2.58", "-200.00", "999.60", "105",
            "Del olor volcánico al industrial: su ácido sulfúrico es el químico más producido del mundo."),
     "Cl": (17, 3, "Halógenos", "3.16", "-348.60", "1251.20", "102",
            "Gas halógeno verdoso y desinfectante; potabiliza el agua y conserva alimentos."),
@@ -106,7 +110,7 @@ DETALLES_ELEMENTOS = {
            "Primer semiconductor de los transistores; hoy en óptica infrarroja y fibra óptica."),
     "As": (15, 4, "Metaloides", "2.18", "-78.00", "947.00", "119",
            "Metaloide de fama tóxica; sus semiconductores (GaAs) funcionan en LEDs y láseres."),
-    "Se": (16, 4, "No Metales", "2.55", "-195.00", "941.00", "120",
+    "Se": (16, 4, "Otros No Metales", "2.55", "-195.00", "941.00", "120",
            "Oligoelemento esencial en dosis mínimas; pionero de las fotocopiadoras y vidrio rojo."),
     "Br": (17, 4, "Halógenos", "2.96", "-324.60", "1139.90", "120",
            "Único halógeno líquido a temperatura ambiente; retardante de llama y bromuro fotográfico."),

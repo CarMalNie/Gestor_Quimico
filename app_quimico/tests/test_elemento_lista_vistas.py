@@ -1,8 +1,12 @@
 """Tests for the view-mode toggle (vista=tarjetas|tabla) of ElementoListView."""
 
+import re
+from pathlib import Path
+
 import pytest
 from django.core.management import call_command
 from django.urls import reverse
+from django.utils.text import slugify
 
 from app_quimico.models import (
     CATEGORIA_CHOICES,
@@ -13,6 +17,17 @@ from app_quimico.models import (
 )
 
 pytestmark = pytest.mark.django_db
+
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+PERIODIC_TABLE_CSS = PROJECT_ROOT / "static" / "css" / "periodic_table.css"
+PERIODIC_TABLE_TEMPLATE = (
+    PROJECT_ROOT
+    / "app_quimico"
+    / "templates"
+    / "app_quimico"
+    / "elemento_quimico"
+    / "elemento_lista.html"
+)
 
 
 @pytest.fixture
@@ -88,8 +103,8 @@ def test_leyenda_expone_dos_familias_y_diez_categorias_finas(client, elementos_c
     assert len(finas) == 10
     # Las familias van primero, en este orden exacto.
     assert [chip["valor"] for chip in familias] == [
-        "Todos los metales",
-        "Todos los no metales",
+        "Metales",
+        "No metales",
     ]
     assert familias[0]["categorias"] == list(FAMILIA_METALES)
     assert familias[1]["categorias"] == list(FAMILIA_NO_METALES)
@@ -116,11 +131,8 @@ def test_familias_de_la_leyenda_cubren_los_conjuntos_esperados(
     # 92 metales tras mover Po a "Otros Metales" (la auditoría citaba 91,
     # calculado cuando Po todavía era Metaloides); los 6 metaloides no cuentan
     # como metales. La familia no metálica reúne 20 elementos.
-    assert sum(conteos[categoria] for categoria in familias["Todos los metales"]) == 92
-    assert (
-        sum(conteos[categoria] for categoria in familias["Todos los no metales"])
-        == 20
-    )
+    assert sum(conteos[categoria] for categoria in familias["Metales"]) == 92
+    assert sum(conteos[categoria] for categoria in familias["No metales"]) == 20
 
 
 def test_leyenda_no_tiene_chips_muertos(client, elementos_cargados):
@@ -220,40 +232,45 @@ def test_vista_tabla_renderiza_grilla_leyenda_y_filtros_del_cliente(
         'data-categorias="Alcalinos|Alcalinos-térreos|Metales de Transición|'
         'Otros Metales|Lantánidos|Actínidos"'
     ) in html
-    assert 'data-categorias="No Metales|Halógenos|Gases Nobles"' in html
+    assert 'data-categorias="Otros No Metales|Halógenos|Gases Nobles"' in html
     assert 'data-categoria="Lantánidos"' in html
     # Sin formulario del servidor en modo tabla (los filtros son del cliente).
     assert 'name="busqueda_nombre"' not in html
     assert '?vista=tarjetas' in html and '?vista=tabla' in html
 
 
-def test_leyenda_renombra_las_familias_para_no_colisionar_con_los_chips_finos(
+def test_leyenda_usa_terminologia_bibliografica_sin_inventar_agrupaciones(
     client, elementos_cargados
 ):
-    """El chip de familia ya no se lee como un duplicado del chip fino.
+    """Las familias se llaman 'Metales'/'No metales': conceptos reales.
 
-    Antes la familia "No metales" compartía texto y clase de color
-    (`pt-chip-no-metales`) con la categoría fina "No Metales"."""
+    El operador rechazó el rótulo "Todos los...". La categoría fina se llama
+    'Otros No Metales' (nombre bibliográfico), así que el slug de la familia
+    'No metales' (`pt-chip-no-metales`) ya no choca con ella."""
     respuesta = client.get(reverse("elemento_lista"), {"vista": "tabla"})
     html = respuesta.content.decode()
 
     assert "pt-chip-familia" in html
-    # Etiquetas de familia nuevas y únicas en la leyenda.
-    assert html.count(">Todos los metales<") == 1
-    assert html.count(">Todos los no metales<") == 1
-    # El chip fino "No Metales" conserva su etiqueta exacta, sin repeticiones.
-    assert html.count(">No Metales<") == 1
-    # Sin el chip de familia que colisionaba con el fino.
-    assert ">Metales<" not in html
-    assert ">No metales<" not in html
-    # La familia no reusa la clase de color del chip fino.
+    # Etiquetas de familia bibliográficas y únicas en la leyenda.
+    assert html.count(">Metales<") == 1
+    assert html.count(">No metales<") == 1
+    # La categoría fina renombrada conserva su propia etiqueta.
+    assert html.count(">Otros No Metales<") == 1
+    # Sin la agrupación inventada en ninguna parte de la leyenda.
+    assert ">Todos los" not in html
+    # Slugs sin colisión: familia metales / familia no-metales / fina
+    # otros-no-metales.
     assert (
-        'class="pt-chip pt-chip-familia pt-chip-todos-los-metales"'
+        'class="pt-chip pt-chip-familia pt-chip-metales"'
         ' data-categorias="Alcalinos|'
     ) in html
     assert (
-        'class="pt-chip pt-chip-familia pt-chip-todos-los-no-metales"'
-        ' data-categorias="No Metales|'
+        'class="pt-chip pt-chip-familia pt-chip-no-metales"'
+        ' data-categorias="Otros No Metales|'
+    ) in html
+    assert (
+        'class="pt-chip pt-chip-otros-no-metales"'
+        ' data-categoria="Otros No Metales"'
     ) in html
 
 
@@ -269,15 +286,8 @@ def test_form_de_filtros_de_tarjetas_expone_familias_y_categorias_finas(
     assert valores[0] == ""
     assert valores[1:3] == ["familia_metales", "familia_no_metales"]
     assert valores[3:] == [valor for valor, _ in CATEGORIA_CHOICES]
-    # Los conteos de las etiquetas coinciden con la base realmente cargada.
-    metales = DetalleElemento.objects.filter(
-        categoria_elemento__in=FAMILIA_METALES
-    ).count()
-    no_metales = DetalleElemento.objects.filter(
-        categoria_elemento__in=FAMILIA_NO_METALES
-    ).count()
-    assert str(metales) in etiquetas["familia_metales"]
-    assert str(no_metales) in etiquetas["familia_no_metales"]
+    assert etiquetas["familia_metales"] == "Metales"
+    assert etiquetas["familia_no_metales"] == "No metales"
 
 
 def test_tarjetas_filtran_por_familia_metales(client, elementos_cargados):
@@ -386,3 +396,57 @@ def test_grilla_periodica_mantiene_data_peso_numerico(client, elementos_cargados
 
     assert 'data-peso="209.0000"' in html
     assert 'data-peso="[209]"' not in html
+
+
+# ========================================================================= #
+# Estilos de la leyenda (CSS) y cache-busting
+# ========================================================================= #
+
+
+def test_periodic_table_css_cache_bust_was_bumped():
+    """La paleta de la leyenda cambió: el ?v del CSS sube para invalidar caché."""
+    source = PERIODIC_TABLE_TEMPLATE.read_text(encoding="utf-8")
+
+    assert "css/periodic_table.css' %}?v=4" in source
+
+
+def _paleta_declarada_para_chip(css, slug):
+    """Variables de paleta (--pt-*) usadas por la regla `.pt-chip-<slug>`."""
+    propio = f".pt-chip-{slug}"
+    sin_comentarios = re.sub(r"/\*.*?\*/", "", css, flags=re.S)
+    variables = set()
+    for selector, cuerpo in re.findall(r"([^{}]+)\{([^{}]*)\}", sin_comentarios):
+        if propio in {parte.strip() for parte in selector.split(",")}:
+            variables.update(re.findall(r"var\(\s*(--pt-[\w-]+)", cuerpo))
+    return variables
+
+
+def test_css_estiliza_los_slugs_de_chip_usados_en_ambos_temas(
+    client, elementos_cargados
+):
+    """Cada chip de la leyenda tiene su regla y su paleta en claro y oscuro."""
+    css = PERIODIC_TABLE_CSS.read_text(encoding="utf-8")
+    css_sin_comentarios = re.sub(r"/\*.*?\*/", "", css, flags=re.S)
+    leyenda = client.get(
+        reverse("elemento_lista"), {"vista": "tabla"}
+    ).context["leyenda"]
+    slugs = {slugify(chip["valor"]) for chip in leyenda}
+
+    assert len(slugs) == 12
+    for slug in slugs:
+        variables = _paleta_declarada_para_chip(css, slug)
+        assert variables, f"sin regla CSS para .pt-chip-{slug}"
+        for variable in variables:
+            # Cada variable de tema se declara una vez por tema (claro/oscuro).
+            assert css_sin_comentarios.count(f"{variable}:") == 2, (
+                f"{variable} no está definida en ambos temas"
+            )
+
+
+def test_css_no_conserva_clases_de_agrupaciones_inventadas():
+    """Los slugs 'todos-los-*' quedaron muertos tras el renombre de T11."""
+    css = PERIODIC_TABLE_CSS.read_text(encoding="utf-8")
+
+    assert "pt-chip-todos-los-metales" not in css
+    assert "pt-chip-todos-los-no-metales" not in css
+    assert "Todos los" not in css

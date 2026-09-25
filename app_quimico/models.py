@@ -20,10 +20,12 @@ GRUPO_CHOICES = [(i, str(i)) for i in range(1, 19)]
 # Opciones para Períodos (1 al 7)
 PERIODO_CHOICES = [(i, str(i)) for i in range(1, 8)]
 
-# Opciones para Categoría (10 categorías reales: sin choices muertos como
-# 'Metales' u 'Otros No Metales', que no tenían ningún elemento asignado).
+# Opciones para Categoría (10 categorías reales: sin el choice muerto
+# 'Metales', que no tiene ningún elemento asignado). 'Otros No Metales' es el
+# nombre bibliográfico de la categoría que usan H, C, N, O, P, S y Se (antes
+# rotulada 'No Metales', lo que la hacía chocar con la familia didáctica).
 CATEGORIA_CHOICES = [
-    ('No Metales', 'No Metales'),
+    ('Otros No Metales', 'Otros No Metales'),
     ('Alcalinos', 'Alcalinos'),
     ('Alcalinos-térreos', 'Alcalinos-térreos'),
     ('Lantánidos', 'Lantánidos'),
@@ -57,9 +59,9 @@ FAMILIA_METALES = (
     'Actínidos',
 )
 
-# Familia didáctica "No metales": No Metales + Halógenos + Gases Nobles.
+# Familia didáctica "No metales": Otros No Metales + Halógenos + Gases Nobles.
 FAMILIA_NO_METALES = (
-    'No Metales',
+    'Otros No Metales',
     'Halógenos',
     'Gases Nobles',
 )

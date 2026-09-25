@@ -53,7 +53,7 @@ def test_cargar_elementos_detalles_spot_checks():
     hidrogeno = DetalleElemento.objects.get(id_elemento__simbolo_elemento="H")
     assert hidrogeno.grupo_elemento == 1
     assert hidrogeno.periodo_elemento == 1
-    assert hidrogeno.categoria_elemento == "No Metales"
+    assert hidrogeno.categoria_elemento == "Otros No Metales"
     assert hidrogeno.electronegatividad == Decimal("2.20")
     assert hidrogeno.afinidad_electronica == Decimal("-72.80")
     assert hidrogeno.energia_de_ionizacion == Decimal("1312.00")
@@ -76,6 +76,29 @@ def test_cargar_elementos_detalles_spot_checks():
     cerio = DetalleElemento.objects.get(id_elemento__simbolo_elemento="Ce")
     assert cerio.categoria_elemento == "Lantánidos"
     assert cerio.grupo_elemento == 3
+
+
+def test_cargar_elementos_usa_el_nombre_bibliografico_otros_no_metales():
+    """La categoría fina 'No Metales' pasa a 'Otros No Metales'.
+
+    'Otros No Metales' es el nombre estándar en la bibliografía (y el rótulo
+    original de la cátedra); así deja de chocar con la familia 'No metales'.
+    Exactamente 7 elementos la usan: H, C, N, O, P, S y Se.
+    """
+    call_command("cargar_elementos")
+
+    assert (
+        DetalleElemento.objects.filter(categoria_elemento="No Metales").count()
+        == 0
+    )
+    otros_no_metales = DetalleElemento.objects.filter(
+        categoria_elemento="Otros No Metales"
+    ).order_by("id_elemento__numero_atomico_elemento")
+
+    assert otros_no_metales.count() == 7
+    assert [
+        detalle.id_elemento.simbolo_elemento for detalle in otros_no_metales
+    ] == ["H", "C", "N", "O", "P", "S", "Se"]
 
 
 def test_cargar_elementos_detalles_es_idempotente():

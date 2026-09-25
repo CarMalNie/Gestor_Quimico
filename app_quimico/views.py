@@ -332,14 +332,14 @@ class ElementoListView(ListView):
         context['leyenda'] = [
             {
                 'tipo': 'familia',
-                # Etiquetas distintas de las categorías finas para que "Todos
-                # los no metales" no se lea como el chip fino "No Metales".
-                'valor': 'Todos los metales',
+                # Término bibliográfico llano: los slugs no colisionan con las
+                # categorías finas ('Otros No Metales' es una de ellas).
+                'valor': 'Metales',
                 'categorias': list(FAMILIA_METALES),
             },
             {
                 'tipo': 'familia',
-                'valor': 'Todos los no metales',
+                'valor': 'No metales',
                 'categorias': list(FAMILIA_NO_METALES),
             },
         ] + [

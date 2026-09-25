@@ -88,10 +88,20 @@ def test_filtro_categoria_no_colisiona_centinelas_con_categorias_reales():
     assert FILTRO_FAMILIA_METALES != FILTRO_FAMILIA_NO_METALES
 
 
-def test_filtro_categoria_etiquetas_de_familia_mencionan_conteos():
+def test_filtro_categoria_etiquetas_de_familia_son_bibliograficas():
+    """Sin conteos ni agrupaciones inventadas: solo el término real."""
     etiquetas = dict(CATEGORIA_FILTRO_CHOICES)
 
-    assert "Metales" in etiquetas[FILTRO_FAMILIA_METALES]
-    assert "92" in etiquetas[FILTRO_FAMILIA_METALES]
-    assert "No metales" in etiquetas[FILTRO_FAMILIA_NO_METALES]
-    assert "20" in etiquetas[FILTRO_FAMILIA_NO_METALES]
+    assert etiquetas[FILTRO_FAMILIA_METALES] == "Metales"
+    assert etiquetas[FILTRO_FAMILIA_NO_METALES] == "No metales"
+    assert not any(
+        "Todos los" in etiqueta for _, etiqueta in CATEGORIA_FILTRO_CHOICES
+    )
+
+
+def test_categoria_choices_renombra_no_metales_a_otros_no_metales():
+    """La categoría fina toma su nombre bibliográfico 'Otros No Metales'."""
+    valores = [valor for valor, _ in CATEGORIA_CHOICES]
+
+    assert "No Metales" not in valores
+    assert "Otros No Metales" in valores

@@ -12,7 +12,8 @@
 
 /* ==========================================================================
    1. PALETA POR CATEGORÍA
-   Cada categoría expone --pt-c-<slug> (fondo) y --pt-t-<slug> (texto).
+   Las 10 categorías finas y las 2 familias ("Metales"/"No metales") exponen
+   --pt-c-<slug> (fondo) y --pt-t-<slug> (texto).
    Variante clara: pastel con texto oscuro. Variante oscura: tono profundo
    desaturado con texto claro. Sin ':root' para no pisar el modo oscuro.
    ========================================================================== */
@@ -131,17 +132,12 @@
     --pt-fg: var(--pt-t-gases-nobles, var(--bs-body-color));
 }
 
-/* Chips de familia ("Todos los metales" / "Todos los no metales"): la familia
-   no es una celda de la grilla, asi que solo mapea chips. Reusa la paleta de su
-   categoría representativa para conservar la relación de color con la tabla. */
-.pt-chip-todos-los-metales {
-    --pt-bg: var(--pt-c-metales, var(--bs-secondary-bg));
-    --pt-fg: var(--pt-t-metales, var(--bs-body-color));
-}
-.pt-chip-todos-los-no-metales {
-    --pt-bg: var(--pt-c-no-metales, var(--bs-secondary-bg));
-    --pt-fg: var(--pt-t-no-metales, var(--bs-body-color));
-}
+/* Chips de familia ("Metales" / "No metales"): la familia no es una celda de
+   la grilla, asi que solo mapea chips. Reusa la paleta de su categoría
+   representativa (--pt-c-metales / --pt-c-no-metales) para conservar la
+   relación de color con la tabla. Las reglas `.pt-chip-metales` y
+   `.pt-chip-no-metales` de arriba ya cumplen ese mapeo; la categoría fina
+   renombrada usa `.pt-chip-otros-no-metales` (paleta propia). */
 
 /* ==========================================================================
    3. GRILLA
