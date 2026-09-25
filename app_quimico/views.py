@@ -34,7 +34,8 @@ from .models import (
 from .forms import (
     IndustriaForm, ElementoQuimicoForm, DetalleElementoForm, 
     CompuestoQuimicoForm, AplicacionForm, CompuestoAplicacionForm,
-    ElementoFilterForm, CompuestoFilterForm, RegistroForm
+    ElementoFilterForm, CompuestoFilterForm, RegistroForm,
+    FILTRO_FAMILIA_METALES, FILTRO_FAMILIA_NO_METALES,
 )
 
 
@@ -258,6 +259,14 @@ class ElementoListView(ListView):
     VISTA_TABLA = 'tabla'
     VISTAS_VALIDAS = (VISTA_TARJETAS, VISTA_TABLA)
 
+    # Traducción de los centinelas del filtro "Por Categoría" (tarjetas) a los
+    # conjuntos de categorías finas que representan. Los valores de
+    # `categoria_elemento` nunca usan estos centinelas.
+    FILTROS_FAMILIA = {
+        FILTRO_FAMILIA_METALES: FAMILIA_METALES,
+        FILTRO_FAMILIA_NO_METALES: FAMILIA_NO_METALES,
+    }
+
     # --- Geometría de la grilla periódica (18 columnas x 7 períodos) --- #
     # Los lantánidos (Ce..Lu) y actínidos (Th..Lr) comparten el grupo 3 en la
     # base de datos, pero se dibujan en dos filas despegadas debajo de la
@@ -323,12 +332,14 @@ class ElementoListView(ListView):
         context['leyenda'] = [
             {
                 'tipo': 'familia',
-                'valor': 'Metales',
+                # Etiquetas distintas de las categorías finas para que "Todos
+                # los no metales" no se lea como el chip fino "No Metales".
+                'valor': 'Todos los metales',
                 'categorias': list(FAMILIA_METALES),
             },
             {
                 'tipo': 'familia',
-                'valor': 'No metales',
+                'valor': 'Todos los no metales',
                 'categorias': list(FAMILIA_NO_METALES),
             },
         ] + [
@@ -361,7 +372,15 @@ class ElementoListView(ListView):
                     Q(simbolo_elemento__icontains=data['busqueda_nombre'])
                 )
             if data['categoria']:
-                queryset = queryset.filter(detalleelemento__categoria_elemento__exact=data['categoria'])
+                # Los centinelas de familia agrupan varias categorías finas;
+                # cualquier otro valor es una categoría real (match exacto).
+                familias = self.FILTROS_FAMILIA.get(data['categoria'])
+                if familias is not None:
+                    queryset = queryset.filter(
+                        detalleelemento__categoria_elemento__in=familias
+                    )
+                else:
+                    queryset = queryset.filter(detalleelemento__categoria_elemento__exact=data['categoria'])
             if data['min_peso_atomico']:
                 queryset = queryset.filter(peso_atomico_elemento__gte=data['min_peso_atomico'])
                 

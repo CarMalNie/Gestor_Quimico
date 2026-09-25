@@ -2,8 +2,20 @@
 
 import pytest
 
-from app_quimico.forms import CompuestoAplicacionForm, CompuestoQuimicoForm
-from app_quimico.models import Aplicacion, CompuestoQuimico, Industria
+from app_quimico.forms import (
+    CATEGORIA_FILTRO_CHOICES,
+    FILTRO_FAMILIA_METALES,
+    FILTRO_FAMILIA_NO_METALES,
+    CompuestoAplicacionForm,
+    CompuestoQuimicoForm,
+    ElementoFilterForm,
+)
+from app_quimico.models import (
+    CATEGORIA_CHOICES,
+    Aplicacion,
+    CompuestoQuimico,
+    Industria,
+)
 
 
 @pytest.mark.django_db
@@ -53,3 +65,33 @@ def test_compuesto_form_edicion_no_bloquea_formula():
 
     assert "readonly" not in rendered
     assert "bg-light" not in rendered
+
+
+def test_filtro_categoria_incluye_familias_y_categorias_finas():
+    """El select "Por Categoría" ofrece las 2 familias y las 10 finas."""
+    campo = ElementoFilterForm().fields["categoria"]
+    valores = [valor for valor, _ in campo.choices]
+
+    assert valores[0] == ""
+    assert valores[1] == FILTRO_FAMILIA_METALES
+    assert valores[2] == FILTRO_FAMILIA_NO_METALES
+    assert valores[3:] == [valor for valor, _ in CATEGORIA_CHOICES]
+    assert len(valores) == 13
+
+
+def test_filtro_categoria_no_colisiona_centinelas_con_categorias_reales():
+    """Un valor centinela jamás puede ser un `categoria_elemento` real."""
+    categorias_reales = {valor for valor, _ in CATEGORIA_CHOICES}
+
+    assert FILTRO_FAMILIA_METALES not in categorias_reales
+    assert FILTRO_FAMILIA_NO_METALES not in categorias_reales
+    assert FILTRO_FAMILIA_METALES != FILTRO_FAMILIA_NO_METALES
+
+
+def test_filtro_categoria_etiquetas_de_familia_mencionan_conteos():
+    etiquetas = dict(CATEGORIA_FILTRO_CHOICES)
+
+    assert "Metales" in etiquetas[FILTRO_FAMILIA_METALES]
+    assert "92" in etiquetas[FILTRO_FAMILIA_METALES]
+    assert "No metales" in etiquetas[FILTRO_FAMILIA_NO_METALES]
+    assert "20" in etiquetas[FILTRO_FAMILIA_NO_METALES]

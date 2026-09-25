@@ -20,6 +20,28 @@ SMILES_ERROR = (
 )
 
 
+# ============================================= #
+# Filtro "Por Categoría" (tarjetas de elementos) #
+# ============================================= #
+# Valores centinela de las dos familias didácticas. Son deliberadamente
+# distintos de cualquier valor real de `categoria_elemento` (que usa "No
+# Metales", "Alcalinos", etc.) para que una selección de familia nunca se
+# confunda con una categoría fina. La vista traduce estos centinelas a los
+# conjuntos FAMILIA_METALES / FAMILIA_NO_METALES de models.py.
+FILTRO_FAMILIA_METALES = 'familia_metales'
+FILTRO_FAMILIA_NO_METALES = 'familia_no_metales'
+
+# Opciones del select: primero las dos familias (agrupan varias categorías
+# finas), después las 10 categorías reales. Los conteos entre paréntesis son
+# los elementos cargados por `cargar_elementos` (hay un test que los contrasta
+# contra la base para detectar cualquier deriva si cambian los datos).
+CATEGORIA_FILTRO_CHOICES = [
+    ('', '--- Todas las Categorías ---'),
+    (FILTRO_FAMILIA_METALES, 'Metales (todos: 92)'),
+    (FILTRO_FAMILIA_NO_METALES, 'No metales (todos: 20)'),
+] + CATEGORIA_CHOICES
+
+
 # ================ #
 # Elemento Químico #
 # ================ #
@@ -244,11 +266,11 @@ class ElementoFilterForm(forms.Form):
         widget=forms.TextInput(attrs={'placeholder': 'Ej: Sodio, Cloro', 'class': 'form-control'})
     )
     
-    # 2. Por Categoría (Dropdown)
+    # 2. Por Categoría (Dropdown): familias + categorías finas.
     categoria = forms.ChoiceField(
         required=False, 
         label="Por Categoría",
-        choices=[('', '--- Todas las Categorías ---')] + CATEGORIA_CHOICES,
+        choices=CATEGORIA_FILTRO_CHOICES,
         widget=forms.Select(attrs={'class': 'form-control'})
     )
     

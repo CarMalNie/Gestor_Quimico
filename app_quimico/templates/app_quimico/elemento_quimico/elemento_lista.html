@@ -6,7 +6,7 @@
 
 {% block content %}
 {# base.html no expone un bloque extra_css: la hoja de la tabla periódica se carga acá (link en body es HTML5 válido). #}
-<link rel="stylesheet" href="{% static 'css/periodic_table.css' %}?v=2">
+<link rel="stylesheet" href="{% static 'css/periodic_table.css' %}?v=3">
 {# Los filtros del cliente de la tabla periódica; defer lo hace no bloqueante. #}
 <script src="{% static 'js/periodic_table.js' %}?v=3" defer></script>
 <div class="row">

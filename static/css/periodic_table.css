@@ -2,7 +2,7 @@
  * Tabla periódica (vista ?vista=tabla de elemento_lista.html)
  *
  * Aspecto de la grilla 18x7 + 2 filas despegadas del bloque f, mapa de color
- * por categoría (12 CATEGORIA_CHOICES), estilo de honestidad para elementos
+ * por categoría (10 CATEGORIA_CHOICES), estilo de honestidad para elementos
  * sintéticos (Z >= 104) y clases de estado que el JS (T5) activa/desactiva.
  *
  * Las posiciones (grid-column/grid-row) llegan inline desde la vista; acá
@@ -129,6 +129,18 @@
 .pt-celda-gases-nobles, .pt-chip-gases-nobles {
     --pt-bg: var(--pt-c-gases-nobles, var(--bs-secondary-bg));
     --pt-fg: var(--pt-t-gases-nobles, var(--bs-body-color));
+}
+
+/* Chips de familia ("Todos los metales" / "Todos los no metales"): la familia
+   no es una celda de la grilla, asi que solo mapea chips. Reusa la paleta de su
+   categoría representativa para conservar la relación de color con la tabla. */
+.pt-chip-todos-los-metales {
+    --pt-bg: var(--pt-c-metales, var(--bs-secondary-bg));
+    --pt-fg: var(--pt-t-metales, var(--bs-body-color));
+}
+.pt-chip-todos-los-no-metales {
+    --pt-bg: var(--pt-c-no-metales, var(--bs-secondary-bg));
+    --pt-fg: var(--pt-t-no-metales, var(--bs-body-color));
 }
 
 /* ==========================================================================
@@ -297,6 +309,18 @@
     border-color: var(--pt-anillo, currentColor);
     box-shadow: 0 0 0 2px var(--pt-anillo, currentColor);
     font-weight: 700;
+}
+
+/* Chips de familia: agrupan varias categorías finas (los finos representan
+   una sola). Se distinguen por borde discontinuo de 2px y etiqueta en
+   mayúsculas; borde y fondo usan variables definidas en ambos temas
+   [data-bs-theme], así que el contraste se mantiene en claro y oscuro. */
+.pt-chip-familia {
+    border-style: dashed;
+    border-width: 2px;
+    font-size: .7rem;
+    letter-spacing: .02em;
+    text-transform: uppercase;
 }
 
 #pt-buscar,

@@ -87,7 +87,10 @@ def test_leyenda_expone_dos_familias_y_diez_categorias_finas(client, elementos_c
     assert len(familias) == 2
     assert len(finas) == 10
     # Las familias van primero, en este orden exacto.
-    assert [chip["valor"] for chip in familias] == ["Metales", "No metales"]
+    assert [chip["valor"] for chip in familias] == [
+        "Todos los metales",
+        "Todos los no metales",
+    ]
     assert familias[0]["categorias"] == list(FAMILIA_METALES)
     assert familias[1]["categorias"] == list(FAMILIA_NO_METALES)
     assert [chip["valor"] for chip in finas] == [valor for valor, _ in CATEGORIA_CHOICES]
@@ -113,8 +116,11 @@ def test_familias_de_la_leyenda_cubren_los_conjuntos_esperados(
     # 92 metales tras mover Po a "Otros Metales" (la auditoría citaba 91,
     # calculado cuando Po todavía era Metaloides); los 6 metaloides no cuentan
     # como metales. La familia no metálica reúne 20 elementos.
-    assert sum(conteos[categoria] for categoria in familias["Metales"]) == 92
-    assert sum(conteos[categoria] for categoria in familias["No metales"]) == 20
+    assert sum(conteos[categoria] for categoria in familias["Todos los metales"]) == 92
+    assert (
+        sum(conteos[categoria] for categoria in familias["Todos los no metales"])
+        == 20
+    )
 
 
 def test_leyenda_no_tiene_chips_muertos(client, elementos_cargados):
@@ -219,6 +225,114 @@ def test_vista_tabla_renderiza_grilla_leyenda_y_filtros_del_cliente(
     # Sin formulario del servidor en modo tabla (los filtros son del cliente).
     assert 'name="busqueda_nombre"' not in html
     assert '?vista=tarjetas' in html and '?vista=tabla' in html
+
+
+def test_leyenda_renombra_las_familias_para_no_colisionar_con_los_chips_finos(
+    client, elementos_cargados
+):
+    """El chip de familia ya no se lee como un duplicado del chip fino.
+
+    Antes la familia "No metales" compartía texto y clase de color
+    (`pt-chip-no-metales`) con la categoría fina "No Metales"."""
+    respuesta = client.get(reverse("elemento_lista"), {"vista": "tabla"})
+    html = respuesta.content.decode()
+
+    assert "pt-chip-familia" in html
+    # Etiquetas de familia nuevas y únicas en la leyenda.
+    assert html.count(">Todos los metales<") == 1
+    assert html.count(">Todos los no metales<") == 1
+    # El chip fino "No Metales" conserva su etiqueta exacta, sin repeticiones.
+    assert html.count(">No Metales<") == 1
+    # Sin el chip de familia que colisionaba con el fino.
+    assert ">Metales<" not in html
+    assert ">No metales<" not in html
+    # La familia no reusa la clase de color del chip fino.
+    assert (
+        'class="pt-chip pt-chip-familia pt-chip-todos-los-metales"'
+        ' data-categorias="Alcalinos|'
+    ) in html
+    assert (
+        'class="pt-chip pt-chip-familia pt-chip-todos-los-no-metales"'
+        ' data-categorias="No Metales|'
+    ) in html
+
+
+def test_form_de_filtros_de_tarjetas_expone_familias_y_categorias_finas(
+    client, elementos_cargados
+):
+    respuesta = client.get(reverse("elemento_lista"))
+
+    campo = respuesta.context["filter_form"].fields["categoria"]
+    valores = [valor for valor, _ in campo.choices]
+    etiquetas = dict(campo.choices)
+
+    assert valores[0] == ""
+    assert valores[1:3] == ["familia_metales", "familia_no_metales"]
+    assert valores[3:] == [valor for valor, _ in CATEGORIA_CHOICES]
+    # Los conteos de las etiquetas coinciden con la base realmente cargada.
+    metales = DetalleElemento.objects.filter(
+        categoria_elemento__in=FAMILIA_METALES
+    ).count()
+    no_metales = DetalleElemento.objects.filter(
+        categoria_elemento__in=FAMILIA_NO_METALES
+    ).count()
+    assert str(metales) in etiquetas["familia_metales"]
+    assert str(no_metales) in etiquetas["familia_no_metales"]
+
+
+def test_tarjetas_filtran_por_familia_metales(client, elementos_cargados):
+    respuesta = client.get(
+        reverse("elemento_lista"), {"categoria": "familia_metales"}
+    )
+
+    assert respuesta.status_code == 200
+    elementos = list(respuesta.context["elementos"])
+    assert len(elementos) == 92
+    assert all(
+        elemento.detalleelemento.categoria_elemento in FAMILIA_METALES
+        for elemento in elementos
+    )
+    # Los metaloides no cuentan como metales.
+    simbolos = {elemento.simbolo_elemento for elemento in elementos}
+    assert "B" not in simbolos
+    assert "Si" not in simbolos
+
+
+def test_tarjetas_filtran_por_familia_no_metales(client, elementos_cargados):
+    respuesta = client.get(
+        reverse("elemento_lista"), {"categoria": "familia_no_metales"}
+    )
+
+    assert respuesta.status_code == 200
+    elementos = list(respuesta.context["elementos"])
+    assert len(elementos) == 20
+    assert all(
+        elemento.detalleelemento.categoria_elemento in FAMILIA_NO_METALES
+        for elemento in elementos
+    )
+
+
+def test_tarjetas_mantienen_exacta_la_categoria_fina(client, elementos_cargados):
+    respuesta = client.get(reverse("elemento_lista"), {"categoria": "Alcalinos"})
+
+    elementos = list(respuesta.context["elementos"])
+    assert len(elementos) == 6
+    assert all(
+        elemento.detalleelemento.categoria_elemento == "Alcalinos"
+        for elemento in elementos
+    )
+
+
+def test_tarjetas_ignoran_un_centinela_de_familia_desconocido(
+    client, elementos_cargados
+):
+    """Un valor inventado no debe filtrar como si fuera una categoría real."""
+    respuesta = client.get(
+        reverse("elemento_lista"), {"categoria": "familia_inexistente"}
+    )
+
+    assert respuesta.status_code == 200
+    assert len(list(respuesta.context["elementos"])) == 118
 
 
 def test_vista_tarjetas_mantiene_el_formulario_del_servidor(client, elementos_cargados):
