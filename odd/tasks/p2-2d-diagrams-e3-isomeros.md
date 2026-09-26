@@ -49,14 +49,18 @@ listas largas (cap simple + fallback manual).
 
 ## Tasks
 
-- [ ] T1 Feature doc + Engram mirror + todo projection (este doc)
-- [ ] T2 Cliente PubChem fastformula + tests (httpx mockeado, parseo
-      defensivo de campos, dedupe por SMILES, cap, errores 404/502/timeout)
-- [ ] T3 Endpoint lookup-isomeros + tests (contrato completo como Entrega 2)
-- [ ] T4 Frontend: JS reescrito (?v=2) + wiring template (botón por
-      fórmula, lista de candidatos, fallback por fórmula) + tests
-- [ ] T5 requirements.txt pin httpx[http2] + suite completa verde +
-      work-unit commit (descripción en español)
+- [x] T1 Feature doc + Engram mirror + todo projection (este doc)
+- [x] T2 Cliente PubChem fastformula (`app_quimico/pubchem_lookup.py`) +
+      9 tests httpx mockeados (dedupe por SMILES conserva primer
+      IUPACName, cap 10, campos SMILES defensivos, 404/503/timeout/JSON
+      inesperado → PubChemNoDisponible, PropertyTable vacío →
+      no_encontrado).
+- [x] T3 Endpoint `lookup_isomeros` + url + 9 tests (contrato completo).
+- [x] T4 Frontend JS reescrito (?v=2): botón por fórmula, lista de
+      candidatos list-group clickeables, relleno directo si hay 1,
+      fallback por fórmula; 8 tests de plantilla/JS.
+- [x] T5 requirements.txt pin `httpx[http2]==0.28.1` + suite 348 passed
+      (era 328) + check limpio + commit 7f88dc6.
 - [ ] T6 Validación local del operador → push → PA (pip install -r
       requirements.txt + collectstatic + Reload) → validación producción
 
