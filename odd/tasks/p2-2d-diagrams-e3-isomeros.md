@@ -61,8 +61,17 @@ listas largas (cap simple + fallback manual).
       fallback por fórmula; 8 tests de plantilla/JS.
 - [x] T5 requirements.txt pin `httpx[http2]==0.28.1` + suite 348 passed
       (era 328) + check limpio + commit 7f88dc6.
-- [ ] T6 Validación local del operador → push → PA (pip install -r
+- [x] T6 Validación local del operador → push → PA (pip install -r
       requirements.txt + collectstatic + Reload) → validación producción
+      10/10 (2026-09-26; CI verde 8b21705; hallazgo documentado:
+      fastformula usa fórmula plana Hill — K4[Fe(CN)6] → 404,
+      C6FeK4N6 → lista de candidatos).
+- [x] T7 Feedback del operador (producción): el enlace manual a PubChem
+      también debe aparecer junto a la LISTA de isómeros (no solo en
+      404/502) — el compuesto puede estar fuera del cap o sin match por
+      fórmula. Commit f036e41: copy "¿No se encuentra? Abrir la búsqueda
+      en PubChem ↗" en la plantilla (universal), JS lo muestra junto a
+      la lista, ?v=2→?v=3, 2 tests nuevos (10 passed módulo).
 
 ## Evidence
 
