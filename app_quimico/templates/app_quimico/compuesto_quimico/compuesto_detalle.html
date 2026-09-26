@@ -148,9 +148,26 @@
 
             <div class="tab-pane fade" id="estructura2d" role="tabpanel">
                 <p class="lead text-muted small">Representación 2D generada a partir de la notación SMILES:</p>
-                <div class="estructura-2d" data-smiles="{{ compuesto.smiles_para_render }}">
+                <div class="estructura-2d" data-smiles="{{ compuesto.smiles_para_render }}" data-smiles-zoom tabindex="0" role="button" aria-label="Ampliar la estructura 2D">
                     <span class="estructura-2d__caption">Estructura 2D (SMILES)</span>
                     {% if compuesto.clasificar_enlace_smiles %}<span class="estructura-2d__caption">{{ compuesto.clasificar_enlace_smiles }}</span>{% endif %}
+                </div>
+                <button type="button" class="btn btn-sm btn-outline-secondary mt-3" data-smiles-ampliar="{{ compuesto.smiles_para_render }}">
+                    🔍 Ampliar
+                </button>
+            </div>
+
+            <div class="modal fade" id="modal-estructura-2d" tabindex="-1" aria-labelledby="modal-estructura-2d-titulo" aria-hidden="true">
+                <div class="modal-dialog modal-lg modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="modal-estructura-2d-titulo">Estructura 2D ampliada</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="estructura-2d-modal" data-smiles-modal-body></div>
+                        </div>
+                    </div>
                 </div>
             </div>{% endif %}
             
@@ -164,4 +181,4 @@
 
 {% block extra_js %}
 {% if compuesto.smiles %}<script src="{% static 'vendor/smilesdrawer/smiles-drawer.min.js' %}"></script>
-<script src="{% static 'js/smiles_render.js' %}?v=2"></script>{% endif %}    {% endblock %}
+<script src="{% static 'js/smiles_render.js' %}?v=3"></script>{% endif %}    {% endblock %}

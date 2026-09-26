@@ -152,6 +152,8 @@
     background-color: #ffffff;
     border: 1px solid rgba(0, 0, 0, .15);
     border-radius: var(--bs-border-radius);
+    /* Pista visual: el diagrama abre el modal de zoom (p2-2d-diagrams-e4). */
+    cursor: zoom-in;
 }
 
 .estructura-2d__caption {
@@ -166,4 +168,34 @@
     width: 100%;
     height: auto;
     max-width: 200px;
+}
+
+/* ==========================================================================
+   MODAL DE ZOOM DEL DIAGRAMA — p2-2d-diagrams-e4-modal-zoom
+   El modal re-dibuja el MISMO SMILES a 600x450 (SVG nativo, no estirado).
+   Fondo claro FIJO por la misma razón que la miniatura: el tema "light" de
+   SmilesDrawer debe seguir siendo legible con data-bs-theme="dark".
+   ========================================================================== */
+.estructura-2d-modal {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 300px;
+    padding: .5rem;
+    background-color: #ffffff;
+    border: 1px solid rgba(0, 0, 0, .15);
+    border-radius: var(--bs-border-radius);
+}
+
+/* Escala proporcional (width 100% + height auto): nunca un SVG estirado. */
+.estructura-2d-modal svg {
+    display: block;
+    width: 100%;
+    height: auto;
+    max-width: 600px;
+}
+
+.estructura-2d-modal__aviso {
+    text-align: center;
 }

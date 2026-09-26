@@ -65,10 +65,13 @@
                     <span class="badge bg-secondary p-2">Fórmula:</span> 
                     <span class="h4 text-primary ms-2">{{ compuesto.formula_compuesto }}</span>
                 </div>{% if compuesto.smiles %}
-                <div class="estructura-2d mb-3" data-smiles="{{ compuesto.smiles_para_render }}">
+                <div class="estructura-2d mb-3" data-smiles="{{ compuesto.smiles_para_render }}" data-smiles-zoom tabindex="0" role="button" aria-label="Ampliar la estructura 2D">
                     <span class="estructura-2d__caption">Estructura 2D (SMILES)</span>
                     {% if compuesto.clasificar_enlace_smiles %}<span class="estructura-2d__caption">{{ compuesto.clasificar_enlace_smiles }}</span>{% endif %}
-                </div>{% endif %}
+                </div>
+                <button type="button" class="btn btn-sm btn-outline-secondary mb-3" data-smiles-ampliar="{{ compuesto.smiles_para_render }}">
+                    🔍 Ampliar
+                </button>{% endif %}
                 
                 <h6 class="text-muted">Detalles Químicos:</h6>
                 <p class="card-text">
@@ -147,6 +150,23 @@
     {% endfor %}
 </div>
 
+{# p2-2d-diagrams-e4-modal-zoom: modal compartido de zoom. Se emite UNA sola vez, y solo si alguna tarjeta de la pagina tiene SMILES. El contenido es estatico a proposito (el JS lo rellena): por eso {% ifchanged %} puede emitirlo una unica vez fuera del loop de tarjetas. No interpolar datos por compuesto aqui. #}
+{% for compuesto in compuestos %}{% if compuesto.smiles %}{% ifchanged %}
+<div class="modal fade" id="modal-estructura-2d" tabindex="-1" aria-labelledby="modal-estructura-2d-titulo" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modal-estructura-2d-titulo">Estructura 2D ampliada</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                <div class="estructura-2d-modal" data-smiles-modal-body></div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endifchanged %}{% endif %}{% endfor %}
+
 {% if is_paginated %}
 <nav aria-label="Paginación de compuestos" class="mt-4">
     <ul class="pagination justify-content-center">
@@ -178,5 +198,5 @@
 
 {% block extra_js %}
 <script src="{% static 'vendor/smilesdrawer/smiles-drawer.min.js' %}"></script>
-<script src="{% static 'js/smiles_render.js' %}?v=2"></script>
+<script src="{% static 'js/smiles_render.js' %}?v=3"></script>
 {% endblock %}

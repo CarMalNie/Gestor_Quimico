@@ -584,7 +584,8 @@ def test_lista_with_smiles_renders_the_estructura_2d_block(
     # Scripts self-hosted con cache-bust, solo en esta página.
     assert "vendor/smilesdrawer/smiles-drawer.min.js" in html
     assert "js/smiles_render.js" in html
-    assert "?v=2" in html
+    # E4 (modal zoom): el asset cambió, el cache-bust sube a ?v=3.
+    assert "?v=3" in html
 
 
 def test_form_template_cache_busts_the_cascade_script(client, owner):
@@ -620,7 +621,7 @@ def test_detalle_with_smiles_renders_the_estructura_2d_tab(
     assert f'data-smiles="{EXPANDIDO_ETANOL}"' in html
     assert "Estructura 2D (SMILES)" in html
     assert "vendor/smilesdrawer/smiles-drawer.min.js" in html
-    assert "smiles_render.js?v=2" in html
+    assert "smiles_render.js?v=3" in html
 
 
 # --- Regresión: comentarios multilinea {# #} ---
@@ -685,11 +686,12 @@ def test_smiles_scripts_are_not_loaded_globally_in_base():
 
 
 def test_base_stylesheet_cache_bust_was_bumped():
-    # styles.css cambió (sección .estructura-2d): el ?v sube para invalidar
-    # la caché del navegador (convención del proyecto: bump al editar assets).
+    # styles.css cambió (secciones .estructura-2d / .estructura-2d-modal del
+    # modal de zoom E4): el ?v sube para invalidar la caché del navegador
+    # (convención del proyecto: bump al editar assets).
     source = BASE_TEMPLATE.read_text(encoding="utf-8")
 
-    assert "css/styles.css' %}?v=3" in source
+    assert "css/styles.css' %}?v=4" in source
 
 
 # ========================================================================= #
