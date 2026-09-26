@@ -1,6 +1,6 @@
 # p1-mfa-self-rebind
 
-**Status:** DONE (commiteado: 463d2ea; pendiente push con decisión del operador)
+**Status:** DONE — commit 463d2ea en origin/main, desplegado en producción.
 
 ## Goal
 

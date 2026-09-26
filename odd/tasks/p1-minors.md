@@ -19,7 +19,7 @@ and live local DB).
       operator-approved wording. .env.example example line to be added
       manually by operator (harness safety policy blocks agent edits there);
       production PA needs no .env change (default covers it). Evidence: 3-file
-      diff, pytest 137 passed; commit pending operator request.
+      diff, pytest 137 passed; commit 0985c0e (en origin/main).
 - [x] ~~MySQL timezone tables (local)~~ — RESOLVED: tz tables installed
       locally (mysql.time_zone / time_zone_name = 597 rows each, verified
       via Django shell 2026-09-21). Axes admin date-hierarchy pages work
@@ -54,8 +54,8 @@ and live local DB).
 - 2026-09-21 0985c0e fix(auth): nombre amigable en asunto y cuerpo del email
   de recuperacion (4 files, 26 insertions). Suite 137 passed (pytest -q).
   Implemented via gentle-ai-worker; .env.example line added by operator
-  (harness policy blocks agent writes to .env*). Push/PA deploy pending
-  explicit operator request.
+  (harness policy blocks agent writes to .env*). Push/PA deploy realizado y
+  validado en producción por el operador (2026-09-21).
 - 2026-09-21 d38e03f fix(frontend): navbar responsiva en vista movil (1 file).
   Suite 137 passed, manage.py check clean.
 - 2026-09-21 a1f91b9 feat(db): semilla del grupo Administradores (migration
@@ -73,9 +73,11 @@ and live local DB).
   separators (space outside hydrate position stays invalid), 452f5e3
   fix(frontend) compound edit unlocks the formula field (backend already
   recalculated PM + recomposed; readonly was frontend-only). Suite 158
-  passed. Push + PA (pull + reload, no migrate/no collectstatic) pending.
-- 2026-09-21 T9 Force-MFA session-wide hardening (NOT committed; orchestrator
-  reviews and commits). Files: new `app_quimico/middleware.py`,
+  passed. Push + PA desplegados y validados (2026-09-21, checkpoint cierre
+  más abajo).
+- 2026-09-21 T9 Force-MFA session-wide hardening (commit 8e9dacb, en
+  origin/main; validado por el operador, ver checkpoint del cierre). Files:
+  new `app_quimico/middleware.py`,
   `core/settings.py` (MIDDLEWARE), `app_quimico/mfa_views.py`,
   `mfa_setup.html`, `test_force_mfa.py` (6 -> 16 tests), this file.
   Evidence: focused `pytest -q app_quimico/tests/test_force_mfa.py` 16 passed;

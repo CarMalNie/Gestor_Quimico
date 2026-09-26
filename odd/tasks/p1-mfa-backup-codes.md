@@ -1,6 +1,6 @@
 # p1-mfa-backup-codes
 
-**Status:** DONE (commiteado: 66e65ba; pendiente push con decisión del operador)
+**Status:** DONE — commit 66e65ba en origin/main, desplegado en producción.
 
 ## Goal
 

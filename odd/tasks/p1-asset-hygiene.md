@@ -1,7 +1,7 @@
 # Feature: p1-asset-hygiene — CSS muerto + cache-busting de compuesto_cascade.js
 
-Status: DONE (commit e2e0cba en main local; push/deploy solo con pedido
-explícito del operador)
+Status: DONE — commit 590e09d en origin/main (e2e0cba fue el hash pre-rebase;
+la versión final pusheada es 590e09d), desplegado en producción.
 
 ## Scope
 
@@ -34,8 +34,9 @@ touch -> behavior.
       (ninguna celda con slug de familia, regex con lookahead);
       (b) test "compuesto_cascade.js?v=1" en compuesto_form.html.
 - [x] T4 Suite completa verde (300 passed, era 297) + manage.py check limpio
-      + work-unit commit e2e0cba (chore). Push/deploy: solo con pedido
-      explícito del operador.
+      + work-unit commit 590e09d (chore, en origin/main). Desplegado en
+      producción (commit e2e0cba era el hash previo a un rebase; el cambio
+      final pusheado es 590e09d, mismo árbol).
 
 ## Evidence
 
