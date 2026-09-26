@@ -377,6 +377,24 @@ def test_vista_tabla_no_filtra_comentarios_multilinea_al_html(
     assert "posiciones_tabla" not in html
 
 
+def test_ningun_comentario_django_se_filtraba_al_html(
+    client, elementos_cargados
+):
+    """Anti-regresión general del leak {# #}: django template comments que
+    abarcan más de una línea (o cuyo cierre queda tras un salto de línea)
+
+    se renderizan como texto. Regresión T2 E2: el script inline tenía su
+
+    {# #} en 3 líneas y el comentario aparecía sobre la vista. La aserción
+    es genérica (no tokenizada a un texto): ningún fragmento con la sintaxis
+    "{#" ni "#}" debe sobrevivir al render en ninguna de las dos vistas."""
+    for query, vista in (({}, "tarjetas"), ({"vista": "tabla"}, "tabla")):
+        respuesta = client.get(reverse("elemento_lista"), query)
+        html = respuesta.content.decode()
+        assert "{#" not in html, f"comentario filtrado en vista {vista}"
+        assert "#}" not in html, f"cierre de comentario filtrado en vista {vista}"
+
+
 def test_encabezado_compartido_usa_el_titulo_corto_en_ambas_vistas(
     client, elementos_cargados
 ):

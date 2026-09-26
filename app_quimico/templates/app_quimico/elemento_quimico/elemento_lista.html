@@ -34,10 +34,11 @@
     </div>
 </div>
 
-{# Recuerda la última vista elegida: si la URL no trae ?vista, lo guardado es
-   "tabla" y el servidor renderizó tarjetas, redirige una sola vez. Después del
-   redirect la URL ya lleva ?vista=tabla, así que el guard no puede repetirse. #}
 <script>
+    // Recuerda la última vista elegida: si la URL no trae ?vista, lo guardado
+    // es "tabla" y el servidor renderizó tarjetas, redirige una sola vez.
+    // Después del redirect la URL ya lleva ?vista=tabla, así que el guard no
+    // puede repetirse.
     (function () {
         "use strict";
         var STORAGE_KEY = "gestorQuimicoVistaElementos";
