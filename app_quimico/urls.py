@@ -73,6 +73,9 @@ path('compuestos/eliminar/<int:pk>/', views.CompuestoDeleteView.as_view(), name=
 # Entrega 2 (p2-2d-diagrams-e2-lookup): resolver nombre->SMILES para el form.
 path('compuestos/api/lookup-estructura/', lookup_views.lookup_estructura, name='lookup_estructura'),
 
+# Entrega 3 (p2-2d-diagrams-e3-isomeros): selector de isómeros por fórmula.
+path('compuestos/api/lookup-isomeros/', lookup_views.lookup_isomeros, name='lookup_isomeros'),
+
 # ====================== #
 # CRUD para APLICACIONES # 
 # ====================== #

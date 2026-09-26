@@ -1,0 +1,65 @@
+# Feature: p2-2d-diagrams-e3-isomeros — Entrega 3: selector de isómeros por fórmula
+
+Sealed design (2026-09-25/26, decisiones del operador):
+- Solución robusta elegida sobre el "parche" del diccionario ES→EN:
+  la búsqueda usa la **fórmula molecular** (campo obligatorio del form,
+  independiente del idioma del nombre) y el **usuario elige** su
+  estructura entre los isómeros con nombre — la decisión química queda
+  en el humano, nunca en un resolver arbitrario.
+- Traducción por IA descartada: no determinista, riesgo de alucinación
+  química, y el diseño por fórmula la vuelve innecesaria.
+- Fallback manual: link a PubChem precargado **por fórmula** (universal;
+  en PubChem el usuario ve la misma lista de isómeros y elige a mano).
+
+## Evidencia que sella el diseño
+
+- PubChem bloquea clientes Python HTTP/1.1 (503 fingerprint, verificado
+  en PA y local) PERO **httpx con HTTP/2 pasa limpio**: spike verificado
+  local Y en producción PA (operador 05:12): `fastformula/C2H6O/property/
+  CanonicalSMILES,IUPACName` → 200 HTTP/2 con isómeros {CID, SMILES,
+  IUPACName} (ethanol CCO, methoxymethane COC, isotopólogos...).
+- httpx[http2]==0.28.1 instalado en venv PA (temporal para el spike) y
+  local; la implementación lo pinneará en requirements.txt (decisión de
+  dependencia formal, como django-otp).
+- Cactus (Entrega 2, lookup por nombre) queda en el backend con sus
+  tests: sigue siendo útil para nombres en inglés; la UI cambia a
+  fórmula como único flujo del botón.
+
+## Scope (Entrega 3)
+
+- Cliente `app_quimico/pubchem_lookup.py`: `buscar_isomeros(formula)` via
+  httpx (http2=True, timeout ~8s), parseo defensivo de campos
+  (CanonicalSMILES|ConnectivitySMILES|SMILES), **dedupe por SMILES**
+  conservando el primer IUPACName (el más común) y cap de ~10 candidatos.
+- Endpoint `GET /compuestos/api/lookup-isomeros/?formula=<f>` (login):
+  200 `{formula, candidatos: [{nombre, smiles}]}` / 400 fórmula inválida
+  / 401 anónimo JSON / 404 sin resultados / 405 método / 502 servicio.
+- Frontend: botón único "🔍 Buscar estructura (por fórmula)" en la
+  sección 2D plegada — usa `id_formula_compuesto`:
+  - 1 solo isómero → rellena el SMILES directo + mensaje de éxito.
+  - N isómeros → lista de opciones clickeables (nombre + SMILES
+    visibles); al elegir una, se rellena el campo.
+  - 404/502 → mensaje + link PubChem precargado **con la fórmula**.
+- `estructura_lookup.js` reescrito (cache-bust ?v=2), español neutro.
+- requirements.txt: `httpx[http2]==0.28.1` pinneado. Sin migraciones.
+
+Non-goals: diccionario ES→EN (descartado como parche), traducción IA,
+subprocess curl (documentado en Entram, no necesario), paginación de
+listas largas (cap simple + fallback manual).
+
+## Tasks
+
+- [ ] T1 Feature doc + Engram mirror + todo projection (este doc)
+- [ ] T2 Cliente PubChem fastformula + tests (httpx mockeado, parseo
+      defensivo de campos, dedupe por SMILES, cap, errores 404/502/timeout)
+- [ ] T3 Endpoint lookup-isomeros + tests (contrato completo como Entrega 2)
+- [ ] T4 Frontend: JS reescrito (?v=2) + wiring template (botón por
+      fórmula, lista de candidatos, fallback por fórmula) + tests
+- [ ] T5 requirements.txt pin httpx[http2] + suite completa verde +
+      work-unit commit (descripción en español)
+- [ ] T6 Validación local del operador → push → PA (pip install -r
+      requirements.txt + collectstatic + Reload) → validación producción
+
+## Evidence
+
+(completa a medida que se ejecutan)

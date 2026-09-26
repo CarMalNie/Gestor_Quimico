@@ -60,14 +60,15 @@
                                 <div class="mt-2 d-flex gap-2 align-items-start">
                                     <button class="btn btn-outline-primary btn-sm" type="button"
                                             id="smiles-buscar"
-                                            data-lookup-url="{% url 'lookup_estructura' %}">
-                                        🔍 Buscar estructura por nombre
+                                            data-lookup-url="{% url 'lookup_isomeros' %}">
+                                        🔍 Buscar estructura (por fórmula)
                                     </button>
-                                    <span class="form-text mb-0">Usa el nombre del compuesto escrito arriba.</span>
+                                    <span class="form-text mb-0">Usa la fórmula molecular escrita arriba.</span>
                                 </div>
                                 <div id="lookup-mensaje" class="small mt-2" hidden></div>
-                                <a id="lookup-pubchem" class="small mt-1 d-inline-block" hidden
-                                   href="https://pubchem.ncbi.nlm.nih.gov/" target="_blank" rel="noopener noreferrer">
+                                <div id="lookup-resultados" class="list-group list-group-flush mt-2" hidden></div>
+                                <a id="lookup-pubchem" class="small mt-1"
+                                   href="https://pubchem.ncbi.nlm.nih.gov/" target="_blank" rel="noopener noreferrer" hidden>
                                     Abrir la búsqueda en PubChem ↗
                                 </a>
 
@@ -158,7 +159,7 @@
 {% for a in relacion_form.fields.id_aplicacion.queryset %}"{{ a.pk }}": {{ a.id_industria_id }}{% if not forloop.last %},{% endif %}
 {% endfor %}}</script>
 <script src="{% static 'js/compuesto_cascade.js' %}?v=1"></script>
-<script src="{% static 'js/estructura_lookup.js' %}?v=1"></script>
+<script src="{% static 'js/estructura_lookup.js' %}?v=2"></script>
 <script>
     // Opt-out of the optional 2D structure: collapse the section and clear the
     // SMILES input so the compound is saved without a structure, as before.

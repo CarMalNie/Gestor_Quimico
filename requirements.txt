@@ -4,6 +4,7 @@ django-otp==1.7.3
 crispy-bootstrap5==2025.6
 Django==5.2.8
 django-crispy-forms==2.5
+httpx[http2]==0.28.1
 mysqlclient==2.2.7
 networkx==3.7
 pysmiles==2.1.0

@@ -1,25 +1,32 @@
 /**
- * Búsqueda automática de estructura por nombre (p2-2d-diagrams-e2-lookup).
+ * Selector de estructura por fórmula (p2-2d-diagrams-e3-isomeros).
  *
  * Contract:
- * - Botón #smiles-buscar dentro de la sección #estructura2d: consulta al
- *   endpoint GET lookup-estructura usando el nombre escrito en el campo
- *   nombre_compuesto y rellena el input #id_smiles si el resolver responde.
+ * - Botón #smiles-buscar en la sección #estructura2d: consulta al endpoint
+ *   GET lookup-isomeros usando la FÓRMULA MOLECULAR escrita en el campo
+ *   formula_compuesto (campo obligatorio del form, independiente del
+ *   idioma del nombre).
+ * - Un solo isómero -> rellena #id_smiles directo + mensaje de éxito.
+ * - Varios -> lista de opciones clickeables (nombre + SMILES) en
+ *   #lookup-resultados; al elegir una, se rellena el campo.
+ * - En 404 (fórmula sin resultados) o 502 (servicio caído) muestra el
+ *   mensaje correspondiente y el enlace manual a PubChem precargado CON
+ *   LA FÓRMULA (idioma-agnóstico: PubChem muestra la misma lista de
+ *   isómeros y el usuario elige a mano).
  * - Fail soft: si falta algún elemento del DOM, este script no hace nada.
- * - En 404 (nombre desconocido) o 502 (servidor caído) muestra el mensaje
- *   correspondiente y el enlace manual a PubChem con la búsqueda precargada.
- * - Español neutro en todos los mensajes (decisión de diseño del operador).
+ * - Español neutro en todos los mensajes (decisión del operador).
  */
 (function () {
   "use strict";
 
   var boton = document.getElementById("smiles-buscar");
   var inputSmiles = document.getElementById("id_smiles");
-  var inputNombre = document.getElementById("id_nombre_compuesto");
+  var inputFormula = document.getElementById("id_formula_compuesto");
   var mensaje = document.getElementById("lookup-mensaje");
   var enlacePubChem = document.getElementById("lookup-pubchem");
+  var resultados = document.getElementById("lookup-resultados");
 
-  if (!boton || !inputSmiles || !inputNombre || !mensaje || !enlacePubChem) {
+  if (!boton || !inputSmiles || !inputFormula || !mensaje || !enlacePubChem) {
     return;
   }
 
@@ -32,9 +39,10 @@
     mensaje.hidden = false;
   }
 
-  function enlacesPubChem(nombre) {
+  function enlacePubChemConFormula(formula) {
     enlacePubChem.href =
-      "https://pubchem.ncbi.nlm.nih.gov/#query=" + encodeURIComponent(nombre);
+      "https://pubchem.ncbi.nlm.nih.gov/#query=" + encodeURIComponent(formula);
+    // Sin display utility: el atributo hidden manda hasta que hace falta.
     enlacePubChem.hidden = false;
   }
 
@@ -42,12 +50,63 @@
     enlacePubChem.hidden = true;
   }
 
+  function limpiarResultados() {
+    if (resultados) {
+      resultados.textContent = "";
+      resultados.hidden = true;
+    }
+  }
+
+  function usarCandidato(candidato) {
+    inputSmiles.value = candidato.smiles;
+    limpiarResultados();
+    mostrar(
+      "Estructura cargada (" + candidato.nombre +
+      "). Revísela y edítela si es necesario antes de guardar.",
+      "text-success"
+    );
+  }
+
+  function mostrarCandidatos(candidatos, formula) {
+    if (!resultados) {
+      usarCandidatoDirecto(candidatos[0]);
+      return;
+    }
+    resultados.textContent = "";
+    candidatos.forEach(function (candidato) {
+      var opcion = document.createElement("button");
+      opcion.type = "button";
+      opcion.className = "list-group-item list-group-item-action py-2";
+      opcion.textContent = candidato.nombre + " — " + candidato.smiles;
+      opcion.addEventListener("click", function () {
+        usarCandidato(candidato);
+      });
+      resultados.appendChild(opcion);
+    });
+    resultados.hidden = false;
+    mostrar(
+      "La fórmula " + formula + " corresponde a varias estructuras. " +
+      "Elija la que corresponde a su compuesto:",
+      "text-muted"
+    );
+  }
+
+  function usarCandidatoDirecto(candidato) {
+    inputSmiles.value = candidato.smiles;
+    mostrar(
+      "Estructura cargada (" + candidato.nombre +
+      "). Revísela y edítela si es necesario antes de guardar.",
+      "text-success"
+    );
+  }
+
   boton.addEventListener("click", function () {
-    var nombre = inputNombre.value.trim();
-    if (!nombre) {
+    var formula = inputFormula.value.trim();
+    if (!formula) {
+      limpiarResultados();
       ocultarEnlace();
       mostrar(
-        "Escriba primero el nombre del compuesto y luego busque la estructura.",
+        "Escriba primero la fórmula molecular del compuesto y luego busque la estructura.",
         "text-muted"
       );
       return;
@@ -55,10 +114,11 @@
 
     boton.disabled = true;
     boton.textContent = "Buscando…";
+    limpiarResultados();
     ocultarEnlace();
-    mostrar("Buscando estructura para \"" + nombre + "\"…", "text-muted");
+    mostrar("Buscando estructuras para " + formula + "…", "text-muted");
 
-    fetch(urlEndpoint + "?nombre=" + encodeURIComponent(nombre))
+    fetch(urlEndpoint + "?formula=" + encodeURIComponent(formula))
       .then(function (respuesta) {
         return respuesta.json().then(function (cuerpo) {
           return { estado: respuesta.status, cuerpo: cuerpo };
@@ -66,25 +126,26 @@
       })
       .then(function (resultado) {
         if (resultado.estado === 200) {
-          inputSmiles.value = resultado.cuerpo.smiles;
-          mostrar(
-            "Estructura cargada. Revísela y edítela si es necesario antes de guardar.",
-            "text-success"
-          );
+          var candidatos = resultado.cuerpo.candidatos;
+          if (candidatos.length === 1) {
+            usarCandidatoDirecto(candidatos[0]);
+          } else {
+            mostrarCandidatos(candidatos, resultado.cuerpo.formula);
+          }
         } else if (resultado.estado === 404) {
           mostrar(
-            "No se encontró una estructura para \"" + nombre +
-            "\". Puede buscarla en PubChem y pegar el SMILES manualmente.",
+            "No se encontraron estructuras para la fórmula " + formula +
+            ". Puede revisar la fórmula, buscar en PubChem y pegar el SMILES manualmente.",
             "text-warning"
           );
-          enlacesPubChem(nombre);
+          enlacePubChemConFormula(formula);
         } else {
           mostrar(
             "El servicio de búsqueda no está disponible en este momento. " +
-            "Puede buscar la estructura en PubChem y pegar el SMILES manualmente.",
+            "Puede buscar la fórmula en PubChem y pegar el SMILES manualmente.",
             "text-warning"
           );
-          enlacesPubChem(nombre);
+          enlacePubChemConFormula(formula);
         }
       })
       .catch(function () {

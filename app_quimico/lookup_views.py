@@ -17,6 +17,11 @@ from app_quimico.estructura_lookup import (
     LookupNoEncontrado,
     resolver_smiles,
 )
+from app_quimico.pubchem_lookup import (
+    IsomerosNoEncontrados,
+    PubChemNoDisponible,
+    buscar_isomeros,
+)
 
 
 def lookup_estructura(request):
@@ -42,6 +47,38 @@ def lookup_estructura(request):
         return json_response(502, {"error": "servicio_no_disponible"})
 
     return json_response(200, {"smiles": smiles, "fuente": "cactus", "nombre": nombre})
+
+
+def lookup_isomeros(request):
+    """GET /compuestos/api/lookup-isomeros/?formula=<formula molecular>.
+
+    Entrega 3: lista de isómeros con nombre para que el usuario elija su
+    estructura (la fórmula es idioma-agnóstico y ya es obligatoria en el
+    form). Cap de candidatos lo aplica el cliente de PubChem.
+    """
+    if not request.user.is_authenticated:
+        return json_response(401, {"error": "autenticacion_requerida"})
+
+    if request.method != "GET":
+        return json_response(405, {"error": "metodo_no_permitido"})
+
+    formula = (request.GET.get("formula") or "").strip()
+    if not formula:
+        return json_response(400, {"error": "formula_requerida"})
+
+    if len(formula) > 60:
+        return json_response(400, {"error": "formula_demasiado_larga"})
+
+    try:
+        candidatos = buscar_isomeros(formula)
+    except IsomerosNoEncontrados:
+        return json_response(404, {"error": "no_encontrado", "formula": formula})
+    except PubChemNoDisponible:
+        return json_response(502, {"error": "servicio_no_disponible"})
+
+    return json_response(
+        200, {"formula": formula, "fuente": "pubchem", "candidatos": candidatos}
+    )
 
 
 def json_response(status, payload):
