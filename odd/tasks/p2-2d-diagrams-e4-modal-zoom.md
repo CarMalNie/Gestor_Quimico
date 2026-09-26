@@ -37,10 +37,11 @@ descarga de imagen, tamaño configurable por el usuario.
 - [x] T4 Suite completa verde + work-unit commit (español)
       (367 passed, era 328; check y makemigrations --check limpios;
       commit c02bcd6)
-- [ ] T5 Validación local operador → push → PA (collectstatic + Reload)
+- [x] T5 Validación local operador → push → PA (collectstatic + Reload)
       → validación producción
       (validación local OK, 10/10, operador 2026-09-27; push a
-      origin/main hecho; falta deploy PA y validación producción)
+      origin/main; deploy PA + validación producción completados por el
+      operador 2026-09-27; CI Actions green en 4273caf)
 
 ## Evidence
 
@@ -84,7 +85,16 @@ descarga de imagen, tamaño configurable por el usuario.
   de conexión a MySQL de test (lock/conexiones tras el abort de un
   subagente en la misma sesión); no reproducible y ajenos al cambio.
   Work-unit commit: `c02bcd6`.
-- T5 (parcial): validación local del operador OK (10/10: click, botón
+- T5: validación local del operador OK (10/10: click, botón
   Ampliar, cierre X/ESC/click fuera, nítido) 2026-09-27; push
   `0e09629..c02bcd6` a origin/main; RDD off en este clone, entrega por
-  política ordinaria.
+  política ordinaria. Deploy PA (pull + collectstatic + Reload) y
+  validación producción completados por el operador 2026-09-27.
+  GitHub Actions CI: success en c02bcd6 y 4273caf (suite completa
+  contra MySQL efímero del runner).
+
+## Cierre
+
+Feature p2-2d-diagrams-e4-modal-zoom COMPLETA 2026-09-27. Entregas 1-4
+intactas y validadas: render 2D mejorado, lookup por nombre, selector
+de isómeros, modal de zoom 600x450.
