@@ -400,12 +400,17 @@
    data-nombre-display (ver template), que emiten el dato tal cual.
 */
 .pt-card-simbolo {
-    margin-right: .3rem;
+    font-weight: 700;
+    opacity: .7;
+}
+
+.pt-card-simbolo-valor {
     font-weight: 700;
 }
 
 .pt-card-nombre {
     font-weight: 600;
+    margin-left: .3rem;
 }
 
 .pt-card-nombre {

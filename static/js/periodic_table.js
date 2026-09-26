@@ -297,9 +297,13 @@
             lineaZ.appendChild(crear("span", "pt-card-z-rotulo", "Z="));
             lineaZ.appendChild(crear("span", "pt-card-z-valor", z ? z.textContent : ""));
             cabecera.appendChild(lineaZ);
+            // Corchetes cuadrados alrededor del símbolo: distinguen el
+            // elemento de su nombre al leer la card de corrido.
+            cabecera.appendChild(crear("span", "pt-card-simbolo", "["));
             cabecera.appendChild(
-                crear("span", "pt-card-simbolo", celda.getAttribute("data-simbolo-display"))
+                crear("span", "pt-card-simbolo-valor", celda.getAttribute("data-simbolo-display"))
             );
+            cabecera.appendChild(crear("span", "pt-card-simbolo", "]"));
             cabecera.appendChild(
                 crear("span", "pt-card-nombre", celda.getAttribute("data-nombre-display"))
             );
