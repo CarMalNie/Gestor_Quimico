@@ -642,7 +642,10 @@ def test_celdas_distinguen_peso_atomico_de_numero_masico(client, elementos_carga
 
     hidrogeno = _celda_de_simbolo(html, "H")
     assert 'data-peso-masico="0"' in hidrogeno
-    assert 'data-peso-mostrar="1.0080"' in hidrogeno
+    # Localización es-cl: coma decimal en el peso mostrable (mismo formato
+    # que la vista de tarjetas); data-peso sigue siendo el valor numérico
+    # plano (punto) para el filtro min_peso_atomico del cliente.
+    assert 'data-peso-mostrar="1,0080"' in hidrogeno
 
 
 def test_celda_sin_detalle_no_emite_grupo_ni_periodo(client):

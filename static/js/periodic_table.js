@@ -289,14 +289,20 @@
         function rellenar(celda) {
             var z = celda.querySelector(".pt-z");
             var cabecera = crear("div", "pt-card-cabecera");
-            cabecera.appendChild(crear("span", "pt-card-z", z ? z.textContent : ""));
-            cabecera.appendChild(
-                crear("span", "pt-card-simbolo", celda.getAttribute("data-simbolo"))
-            );
-            cabecera.appendChild(
-                crear("span", "pt-card-nombre", celda.getAttribute("data-nombre"))
-            );
+            var lineaZ = crear("span", "pt-card-z");
+            // Rótulo textual del número atómico: 'Z=26' es etiqueta, no texto
 
+            // pegado al símbolo ('26' contra 'Fe...' se leía como una sola
+            // palabra).
+            lineaZ.appendChild(crear("span", "pt-card-z-rotulo", "Z="));
+            lineaZ.appendChild(crear("span", "pt-card-z-valor", z ? z.textContent : ""));
+            cabecera.appendChild(lineaZ);
+            cabecera.appendChild(
+                crear("span", "pt-card-simbolo", celda.getAttribute("data-simbolo-display"))
+            );
+            cabecera.appendChild(
+                crear("span", "pt-card-nombre", celda.getAttribute("data-nombre-display"))
+            );
             var datos = crear("dl", "pt-card-datos mb-0");
             agregarDato(datos, "Categoría", celda.getAttribute("data-categoria"));
             var grupo = celda.getAttribute("data-grupo");

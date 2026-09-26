@@ -199,3 +199,19 @@
 .estructura-2d-modal__aviso {
     text-align: center;
 }
+
+/* ==========================================================================
+   DETALLE DE ELEMENTO: separación vertical en móvil
+   El col-md-4 del símbolo usa .border-end (línea divisoria vertical); en
+   móvil las columnas apilan y ese borde termina pegado al contenido de
+   abajo. En anchos < md el borde pasa abajo del bloque y se agrega
+   separación real entre las dos mitades del card.
+   ========================================================================== */
+@media (max-width: 767.98px) {
+    .detalle-elemento-simbolo.border-end {
+        border-right: 0;
+        padding-bottom: 1rem;
+        margin-bottom: 1rem;
+        border-bottom: 1px solid var(--bs-border-color);
+    }
+}

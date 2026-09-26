@@ -379,15 +379,33 @@
 }
 
 .pt-card-z {
-    margin-right: .35rem;
+    margin-right: .45rem;
     font-size: .65rem;
     opacity: .75;
 }
 
-/* El símbolo llega en minúscula (data-simbolo): se muestra en mayúscula. */
-.pt-card-simbolo {
+/* Rótulo 'Z=' con el valor: 'Z=26' destacado, separado del símbolo por el
+   margin del contenedor. */
+.pt-card-z-rotulo {
+    opacity: .85;
+}
+
+.pt-card-z-valor {
     font-weight: 700;
-    text-transform: uppercase;
+}
+
+/* El símbolo y el nombre deben respetar el formato IUPAC de la DB (La, H,
+   Fe; 'Lantano', 'Hidrógeno'): sin text-transform que re-escriba casos. La
+   card lee los valores canónicos de data-simbolo-display/
+   data-nombre-display (ver template), que emiten el dato tal cual.
+*/
+.pt-card-simbolo {
+    margin-right: .3rem;
+    font-weight: 700;
+}
+
+.pt-card-nombre {
+    font-weight: 600;
 }
 
 .pt-card-nombre {

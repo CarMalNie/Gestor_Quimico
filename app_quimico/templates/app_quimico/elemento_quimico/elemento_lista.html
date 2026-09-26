@@ -89,10 +89,12 @@
                {% if celda.fila %}style="grid-column: {{ celda.columna }}; grid-row: {{ celda.fila }};"{% endif %}
                data-categoria="{{ celda.elemento.detalleelemento.categoria_elemento }}"
                data-simbolo="{{ simbolo|lower }}"
+               data-simbolo-display="{{ simbolo }}"
                data-nombre="{{ celda.elemento.nombre_elemento|lower }}"
+               data-nombre-display="{{ celda.elemento.nombre_elemento }}"
                data-peso="{{ celda.elemento.peso_atomico_elemento|stringformat:'s' }}"
                {% if celda.elemento.detalleelemento %}data-grupo="{{ celda.elemento.detalleelemento.grupo_elemento }}" data-periodo="{{ celda.elemento.detalleelemento.periodo_elemento }}"{% endif %}
-               data-peso-mostrar="{{ celda.elemento.peso_atomico_para_mostrar|stringformat:'s' }}"
+               data-peso-mostrar="{% if celda.elemento.peso_atomico_es_masico %}{{ celda.elemento.peso_atomico_para_mostrar|stringformat:'s' }}{% else %}{{ celda.elemento.peso_atomico_para_mostrar }}{% endif %}"
                data-peso-masico="{{ celda.elemento.peso_atomico_es_masico|yesno:'1,0' }}">
                 <span class="pt-z">{{ celda.elemento.numero_atomico_elemento }}</span>
                 <span class="pt-simbolo">{{ simbolo }}</span>
