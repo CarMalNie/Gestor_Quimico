@@ -72,7 +72,24 @@ def test_el_fallback_pubchem_arranca_oculto_sin_utility_de_display():
 
 
 def test_form_carga_el_script_cache_busteado(form_html):
-    assert "js/estructura_lookup.js?v=2" in form_html
+    assert "js/estructura_lookup.js?v=3" in form_html
+
+
+def test_el_fallback_pregunta_no_se_encuentra_en_la_plantilla(form_html):
+    """Feedback del operador (E3 producción): el enlace manual también debe
+    estar disponible cuando la lista de isómeros aparece pero el compuesto
+    no está entre los candidatos. Pregunta universal en la plantilla."""
+    assert "¿No se encuentra? Abrir la búsqueda en PubChem" in form_html
+
+
+def test_el_js_muestra_el_enlace_junto_a_la_lista_de_isomeros():
+    js = LOOKUP_JS.read_text(encoding="utf-8")
+
+    # mostrarCandidatos invoca el enlace manual tras renderizar la lista.
+    dentro_de_mostrar_candidatos = js.index("function mostrarCandidatos")
+    fin_funcion = js.index("\n  function usarCandidatoDirecto", dentro_de_mostrar_candidatos)
+    bloque = js[dentro_de_mostrar_candidatos:fin_funcion]
+    assert "enlacePubChemConFormula(formula)" in bloque
 
 
 def test_el_js_maneja_los_tres_desenlaces_y_el_selector():

@@ -89,6 +89,9 @@
       "Elija la que corresponde a su compuesto:",
       "text-muted"
     );
+    // Salida manual siempre disponible junto a la lista: el compuesto puede
+    // estar fuera del cap de candidatos o no estar en PubChem por fórmula.
+    enlacePubChemConFormula(formula);
   }
 
   function usarCandidatoDirecto(candidato) {
