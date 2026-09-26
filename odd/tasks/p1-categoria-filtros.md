@@ -97,13 +97,11 @@
   elementos renombrados), labels sin 'Todos los', CSS ?v=4 con slugs estilizados en ambos temas,
   filtro de familias intacto (92/20/exacto), seed idempotente confirma la adopción.
   Commits: f38fd26 (docs), b96fd0f (feat).
-- [ ] (historia) El operador corrigió el enfoque: NO inventar agrupaciones ("Todos los..."); usar
-  solo terminología bibliográfica. Fix: renombrar la categoría fina 'No Metales' (7 elementos:
-  H, C, N, O, P, S, Se) a **'Otros No Metales'** (su nombre estándar en la bibliografía; así
-  estaba en el modelo original de la cátedra). Chips de familia vuelven a llamarse 'Metales' y
-  'No metales' (conceptos reales, sin "Todos los"). Slugs resultantes sin colisión: familia
-  metales/no-metales vs fina otros-no-metales. En tarjetas, select: 'Metales', 'No metales' +
-  10 finas. Migración state-only (0013) + cargar_elementos adopta el renombre (idempotente).
+- [x] (historia) El operador corrigió el enfoque: NO inventar agrupaciones; usar
+  
+      (cerrada como parte de T10/T11: renombre ejecutado y validado en
+      producción; commits e8209af plan, f4dc5b8 cierre con verificación
+      independiente; feature COMPLETA T1-T11)
 - [x] T10 — feedback del operador tras revisión local: (a) select "Por Categoría" de tarjetas
   ahora ofrece las familias ("Metales (todos: 92)" / "No metales (todos: 20)", sentinels
   familia_metales/familia_no_metales, server-side __in=FAMILIA_*, else __exact); (b) leyenda de

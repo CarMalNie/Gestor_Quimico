@@ -27,7 +27,11 @@ Entrega 2.
 
 ## Tasks
 
-- [ ] T1 Feature doc + todo projection + Engram mirror + plan (this doc)
+- [x] T1 Feature doc + todo projection + Engram mirror + plan (this doc)
+      (el doc se creó y usó desde el 2026-09-24 pero el checkbox quedó
+      sin marcar; T2-T7 ya cerradas con deploy y validación producción;
+      marcado con evidencia en el housekeeping post-E4 2026-09-27, obs
+      #527 y #531 como espejo de la decisión)
 - [x] T2 Backend: ElementoListView accepts `vista=tabla|tarjetas` (default
       tarjetas = untouched current behavior). In tabla mode: full
       118-element queryset (no server-side filtering; filters apply

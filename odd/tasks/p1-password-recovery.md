@@ -34,10 +34,13 @@ Context established during exploration (do not re-explore from scratch):
 - [x] T4 Tests: reset request for existing and unknown email (same response,
       no user enumeration), token confirmation flow, invalid/expired token,
       password validators applied, axes interplay with the reset flow.
-- [ ] T5 (follow-up iteration, separate feature): MFA with Google
+- [x] T5 (follow-up iteration, separate feature): MFA with Google
       Authenticator via `django-otp` + `django-otp-totp` — enrolment with QR,
       second step in the login flow, admin integration. Requires the reset
       flow to be stable first. Intentionally excluded from this feature.
+      (REALIZED en la feature separada p1-mfa-totp: commits c0277c7;
+      desplegada y validada en producción 2026-09-25, MFA session-wide;
+      housekeeping 2a930c1 cerró su tracker)
 
 Rejected alternative (documented decision): secret question/answer recovery.
 Weak pattern (answers cannot be rotated once leaked, easily guessable,
