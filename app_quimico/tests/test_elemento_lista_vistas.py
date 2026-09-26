@@ -431,10 +431,10 @@ def test_grilla_periodica_mantiene_data_peso_numerico(client, elementos_cargados
 
 
 def test_periodic_table_css_cache_bust_was_bumped():
-    """La paleta de la leyenda cambió: el ?v del CSS sube para invalidar caché."""
+    """La card de detalle cambió la hoja: el ?v del CSS sube para invalidar caché."""
     source = PERIODIC_TABLE_TEMPLATE.read_text(encoding="utf-8")
 
-    assert "css/periodic_table.css' %}?v=4" in source
+    assert "css/periodic_table.css' %}?v=5" in source
 
 
 def _paleta_declarada_para_chip(css, slug):
@@ -515,10 +515,10 @@ def test_ningun_celda_lleva_slug_de_familia(client, elementos_cargados):
 
 
 def test_periodic_table_js_cache_bust_was_bumped():
-    """El JS sumó el guardado de la vista: el ?v sube para invalidar caché."""
+    """El JS sumó la card de detalle: el ?v sube para invalidar caché."""
     source = PERIODIC_TABLE_TEMPLATE.read_text(encoding="utf-8")
 
-    assert "js/periodic_table.js' %}?v=4" in source
+    assert "js/periodic_table.js' %}?v=5" in source
 
 
 def test_js_de_la_tabla_persiste_la_vista_del_selector():
@@ -588,3 +588,159 @@ def test_detalle_mantiene_enlace_plano_al_listado(client, elementos_cargados):
         r'href="[^"]*"\s+class="btn btn-secondary mt-4">Volver al Listado', html
     )
     assert "?vista=" not in html
+
+
+# ========================================================================= #
+# Tarjeta de detalle al hover/focus (T3 de p1-periodic-table-e2)
+# ========================================================================= #
+
+
+def _celda_de_simbolo(html, simbolo):
+    """Devuelve la etiqueta <a> de la celda del símbolo (sin su contenido)."""
+    for etiqueta in re.findall(r"<a\b[^>]*>", html):
+        if f'data-simbolo="{simbolo.lower()}"' in etiqueta:
+            return etiqueta
+    raise AssertionError(f"celda no encontrada: {simbolo}")
+
+
+def test_card_de_detalle_existe_solo_en_la_vista_tabla(client, elementos_cargados):
+    """Una única card flotante renderizada junto a la grilla (nunca en tarjetas)."""
+    html_tabla = client.get(
+        reverse("elemento_lista"), {"vista": "tabla"}
+    ).content.decode()
+    html_tarjetas = client.get(reverse("elemento_lista")).content.decode()
+
+    assert 'id="pt-card"' in html_tabla
+    assert 'class="pt-card"' in html_tabla
+    assert 'role="tooltip"' in html_tabla
+    # Arranca oculta y decorativa (el JS administra aria-hidden).
+    assert 'aria-hidden="true"' in html_tabla
+    assert html_tabla.count('id="pt-card"') == 1
+    # La vista de tarjetas conserva el contexto mínimo de siempre.
+    assert 'id="pt-card"' not in html_tarjetas
+
+
+def test_celdas_exponen_grupo_y_periodo_para_la_card(client, elementos_cargados):
+    html = client.get(reverse("elemento_lista"), {"vista": "tabla"}).content.decode()
+
+    hidrogeno = _celda_de_simbolo(html, "H")
+    assert 'data-grupo="1"' in hidrogeno
+    assert 'data-periodo="1"' in hidrogeno
+
+    polonio = _celda_de_simbolo(html, "Po")
+    assert 'data-grupo="16"' in polonio
+    assert 'data-periodo="6"' in polonio
+
+
+def test_celdas_distinguen_peso_atomico_de_numero_masico(client, elementos_cargados):
+    """La card no puede rotular '[209]' como peso atómico: es número másico."""
+    html = client.get(reverse("elemento_lista"), {"vista": "tabla"}).content.decode()
+
+    polonio = _celda_de_simbolo(html, "Po")
+    assert 'data-peso-masico="1"' in polonio
+    assert 'data-peso-mostrar="[209]"' in polonio
+
+    hidrogeno = _celda_de_simbolo(html, "H")
+    assert 'data-peso-masico="0"' in hidrogeno
+    assert 'data-peso-mostrar="1.0080"' in hidrogeno
+
+
+def test_celda_sin_detalle_no_emite_grupo_ni_periodo(client):
+    """Sin DetalleElemento la celda se renderiza, pero sin data-grupo/periodo."""
+    ElementoQuimico.objects.create(
+        numero_atomico_elemento=999,
+        simbolo_elemento="Xx",
+        nombre_elemento="Elemento sin detalle",
+        peso_atomico_elemento=1,
+    )
+    html = client.get(reverse("elemento_lista"), {"vista": "tabla"}).content.decode()
+
+    celda = _celda_de_simbolo(html, "Xx")
+    assert "data-grupo" not in celda
+    assert "data-periodo" not in celda
+
+
+def test_css_define_la_card_flotante_sin_capturar_el_puntero():
+    """La card es flotante y deja pasar el mouse: nunca realimenta el hover."""
+    css = PERIODIC_TABLE_CSS.read_text(encoding="utf-8")
+    sin_comentarios = re.sub(r"/\*.*?\*/", "", css, flags=re.S)
+
+    assert ".pt-card" in sin_comentarios
+    assert "pointer-events: none" in sin_comentarios
+    assert "max-width: 240px" in sin_comentarios
+
+
+def test_css_de_la_card_sigue_el_tema_activo():
+    """La card usa variables de Bootstrap: cambia con [data-bs-theme]."""
+    css = PERIODIC_TABLE_CSS.read_text(encoding="utf-8")
+    sin_comentarios = re.sub(r"/\*.*?\*/", "", css, flags=re.S)
+
+    bloque = re.search(r"\.pt-card\s*\{([^}]*)\}", sin_comentarios)
+    assert bloque, "sin regla .pt-card"
+    cuerpo = bloque.group(1)
+    assert "var(--bs-body-bg)" in cuerpo
+    assert "var(--bs-body-color)" in cuerpo
+
+
+def test_css_de_la_card_respeta_prefers_reduced_motion():
+    css = PERIODIC_TABLE_CSS.read_text(encoding="utf-8")
+    sin_comentarios = re.sub(r"/\*.*?\*/", "", css, flags=re.S)
+
+    reducido = re.search(
+        r"@media\s*\(prefers-reduced-motion:\s*reduce\)\s*\{([^@]*)\}",
+        sin_comentarios,
+        flags=re.S,
+    )
+    assert reducido, "sin bloque prefers-reduced-motion"
+    assert ".pt-card" in reducido.group(1)
+    assert "transition: none" in reducido.group(1)
+
+
+def test_js_de_la_card_lee_los_datos_de_la_celda():
+    source = PERIODIC_TABLE_JS.read_text(encoding="utf-8")
+
+    assert "initDetailCard" in source
+    for atributo in (
+        "data-simbolo",
+        "data-nombre",
+        "data-categoria",
+        "data-grupo",
+        "data-periodo",
+        "data-peso-mostrar",
+        "data-peso-masico",
+    ):
+        assert atributo in source, f"el JS no lee {atributo}"
+
+
+def test_js_de_la_card_se_inicializa_desde_el_dispatch(client, elementos_cargados):
+    source = PERIODIC_TABLE_JS.read_text(encoding="utf-8")
+
+    # Se registra en el init combinado, junto a la preferencia y la tabla.
+    assert re.search(
+        r"function init\(\)\s*\{[^}]*initDetailCard\(\)", source, flags=re.S
+    )
+    # Solo actúa si existen la grilla y la card.
+    assert 'getElementById("pt-tabla")' in source
+    assert 'getElementById("pt-card")' in source
+
+
+def test_js_de_la_card_oculta_con_mouse_focus_escape_y_scroll():
+    source = PERIODIC_TABLE_JS.read_text(encoding="utf-8")
+
+    assert '"mouseover"' in source and '"mouseout"' in source
+    assert '"focusin"' in source and '"focusout"' in source
+    assert '"Escape"' in source
+    assert '"scroll"' in source
+    assert 'setAttribute("aria-hidden"' in source
+    # Touch: no se activa en dispositivos sin hover real.
+    assert "(hover: none)" in source
+
+
+def test_js_de_la_card_usa_rotulos_neutrales_y_honestos():
+    source = PERIODIC_TABLE_JS.read_text(encoding="utf-8")
+
+    assert "Ver detalle" in source
+    assert "Categoría" in source
+    assert "Grupo/Período" in source
+    assert "Peso atómico" in source
+    assert "Número másico" in source

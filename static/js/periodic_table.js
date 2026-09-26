@@ -240,9 +240,191 @@
         aplicar(filtroEfectivo());
     }
 
+    // Tarjeta de detalle (T3 de la entrega 2): una única card flotante con los
+    // datos de la celda apuntada con el mouse o el teclado. Todo sale de los
+    // data-* de la celda: cero peticiones al servidor. La card no captura el
+    // puntero (pointer-events: none en el CSS), así que el hover nunca se
+    // realimenta; en touch no se activa porque un tap navega directo al
+    // detalle (las celdas son <a>).
+    function initDetailCard() {
+        var tabla = document.getElementById("pt-tabla");
+        var card = document.getElementById("pt-card");
+        // La card solo tiene sentido junto a la grilla de la vista tabla.
+        if (!tabla || !card) {
+            return;
+        }
+        // Dispositivos sin hover real (touch): el tap navega, no hay peek.
+        if (window.matchMedia && window.matchMedia("(hover: none)").matches) {
+            return;
+        }
+        // Guard idempotente: un doble include no duplica listeners.
+        if (window.gestorQuimicoPtCard) {
+            return;
+        }
+        window.gestorQuimicoPtCard = true;
+
+        var MARGEN = 8;
+        var celdaVisible = null;
+
+        function crear(tag, clase, texto) {
+            var nodo = document.createElement(tag);
+            if (clase) {
+                nodo.className = clase;
+            }
+            if (texto) {
+                nodo.textContent = texto;
+            }
+            return nodo;
+        }
+
+        // Sin valor no se dibuja la fila: nada se inventa.
+        function agregarDato(lista, etiqueta, valor) {
+            if (!valor) {
+                return;
+            }
+            lista.appendChild(crear("dt", null, etiqueta));
+            lista.appendChild(crear("dd", null, valor));
+        }
+
+        function rellenar(celda) {
+            var z = celda.querySelector(".pt-z");
+            var cabecera = crear("div", "pt-card-cabecera");
+            cabecera.appendChild(crear("span", "pt-card-z", z ? z.textContent : ""));
+            cabecera.appendChild(
+                crear("span", "pt-card-simbolo", celda.getAttribute("data-simbolo"))
+            );
+            cabecera.appendChild(
+                crear("span", "pt-card-nombre", celda.getAttribute("data-nombre"))
+            );
+
+            var datos = crear("dl", "pt-card-datos mb-0");
+            agregarDato(datos, "Categoría", celda.getAttribute("data-categoria"));
+            var grupo = celda.getAttribute("data-grupo");
+            var periodo = celda.getAttribute("data-periodo");
+            if (grupo && periodo) {
+                agregarDato(datos, "Grupo/Período", grupo + " / " + periodo);
+            }
+            // Honestidad del dato: un valor entre corchetes es número másico
+            // de un isótopo representativo, no el peso atómico estándar.
+            var masico = celda.getAttribute("data-peso-masico") === "1";
+            var peso = celda.getAttribute("data-peso-mostrar");
+            if (peso) {
+                agregarDato(
+                    datos,
+                    masico ? "Número másico" : "Peso atómico",
+                    masico ? peso : peso + " g/mol"
+                );
+            }
+
+            card.textContent = "";
+            card.appendChild(cabecera);
+            card.appendChild(datos);
+            card.appendChild(crear("div", "pt-card-hint", "Ver detalle"));
+        }
+
+        // Posiciona la card junto a la celda, acotada al viewport: no se sale
+        // por el borde derecho ni por abajo. Usa coordenadas de página
+        // (rect + scroll) porque la card vive en el flujo normal.
+        function posicionar(celda) {
+            var rect = celda.getBoundingClientRect();
+            var ancho = card.offsetWidth;
+            var alto = card.offsetHeight;
+            var scrollX = window.scrollX || window.pageXOffset || 0;
+            var scrollY = window.scrollY || window.pageYOffset || 0;
+            var vistaAncho = document.documentElement.clientWidth;
+            var vistaAlto = document.documentElement.clientHeight;
+
+            var izq = rect.right + scrollX + MARGEN;
+            if (izq + ancho > scrollX + vistaAncho - MARGEN) {
+                // No entra a la derecha: se pasa al lado izquierdo de la celda.
+                izq = rect.left + scrollX - ancho - MARGEN;
+            }
+            izq = Math.max(izq, scrollX + MARGEN);
+            izq = Math.min(izq, scrollX + vistaAncho - ancho - MARGEN);
+
+            var arriba = rect.top + scrollY;
+            arriba = Math.min(arriba, scrollY + vistaAlto - alto - MARGEN);
+            arriba = Math.max(arriba, scrollY + MARGEN);
+
+            card.style.left = izq + "px";
+            card.style.top = arriba + "px";
+        }
+
+        function mostrar(celda) {
+            if (celda === celdaVisible) {
+                return;
+            }
+            celdaVisible = celda;
+            rellenar(celda);
+            card.hidden = false;
+            // Reflow forzado: fija el estado inicial (opacidad 0) antes de
+            // la clase visible, si no el fundido no se ve.
+            void card.offsetWidth;
+            card.classList.add("pt-card-visible");
+            card.setAttribute("aria-hidden", "false");
+            posicionar(celda);
+        }
+
+        function ocultar() {
+            if (!celdaVisible) {
+                return;
+            }
+            celdaVisible = null;
+            card.classList.remove("pt-card-visible");
+            card.setAttribute("aria-hidden", "true");
+            card.hidden = true;
+        }
+
+        function celdaDeEvento(event) {
+            var objetivo = event.target;
+            if (!objetivo || !objetivo.closest) {
+                return null;
+            }
+            return objetivo.closest(".pt-celda");
+        }
+
+        // El mouse entra o sale de la celda: la card sigue el mismo ciclo.
+        tabla.addEventListener("mouseover", function (event) {
+            var celda = celdaDeEvento(event);
+            if (celda) {
+                mostrar(celda);
+            }
+        });
+        tabla.addEventListener("mouseout", function (event) {
+            var celda = celdaDeEvento(event);
+            var destino = event.relatedTarget;
+            if (!celda || !destino || !celda.contains(destino)) {
+                ocultar();
+            }
+        });
+        // Teclado: misma card al enfocar la celda (accesibilidad).
+        tabla.addEventListener("focusin", function (event) {
+            var celda = celdaDeEvento(event);
+            if (celda) {
+                mostrar(celda);
+            }
+        });
+        tabla.addEventListener("focusout", function (event) {
+            var celda = celdaDeEvento(event);
+            var destino = event.relatedTarget;
+            if (!celda || !destino || !celda.contains(destino)) {
+                ocultar();
+            }
+        });
+        document.addEventListener("keydown", function (event) {
+            if (event.key === "Escape") {
+                ocultar();
+            }
+        });
+        // Al scrollear la card quedaría despegada de su celda: se oculta. En
+        // captura (no burbujea) porque la grilla también hace scroll interno.
+        window.addEventListener("scroll", ocultar, { passive: true, capture: true });
+    }
+
     function init() {
         initPreferenciaVista();
         initTabla();
+        initDetailCard();
     }
 
     if (document.readyState === "loading") {

@@ -344,3 +344,81 @@
 }
 
 /* 9. PANELES DE FILTRO PEGAJOSOS — movido a static/css/styles.css (la usa también compuesto_lista.html, que no carga esta hoja). */
+
+/* ==========================================================================
+   10. TARJETA DE DETALLE (hover/focus de una celda, T3 de p1-periodic-table-e2)
+   Una única card flotante que el JS rellena y posiciona junto a la celda. No
+   captura el puntero (pointer-events: none): el mouse sigue siendo de la
+   celda y el hover no puede realimentarse en un bucle. El color sale de
+   variables de Bootstrap, por eso es correcta en ambos [data-bs-theme].
+   ========================================================================== */
+.pt-card {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 1080;
+    max-width: 240px;
+    padding: .5rem .65rem;
+    border: 1px solid var(--pt-borde, var(--bs-border-color));
+    border-radius: var(--pt-radio, .375rem);
+    background-color: var(--bs-body-bg);
+    color: var(--bs-body-color);
+    box-shadow: var(--bs-box-shadow, 0 .5rem 1rem rgba(0, 0, 0, .15));
+    font-size: .75rem;
+    line-height: 1.35;
+    pointer-events: none;
+    opacity: 0;
+    transform: translateY(4px);
+    transition: opacity .15s ease, transform .15s ease;
+}
+
+/* Visibilidad real: el JS quita [hidden] y suma .pt-card-visible. */
+.pt-card-visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.pt-card-z {
+    margin-right: .35rem;
+    font-size: .65rem;
+    opacity: .75;
+}
+
+/* El símbolo llega en minúscula (data-simbolo): se muestra en mayúscula. */
+.pt-card-simbolo {
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.pt-card-nombre {
+    font-weight: 600;
+    text-transform: capitalize;
+}
+
+.pt-card-datos {
+    margin: .35rem 0 0;
+}
+
+.pt-card-datos dt {
+    font-weight: 600;
+    opacity: .75;
+}
+
+.pt-card-datos dd {
+    margin-bottom: .15rem;
+}
+
+.pt-card-hint {
+    margin-top: .35rem;
+    border-top: 1px solid var(--pt-borde, var(--bs-border-color));
+    padding-top: .25rem;
+    font-style: italic;
+    opacity: .75;
+}
+
+/* La card es un simple fundido de 150 ms: sin movimiento para quien lo pidió. */
+@media (prefers-reduced-motion: reduce) {
+    .pt-card {
+        transition: none;
+    }
+}

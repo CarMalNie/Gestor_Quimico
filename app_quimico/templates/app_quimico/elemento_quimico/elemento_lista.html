@@ -6,9 +6,9 @@
 
 {% block content %}
 {# base.html no expone un bloque extra_css: la hoja de la tabla periódica se carga acá (link en body es HTML5 válido). #}
-<link rel="stylesheet" href="{% static 'css/periodic_table.css' %}?v=4">
+<link rel="stylesheet" href="{% static 'css/periodic_table.css' %}?v=5">
 {# Los filtros del cliente de la tabla periódica; defer lo hace no bloqueante. #}
-<script src="{% static 'js/periodic_table.js' %}?v=4" defer></script>
+<script src="{% static 'js/periodic_table.js' %}?v=5" defer></script>
 <div class="row">
     <div class="col-12 d-flex justify-content-between align-items-center mb-4">
         <h1>⚛️ Tabla Periódica</h1>
@@ -90,13 +90,18 @@
                data-categoria="{{ celda.elemento.detalleelemento.categoria_elemento }}"
                data-simbolo="{{ simbolo|lower }}"
                data-nombre="{{ celda.elemento.nombre_elemento|lower }}"
-               data-peso="{{ celda.elemento.peso_atomico_elemento|stringformat:'s' }}">
+               data-peso="{{ celda.elemento.peso_atomico_elemento|stringformat:'s' }}"
+               {% if celda.elemento.detalleelemento %}data-grupo="{{ celda.elemento.detalleelemento.grupo_elemento }}" data-periodo="{{ celda.elemento.detalleelemento.periodo_elemento }}"{% endif %}
+               data-peso-mostrar="{{ celda.elemento.peso_atomico_para_mostrar|stringformat:'s' }}"
+               data-peso-masico="{{ celda.elemento.peso_atomico_es_masico|yesno:'1,0' }}">
                 <span class="pt-z">{{ celda.elemento.numero_atomico_elemento }}</span>
                 <span class="pt-simbolo">{{ simbolo }}</span>
                 <span class="pt-nombre">{{ celda.elemento.nombre_elemento }}</span>
             </a>
             {% endfor %}
         </div>
+        {# Card de detalle: una sola, oculta; el JS la rellena y posiciona. #}
+        <div id="pt-card" class="pt-card" role="tooltip" hidden aria-hidden="true"></div>
     </div>
 </div>
 {% else %}
