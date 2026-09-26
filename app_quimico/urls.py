@@ -2,7 +2,7 @@ from django.conf import settings
 from django.urls import path
 from django.contrib.auth import views as auth_views
 from app_quimico.views import CustomLoginView, custom_logout_view, HomeView
-from app_quimico import mfa_views
+from app_quimico import lookup_views, mfa_views
 from . import views 
 
 urlpatterns = [
@@ -66,6 +66,12 @@ path('compuestos/modificar/<int:pk>/', views.CompuestoUpdateView.as_view(), name
 
 # D - DELETE
 path('compuestos/eliminar/<int:pk>/', views.CompuestoDeleteView.as_view(), name='compuesto_eliminar'),
+
+# ============== #
+# LOOKUP SMILES  #
+# ============== #
+# Entrega 2 (p2-2d-diagrams-e2-lookup): resolver nombre->SMILES para el form.
+path('compuestos/api/lookup-estructura/', lookup_views.lookup_estructura, name='lookup_estructura'),
 
 # ====================== #
 # CRUD para APLICACIONES # 

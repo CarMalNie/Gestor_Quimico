@@ -57,6 +57,20 @@
                                 </label>
                                 {{ compuesto_form.smiles }}
 
+                                <div class="mt-2 d-flex gap-2 align-items-start">
+                                    <button class="btn btn-outline-primary btn-sm" type="button"
+                                            id="smiles-buscar"
+                                            data-lookup-url="{% url 'lookup_estructura' %}">
+                                        🔍 Buscar estructura por nombre
+                                    </button>
+                                    <span class="form-text mb-0">Usa el nombre del compuesto escrito arriba.</span>
+                                </div>
+                                <div id="lookup-mensaje" class="small mt-2" hidden></div>
+                                <a id="lookup-pubchem" class="small mt-1 d-inline-block" hidden
+                                   href="https://pubchem.ncbi.nlm.nih.gov/" target="_blank" rel="noopener noreferrer">
+                                    Abrir la búsqueda en PubChem ↗
+                                </a>
+
                                 <small class="form-text text-muted d-block">
                                     Escriba la conectividad de los átomos en notación SMILES. Es opcional: si la deja vacía, el compuesto funciona igual que siempre.
                                 </small>
@@ -144,6 +158,7 @@
 {% for a in relacion_form.fields.id_aplicacion.queryset %}"{{ a.pk }}": {{ a.id_industria_id }}{% if not forloop.last %},{% endif %}
 {% endfor %}}</script>
 <script src="{% static 'js/compuesto_cascade.js' %}?v=1"></script>
+<script src="{% static 'js/estructura_lookup.js' %}?v=1"></script>
 <script>
     // Opt-out of the optional 2D structure: collapse the section and clear the
     // SMILES input so the compound is saved without a structure, as before.
