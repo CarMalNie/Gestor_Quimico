@@ -48,9 +48,11 @@ def resolver_smiles(nombre):
         with urllib.request.urlopen(request, timeout=CACTUS_TIMEOUT_SEGUNDOS) as response:
             cuerpo = response.read(4096).decode("utf-8", errors="replace").strip()
     except urllib.error.HTTPError as exc:
-        if exc.code in (400, 404):
-            # Cactus responde "ERROR: ..." con 200 en algunos casos y 404
-            # en otros; ambos significan "no conozco esa estructura".
+        if exc.code in (400, 404, 500):
+            # Cactus "no conozco esa estructura": 404 REST o 500 con página
+            # "Page not found" (verificado 2026-09-26 con nombres basura y
+            # nombres en español: glucosa/aspirina/bicarbonato -> 500). Todo
+            # ese rango es "nombre desconocido", no falla de servicio.
             raise LookupNoEncontrado(nombre) from exc
         raise LookupNoDisponible(f"HTTP {exc.code}") from exc
     except (urllib.error.URLError, TimeoutError, OSError) as exc:

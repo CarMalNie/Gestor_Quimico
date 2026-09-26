@@ -84,10 +84,14 @@ def test_upstream_404_es_no_encontrado():
             resolver_smiles("nonexistentsubstancexyz")
 
 
-def test_upstream_500_es_no_disponible():
+def test_upstream_500_con_pagina_404_es_no_encontrado():
+    """Cactus contesta 500 (no 404) cuando el nombre no existe — verificado
+    2026-09-26 con nombres basura y en español. Es 'no encontrado', no un
+    servicio caído: el fallback correcto es el link manual, no el mensaje
+    de servicio caído."""
     with patch(URLOPEN, side_effect=_http_error(500)):
-        with pytest.raises(LookupNoDisponible):
-            resolver_smiles("ethanol")
+        with pytest.raises(LookupNoEncontrado):
+            resolver_smiles("glucosa")
 
 
 def test_timeout_es_no_disponible():
