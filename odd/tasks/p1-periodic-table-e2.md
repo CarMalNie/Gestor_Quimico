@@ -64,7 +64,9 @@ de período, librerías de terceros, hover zoom.
       'Z=57 [La] Lantano' (rótulo Z=, símbolo entre corchetes cuadrados,
       data-*-display canónicos IUPAC — sin text-transform), peso con coma
       decimal, y separación vertical del detalle en móvil (styles.css
-      ?v=5, .detalle-elemento-simbolo).
+      ?v=5, .detalle-elemento-simbolo). Sin 'Ver detalle' (3ccdfc5): la
+      celda entera es el enlace y el texto era affordance falsa (decisión
+      del operador: card = resumen puro).
       Verificación independiente gentle-ai-verify: PASS 6/6 checks. Commit
       23fdb4c (parent).
 - [ ] T4 Keyboard nav + ARIA: roving tabindex con flechas (±1 col, ±1 fila)
