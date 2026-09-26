@@ -50,15 +50,23 @@ proveedor, cache de resultados.
 
 ## Tasks
 
-- [ ] T1 Feature doc + Engram mirror + todo projection (este doc)
-- [ ] T2 Backend: resolver de Cactus (`app_quimico/services.py` o módulo
-      propio) + tests con urllib mockeado (200/404/timeout/SMILES
-      inválido rechazado)
-- [ ] T3 Endpoint view + url (login JSON 401) + tests
-- [ ] T4 Frontend: `estructura_lookup.js` (?v=1) + wiring en
-      `compuesto_form.html` + fallback link + tests de template
-- [ ] T5 Suite completa verde + work-unit commit (Conventional Commit,
-      descripción en español)
+- [x] T1 Feature doc + Engram mirror + todo projection (este doc)
+- [x] T2 Resolver Cactus (`app_quimico/estructura_lookup.py`) + 13 tests
+      con urllib mockeado (200/404/500/timeout, cuerpo ERROR, cuerpos no
+      utilizables: "XYZ"/"C C"/"no es un smiles", primera línea de
+      multilínea, URL-encoded del nombre, UA propio). Guard de whitespace
+      alineado con clean_smiles (pysmiles parsea "C C" como 2 átomos).
+- [x] T3 Endpoint `lookup_views.py` + url `compuestos/api/lookup-estructura/`
+      + 9 tests (401 JSON para anónimo sin redirect HTML — sin
+      @login_required, check explícito is_authenticated; 405; 400 sin
+      parámetro/vacío/largo; 200 con fuente; 404/502 mapeados).
+- [x] T4 Frontend `static/js/estructura_lookup.js` (?v=1) + wiring en
+      `compuesto_form.html` (botón con data-lookup-url, contenedor de
+      mensaje, enlace PubChem target=_blank) + 6 tests de plantilla/JS
+      (incluye guard anti-voseo del copy).
+- [x] T5 Suite completa verde (328 passed, era 300) + check limpio +
+      makemigrations --check sin cambios + work-unit commit 43c1c59
+      (Conventional Commit, descripción en español).
 - [ ] T6 Push + deploy PA (operador) + validación en producción
 
 ## Evidence
