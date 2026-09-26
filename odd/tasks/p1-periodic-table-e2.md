@@ -60,11 +60,11 @@ de período, librerías de terceros, hover zoom.
       posicionamiento acotado a viewport, tests de markup y clases.
       Implementado por gentle-ai-worker (RED 12 intended failures → GREEN
       50 passed módulo, era 39; labels honestos: Po [209] = 'Número másico').
-      Feedback del operador corregido en 50c47de: cabecera 'Z=57 La Lantano'
-      (antes '57 lalantano' pegado), formato IUPAC respetado (data-*display
-      canónicos, sin text-transform), peso con coma decimal, y separación
-      vertical del detalle en móvil (styles.css ?v=5, .detalle-elemento-
-      simbolo).
+      Feedback del operador corregido en 50c47de + adaa93c: cabecera
+      'Z=57 [La] Lantano' (rótulo Z=, símbolo entre corchetes cuadrados,
+      data-*-display canónicos IUPAC — sin text-transform), peso con coma
+      decimal, y separación vertical del detalle en móvil (styles.css
+      ?v=5, .detalle-elemento-simbolo).
       Verificación independiente gentle-ai-verify: PASS 6/6 checks. Commit
       23fdb4c (parent).
 - [ ] T4 Keyboard nav + ARIA: roving tabindex con flechas (±1 col, ±1 fila)
