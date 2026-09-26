@@ -329,7 +329,6 @@
             card.textContent = "";
             card.appendChild(cabecera);
             card.appendChild(datos);
-            card.appendChild(crear("div", "pt-card-hint", "Ver detalle"));
         }
 
         // Posiciona la card junto a la celda, acotada al viewport: no se sale

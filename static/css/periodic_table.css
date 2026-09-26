@@ -431,14 +431,6 @@
     margin-bottom: .15rem;
 }
 
-.pt-card-hint {
-    margin-top: .35rem;
-    border-top: 1px solid var(--pt-borde, var(--bs-border-color));
-    padding-top: .25rem;
-    font-style: italic;
-    opacity: .75;
-}
-
 /* La card es un simple fundido de 150 ms: sin movimiento para quien lo pidió. */
 @media (prefers-reduced-motion: reduce) {
     .pt-card {

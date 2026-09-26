@@ -742,7 +742,10 @@ def test_js_de_la_card_oculta_con_mouse_focus_escape_y_scroll():
 def test_js_de_la_card_usa_rotulos_neutrales_y_honestos():
     source = PERIODIC_TABLE_JS.read_text(encoding="utf-8")
 
-    assert "Ver detalle" in source
+    # Sin texto accionable: la celda entera es el enlace; un "Ver detalle"
+    # dentro de la card invitaba a un clic que no existía (feedback del
+    # operador). Sin rótulo de acción, solo datos.
+    assert "Ver detalle" not in source
     assert "Categoría" in source
     assert "Grupo/Período" in source
     assert "Peso atómico" in source
