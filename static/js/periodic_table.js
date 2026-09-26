@@ -1,9 +1,56 @@
 // Filtros del cliente para la vista de tabla periódica (?vista=tabla).
+// También recuerda la última vista elegida en el selector (?vista=tarjetas|tabla).
 // Semántica sellada (obs #527): los tres filtros se combinan con AND; nunca
 // se quitan celdas, solo se atenúan (.pt-dim) o se destacan (.pt-destacada).
 // Sin dependencias: vanilla JS.
 (function () {
     "use strict";
+
+    // Preferencia de vista: al tocar uno de los dos botones del selector se
+    // guarda la vista destino para la próxima visita. Es delegación de eventos
+    // y corre en AMBAS vistas: el guardado no depende de que exista la grilla.
+    // Nunca se escribe fuera de un click explícito.
+    function initPreferenciaVista() {
+        // Guard idempotente: un doble include no duplica listeners.
+        if (window.gestorQuimicoVistaElementos) {
+            return;
+        }
+        window.gestorQuimicoVistaElementos = true;
+
+        var STORAGE_KEY = "gestorQuimicoVistaElementos";
+
+        document.addEventListener("click", function (event) {
+            var objetivo = event.target;
+            if (!objetivo || !objetivo.closest) {
+                return;
+            }
+            var enlace = objetivo.closest("a");
+            if (!enlace) {
+                return;
+            }
+            var href = enlace.getAttribute("href") || "";
+            // Solo los enlaces del selector llevan la vista en la URL.
+            if (href.indexOf("vista=") === -1) {
+                return;
+            }
+            var vista = null;
+            if (href.indexOf("vista=tabla") !== -1) {
+                vista = "tabla";
+            } else if (href.indexOf("vista=tarjetas") !== -1) {
+                vista = "tarjetas";
+            }
+            if (vista === null) {
+                return;
+            }
+            try {
+                window.localStorage.setItem(STORAGE_KEY, vista);
+            } catch (error) {
+                // Storage no disponible (p. ej. modo privado): se ignora.
+            }
+            // Sin preventDefault: la navegación sigue y el servidor honra el
+            // ?vista explícito del enlace.
+        });
+    }
 
     // Normaliza texto para buscar sin distinguir mayúsculas ni diacríticos:
     // 'quimica' debe encontrar 'Química'. NFD separa la letra del acento y el
@@ -193,9 +240,14 @@
         aplicar(filtroEfectivo());
     }
 
-    if (document.readyState === "loading") {
-        document.addEventListener("DOMContentLoaded", initTabla);
-    } else {
+    function init() {
+        initPreferenciaVista();
         initTabla();
+    }
+
+    if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", init);
+    } else {
+        init();
     }
 })();

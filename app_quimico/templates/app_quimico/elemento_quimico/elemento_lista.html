@@ -8,7 +8,7 @@
 {# base.html no expone un bloque extra_css: la hoja de la tabla periódica se carga acá (link en body es HTML5 válido). #}
 <link rel="stylesheet" href="{% static 'css/periodic_table.css' %}?v=4">
 {# Los filtros del cliente de la tabla periódica; defer lo hace no bloqueante. #}
-<script src="{% static 'js/periodic_table.js' %}?v=3" defer></script>
+<script src="{% static 'js/periodic_table.js' %}?v=4" defer></script>
 <div class="row">
     <div class="col-12 d-flex justify-content-between align-items-center mb-4">
         <h1>⚛️ Tabla Periódica</h1>
@@ -23,7 +23,7 @@
 {# Selector de modo: tarjetas (filtrado del servidor) o tabla periódica. #}
 <div class="row mb-4">
     <div class="col-12 d-flex justify-content-end">
-        <div class="btn-group" role="group" aria-label="Modo de vista">
+        <div class="btn-group" role="group" aria-label="Modo de vista" data-vista-actual="{{ vista }}">
             <a href="?vista=tarjetas" class="btn {% if vista == 'tarjetas' %}btn-primary active{% else %}btn-outline-primary{% endif %}"{% if vista == 'tarjetas' %} aria-current="page"{% endif %}>
                 <i class="fas fa-th-large"></i> Tarjetas
             </a>
@@ -33,6 +33,27 @@
         </div>
     </div>
 </div>
+
+{# Recuerda la última vista elegida: si la URL no trae ?vista, lo guardado es
+   "tabla" y el servidor renderizó tarjetas, redirige una sola vez. Después del
+   redirect la URL ya lleva ?vista=tabla, así que el guard no puede repetirse. #}
+<script>
+    (function () {
+        "use strict";
+        var STORAGE_KEY = "gestorQuimicoVistaElementos";
+        try {
+            var tieneVista = /[?&]vista=/.test(window.location.search);
+            var guardada = window.localStorage.getItem(STORAGE_KEY);
+            var grupo = document.querySelector("[data-vista-actual]");
+            var actual = grupo ? grupo.getAttribute("data-vista-actual") : null;
+            if (!tieneVista && guardada === "tabla" && actual === "tarjetas") {
+                window.location.replace("?vista=tabla");
+            }
+        } catch (error) {
+            // localStorage no disponible (p. ej. modo privado): no se redirige.
+        }
+    })();
+</script>
 
 {% if vista == 'tabla' %}
 {# Modo tabla: filtros del cliente (leyenda, búsqueda y peso mínimo). Sin submit al servidor. #}

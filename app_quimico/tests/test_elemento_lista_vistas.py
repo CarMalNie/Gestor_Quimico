@@ -20,6 +20,7 @@ pytestmark = pytest.mark.django_db
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 PERIODIC_TABLE_CSS = PROJECT_ROOT / "static" / "css" / "periodic_table.css"
+PERIODIC_TABLE_JS = PROJECT_ROOT / "static" / "js" / "periodic_table.js"
 PERIODIC_TABLE_TEMPLATE = (
     PROJECT_ROOT
     / "app_quimico"
@@ -27,6 +28,14 @@ PERIODIC_TABLE_TEMPLATE = (
     / "app_quimico"
     / "elemento_quimico"
     / "elemento_lista.html"
+)
+ELEMENTO_DETALLE_TEMPLATE = (
+    PROJECT_ROOT
+    / "app_quimico"
+    / "templates"
+    / "app_quimico"
+    / "elemento_quimico"
+    / "elemento_detalle.html"
 )
 
 
@@ -480,3 +489,84 @@ def test_ningun_celda_lleva_slug_de_familia(client, elementos_cargados):
         # Límite de token: 'pt-celda-metales' no es substring de
         # 'pt-celda-metales-de-transicion' ni de la clase de otros slugs.
         assert not re.search(rf"pt-celda-{re.escape(slug)}(?![\w-])", html)
+
+
+# ========================================================================= #
+# Preferencia de vista recordada en el cliente (localStorage)
+# ========================================================================= #
+
+
+def test_periodic_table_js_cache_bust_was_bumped():
+    """El JS sumó el guardado de la vista: el ?v sube para invalidar caché."""
+    source = PERIODIC_TABLE_TEMPLATE.read_text(encoding="utf-8")
+
+    assert "js/periodic_table.js' %}?v=4" in source
+
+
+def test_js_de_la_tabla_persiste_la_vista_del_selector():
+    """El JS guarda en localStorage la vista elegida al tocar el selector.
+
+    La preferencia se escribe solo por click explícito, reconociendo el enlace
+    por su href (?vista=...); la navegación no se frena (sin preventDefault).
+    """
+    source = PERIODIC_TABLE_JS.read_text(encoding="utf-8")
+
+    assert "gestorQuimicoVistaElementos" in source
+    assert 'indexOf("vista=")' in source
+    assert "localStorage.setItem" in source
+    assert 'addEventListener("click"' in source
+    assert '"tarjetas"' in source and '"tabla"' in source
+    # La navegación del enlace sigue su curso: no se cancela el evento.
+    assert ".preventDefault(" not in source
+
+
+def test_selector_de_vista_mantiene_enlaces_explicitos(client, elementos_cargados):
+    """Los dos botones del selector siguen navegando con ?vista= explícito."""
+    html = client.get(reverse("elemento_lista")).content.decode()
+
+    assert 'href="?vista=tarjetas"' in html
+    assert 'href="?vista=tabla"' in html
+
+
+def test_lista_recupera_la_vista_guardada_en_el_cliente(client, elementos_cargados):
+    """El script inline redirige a ?vista=tabla solo bajo las tres condiciones.
+
+    (1) la URL no trae `vista`, (2) lo guardado es exactamente 'tabla' y
+    (3) el servidor renderizó la vista 'tarjetas' (data-vista-actual). Tras la
+    redirección la URL lleva ?vista=tabla, así que el guard no puede repetirse.
+    """
+    html = client.get(reverse("elemento_lista")).content.decode()
+
+    # Clave de almacenamiento compartida con el JS del selector.
+    assert "gestorQuimicoVistaElementos" in html
+    # Condición 3: el template expone la vista servida en el grupo de botones.
+    assert 'data-vista-actual="tarjetas"' in html
+    assert '=== "tarjetas"' in html
+    # Condición 1: sin parámetro vista en la query; condición 2: valor 'tabla'.
+    assert "location.search" in html
+    assert '=== "tabla"' in html
+    # Redirección sin apilar historial (reemplaza la entrada actual).
+    assert 'location.replace("?vista=tabla")' in html
+
+
+def test_lista_en_vista_tabla_no_redirige(client, elementos_cargados):
+    """En la vista tabla el atributo vale 'tabla': la tercera condición falla y
+    el guard no puede repetir la redirección (sin loop)."""
+    html = client.get(reverse("elemento_lista"), {"vista": "tabla"}).content.decode()
+
+    assert 'data-vista-actual="tabla"' in html
+    assert 'data-vista-actual="tarjetas"' not in html
+
+
+def test_detalle_mantiene_enlace_plano_al_listado(client, elementos_cargados):
+    """El botón 'Volver al Listado' queda sin ?vista: la preferencia la
+    resuelve el script inline de la lista."""
+    elemento = ElementoQuimico.objects.first()
+    html = client.get(
+        reverse("elemento_detalle", kwargs={"pk": elemento.pk})
+    ).content.decode()
+
+    assert re.search(
+        r'href="[^"]*"\s+class="btn btn-secondary mt-4">Volver al Listado', html
+    )
+    assert "?vista=" not in html
