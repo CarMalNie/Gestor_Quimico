@@ -67,8 +67,16 @@ proveedor, cache de resultados.
 - [x] T5 Suite completa verde (328 passed, era 300) + check limpio +
       makemigrations --check sin cambios + work-unit commit 43c1c59
       (Conventional Commit, descripción en español).
-- [ ] T6 Push + deploy PA (operador) + validación en producción
+- [x] T6 Push + deploy PA (operador) + validación en producción
+      (2026-09-27, operador confirmó: búsqueda por nombre en producción
+      muestra la lista de isómeros y el enlace PubChem para carga manual;
+      validado también con compuestos ternarios / corchetes cuadrados,
+      donde se verificó que el diagrama queda chico — motivo de la
+      Entrega 4, p2-2d-diagrams-e4-modal-zoom)
 
 ## Evidence
 
-(completa a medida que se ejecutan)
+- T6: deploy en PA realizado y validado por el operador en producción
+      (2026-09-27). Commit 43c1c59 en origin/main; collectstatic + Reload
+      OK. La observación de los compuestos con corchetes cuadrados dio
+      origen al diseño sellado de la Entrega 4 (modal zoom).
