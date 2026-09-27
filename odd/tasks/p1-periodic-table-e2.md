@@ -69,9 +69,14 @@ de período, librerías de terceros, hover zoom.
       del operador: card = resumen puro).
       Verificación independiente gentle-ai-verify: PASS 6/6 checks. Commit
       23fdb4c (parent).
-- [ ] T4 Keyboard nav + ARIA: roving tabindex con flechas (±1 col, ±1 fila)
+- [x] T4 Keyboard nav + ARIA: roving tabindex con flechas (±1 col, ±1 fila)
       sobre las celdas de la grilla, aria-label descriptivo por celda
       ("Fe, hierro, Z 26, metal de transición"), test del markup.
+      Implementado por gentle-ai-worker (RED 8 failed → GREEN 57 passed).
+      Verificación independiente gentle-ai-verify: PASS 6/6. Commit 23873d0.
+      Realización final distinta al ejemplo del plan: label canónico
+      "La — Lantano, número atómico 57, Lantánidos" (símbolo IUPAC
+      visible primero, WCAG 2.5.3).
 - [ ] T5 Search highlight: subrayado/resaltado dentro de la celda cuando
       hay búsqueda activa y matchea (span .pt-match en símbolo y nombre),
       test de clase en markup + JS toggling.
