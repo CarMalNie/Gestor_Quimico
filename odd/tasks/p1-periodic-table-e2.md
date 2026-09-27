@@ -77,9 +77,13 @@ de período, librerías de terceros, hover zoom.
       Realización final distinta al ejemplo del plan: label canónico
       "La — Lantano, número atómico 57, Lantánidos" (símbolo IUPAC
       visible primero, WCAG 2.5.3).
-- [ ] T5 Search highlight: subrayado/resaltado dentro de la celda cuando
+- [x] T5 Search highlight: subrayado/resaltado dentro de la celda cuando
       hay búsqueda activa y matchea (span .pt-match en símbolo y nombre),
       test de clase en markup + JS toggling.
+      Implementado por gentle-ai-worker (mark.pt-resaltado, no .pt-match —
+      normalizarConMapa mapea índices normalizado→original: 'hidro'
+      resalta 'Hidró' con acento; aria/data-* intactos; guard anti-rebuild
+      en hover). Verify PASS 6/6. Commit 143e2ed; tests 57 → 66.
 - [ ] T6 Staggered entrance: @keyframes entrada + animation-delay por Z
       (inline en template), prefers-reduced-motion desactiva, sessionStorage
       "pt-animada" evita repetir en la misma sesión; CSS/JS ?v= bump;
