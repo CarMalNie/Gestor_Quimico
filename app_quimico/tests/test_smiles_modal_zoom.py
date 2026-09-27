@@ -323,7 +323,7 @@ def test_scripts_de_smiles_van_cache_busteados_a_v3(client, owner, compuesto_eta
 def test_base_hoja_de_estilos_cache_bust_a_v4():
     source = BASE_TEMPLATE.read_text(encoding="utf-8")
 
-    assert "css/styles.css' %}?v=4" in source
+    assert "css/styles.css' %}?v=5" in source
 
 
 # ========================================================================= #

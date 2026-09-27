@@ -691,7 +691,7 @@ def test_base_stylesheet_cache_bust_was_bumped():
     # (convención del proyecto: bump al editar assets).
     source = BASE_TEMPLATE.read_text(encoding="utf-8")
 
-    assert "css/styles.css' %}?v=4" in source
+    assert "css/styles.css' %}?v=5" in source
 
 
 # ========================================================================= #
