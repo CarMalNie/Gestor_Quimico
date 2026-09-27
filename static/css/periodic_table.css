@@ -453,3 +453,37 @@
     background-color: var(--pt-resaltado, rgba(255, 214, 0, .5));
     color: inherit;
 }
+
+/* ==========================================================================
+   12. ENTRADA ESCALONADA DE LA GRILLA (T6 de p1-periodic-table-e2)
+   La animación solo existe mientras el JS deja .pt-animando en la grilla (una
+   vez por pestaña): sin la clase, las celdas quedan en su estado base visible.
+   El retardo sale de --pt-z, que la plantilla emite inline por celda: H (Z=1)
+   entra primero y Og (Z=118) al final, con la secuencia completa ~1,5 s.
+   animation-fill-mode: backwards mantiene la celda oculta durante su espera
+   sin retener el cuadro final (que ya es el estado natural de la celda).
+   ========================================================================== */
+@keyframes pt-entrada {
+    from {
+        opacity: 0;
+        transform: translateY(6px);
+    }
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+.pt-grid.pt-animando .pt-celda {
+    animation: pt-entrada .3s ease;
+    animation-fill-mode: backwards;
+    animation-delay: calc((var(--pt-z, 1) - 1) * 12ms);
+}
+
+/* Quien pidió movimiento reducido ve la tabla completa desde el primer frame:
+   la clase .pt-animando queda inerte (el JS además ni la agrega). */
+@media (prefers-reduced-motion: reduce) {
+    .pt-grid.pt-animando .pt-celda {
+        animation: none;
+    }
+}

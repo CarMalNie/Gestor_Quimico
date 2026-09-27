@@ -6,9 +6,9 @@
 
 {% block content %}
 {# base.html no expone un bloque extra_css: la hoja de la tabla periódica se carga acá (link en body es HTML5 válido). #}
-<link rel="stylesheet" href="{% static 'css/periodic_table.css' %}?v=6">
+<link rel="stylesheet" href="{% static 'css/periodic_table.css' %}?v=7">
 {# Los filtros del cliente de la tabla periódica; defer lo hace no bloqueante. #}
-<script src="{% static 'js/periodic_table.js' %}?v=7" defer></script>
+<script src="{% static 'js/periodic_table.js' %}?v=8" defer></script>
 <div class="row">
     <div class="col-12 d-flex justify-content-between align-items-center mb-4">
         <h1>⚛️ Tabla Periódica</h1>
@@ -86,7 +86,7 @@
             {% for simbolo, celda in posiciones_tabla.items %}
             <a href="{% url 'elemento_detalle' pk=celda.elemento.pk %}"
                class="pt-celda pt-celda-{{ celda.elemento.detalleelemento.categoria_elemento|slugify }}{% if celda.elemento.numero_atomico_elemento >= 104 %} pt-sintetico{% endif %}{% if celda.fila > 7 %} pt-fila-f{% endif %}"
-               {% if celda.fila %}style="grid-column: {{ celda.columna }}; grid-row: {{ celda.fila }};"{% endif %}
+               {% if celda.fila %}style="grid-column: {{ celda.columna }}; grid-row: {{ celda.fila }}; --pt-z: {{ celda.elemento.numero_atomico_elemento }};"{% else %}style="--pt-z: {{ celda.elemento.numero_atomico_elemento }};"{% endif %}
                data-categoria="{{ celda.elemento.detalleelemento.categoria_elemento }}"
                data-simbolo="{{ simbolo|lower }}"
                data-simbolo-display="{{ simbolo }}"

@@ -718,11 +718,78 @@
         });
     }
 
+    // Entrada escalonada de la grilla (T6 de p1-periodic-table-e2): cada celda
+    // entra con un fundido corto cuyo retardo crece con el número atómico
+    // (--pt-z, que emite la plantilla), así la tabla "se llena" de H a Og en
+    // ~1,5 s. Corre una sola vez por pestaña (sessionStorage): al volver a la
+    // vista en la misma sesión las celdas aparecen de inmediato. Con
+    // prefers-reduced-motion: reduce no se anima nunca y la grilla queda
+    // visible desde el primer frame (mismo estado base que si el JS fallara).
+    function initEntradaAnimada() {
+        var tabla = document.getElementById("pt-tabla");
+        // La grilla solo existe en la vista tabla.
+        if (!tabla) {
+            return;
+        }
+        // Guard idempotente: un doble include no reanima.
+        if (window.gestorQuimicoPtEntrada) {
+            return;
+        }
+        window.gestorQuimicoPtEntrada = true;
+
+        // Movimiento reducido: sin animación y sin tocar el storage.
+        if (
+            window.matchMedia &&
+            window.matchMedia("(prefers-reduced-motion: reduce)").matches
+        ) {
+            return;
+        }
+
+        var STORAGE_KEY = "ptEntradaAnimada";
+        try {
+            // Lectura protegida: sin storage se asume ya animada. Reintentar en
+            // cada carga repintaría la tabla una y otra vez en modos privados.
+            if (window.sessionStorage.getItem(STORAGE_KEY) === "1") {
+                return;
+            }
+        } catch (error) {
+            return;
+        }
+
+        var celdas = tabla.querySelectorAll(".pt-celda");
+        if (celdas.length === 0) {
+            return;
+        }
+
+        tabla.classList.add("pt-animando");
+        try {
+            window.sessionStorage.setItem(STORAGE_KEY, "1");
+        } catch (error) {
+            // Sin escritura la animación igual corre: el peor caso es repetirla
+            // en la próxima carga, nunca dejar la grilla invisible.
+        }
+
+        // El retardo mayor es el de la celda de mayor Z (--pt-z de la plantilla).
+        // Un único temporizador retira la clase cuando la secuencia terminó: es
+        // más simple que un animationend por celda y no deja la grilla trabada.
+        var maximo = 0;
+        Array.prototype.forEach.call(celdas, function (celda) {
+            var z = parseInt(celda.style.getPropertyValue("--pt-z"), 10);
+            if (!isNaN(z) && z - 1 > maximo) {
+                maximo = z - 1;
+            }
+        });
+        window.setTimeout(function () {
+            tabla.classList.remove("pt-animando");
+        }, maximo * 12 + 300 + 100);
+    }
+
     function init() {
         initPreferenciaVista();
         initTabla();
         initDetailCard();
         initNavegacionTeclado();
+        initEntradaAnimada();
     }
 
     if (document.readyState === "loading") {

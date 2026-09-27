@@ -231,7 +231,9 @@ def test_vista_tabla_renderiza_grilla_leyenda_y_filtros_del_cliente(
     html = respuesta.content.decode()
 
     assert 'id="pt-tabla"' in html
-    assert 'style="grid-column: 4; grid-row: 9;"' in html  # Ce en la fila despegada
+    # Ce en la fila despegada conserva su posición y suma la variable de la
+    # entrada escalonada (--pt-z).
+    assert 'style="grid-column: 4; grid-row: 9; --pt-z: 58;"' in html
     assert "pt-sintetico" in html  # hook de honestidad para Z >= 104
     assert 'id="pt-buscar"' in html
     assert 'id="pt-peso-min"' in html
@@ -431,10 +433,10 @@ def test_grilla_periodica_mantiene_data_peso_numerico(client, elementos_cargados
 
 
 def test_periodic_table_css_cache_bust_was_bumped():
-    """El resaltado agregó reglas a la hoja: el ?v del CSS sube para invalidar caché."""
+    """La entrada escalonada agregó reglas a la hoja: el ?v del CSS sube."""
     source = PERIODIC_TABLE_TEMPLATE.read_text(encoding="utf-8")
 
-    assert "css/periodic_table.css' %}?v=6" in source
+    assert "css/periodic_table.css' %}?v=7" in source
 
 
 def _paleta_declarada_para_chip(css, slug):
@@ -515,10 +517,10 @@ def test_ningun_celda_lleva_slug_de_familia(client, elementos_cargados):
 
 
 def test_periodic_table_js_cache_bust_was_bumped():
-    """El JS sumó el resaltado de la coincidencia: el ?v sube para invalidar caché."""
+    """El JS sumó la entrada escalonada: el ?v sube para invalidar caché."""
     source = PERIODIC_TABLE_TEMPLATE.read_text(encoding="utf-8")
 
-    assert "js/periodic_table.js' %}?v=7" in source
+    assert "js/periodic_table.js' %}?v=8" in source
 
 
 def test_js_de_la_tabla_persiste_la_vista_del_selector():
@@ -976,3 +978,120 @@ def test_css_del_resaltado_es_visible_en_ambos_temas():
     assert "var(--pt-resaltado" in bloque.group(1)
     # La variable se declara una vez por tema (claro/oscuro).
     assert sin_comentarios.count("--pt-resaltado:") == 2
+
+
+# ========================================================================= #
+# Entrada escalonada de la grilla (T6 de p1-periodic-table-e2)
+# ========================================================================= #
+
+
+def test_celdas_exponen_el_numero_atomico_para_la_entrada_escalonada(
+    client, elementos_cargados
+):
+    """Cada celda emite --pt-z: el CSS calcula el retardo con el número atómico.
+
+    La variable va en el style inline que la celda ya usa para su posición, así
+    el bloque f conserva grid-column/grid-row y suma el retardo de la entrada.
+    """
+    html = client.get(reverse("elemento_lista"), {"vista": "tabla"}).content.decode()
+
+    hidrogeno = _celda_de_simbolo(html, "H")
+    assert "--pt-z: 1;" in hidrogeno
+
+    cerio = _celda_de_simbolo(html, "Ce")
+    assert "--pt-z: 58;" in cerio
+    # La posición inline del bloque f sigue intacta junto a la variable.
+    assert "grid-column: 4;" in cerio and "grid-row: 9;" in cerio
+
+
+def test_celda_sin_detalle_igual_expone_la_variable_de_entrada(client):
+    """Sin DetalleElemento no hay fila, pero la celda igual declara --pt-z."""
+    ElementoQuimico.objects.create(
+        numero_atomico_elemento=999,
+        simbolo_elemento="Xx",
+        nombre_elemento="Elemento sin detalle",
+        peso_atomico_elemento=1,
+    )
+    html = client.get(reverse("elemento_lista"), {"vista": "tabla"}).content.decode()
+
+    celda = _celda_de_simbolo(html, "Xx")
+    assert "--pt-z: 999;" in celda
+    # Sin posición en la grilla, pero con el style inline de la animación.
+    assert "grid-column" not in celda and "grid-row" not in celda
+
+
+def test_js_de_la_entrada_escalonada_corre_una_vez_por_sesion():
+    """El flag de sessionStorage evita repetir la animación en la misma pestaña."""
+    fuente = PERIODIC_TABLE_JS.read_text(encoding="utf-8")
+    cuerpo = _cuerpo_de_funcion(fuente, "initEntradaAnimada")
+
+    assert "ptEntradaAnimada" in cuerpo
+    assert "sessionStorage" in cuerpo
+    # La lectura va protegida: si el storage no está disponible se asume ya
+    # animada (nunca se reanima en cada carga de un modo privado).
+    assert "try" in cuerpo and "catch" in cuerpo
+
+
+def test_js_de_la_entrada_escalonada_activa_y_limpia_la_clase():
+    """La animación vive en .pt-animando y se retira al terminar la secuencia."""
+    fuente = PERIODIC_TABLE_JS.read_text(encoding="utf-8")
+    cuerpo = _cuerpo_de_funcion(fuente, "initEntradaAnimada")
+
+    assert 'classList.add("pt-animando")' in cuerpo
+    assert 'classList.remove("pt-animando")' in cuerpo
+    # La limpieza es por temporizador: una sola espera, sin listener por celda.
+    assert "setTimeout" in cuerpo
+
+
+def test_js_de_la_entrada_escalonada_respeta_el_movimiento_reducido():
+    """Con prefers-reduced-motion: reduce no se agrega la clase que anima."""
+    fuente = PERIODIC_TABLE_JS.read_text(encoding="utf-8")
+    cuerpo = _cuerpo_de_funcion(fuente, "initEntradaAnimada")
+
+    assert "(prefers-reduced-motion: reduce)" in cuerpo
+    assert "matchMedia" in cuerpo
+
+
+def test_js_de_la_entrada_escalonada_se_inicializa_al_final():
+    """La entrada corre después de la navegación: no compite con el foco inicial."""
+    fuente = PERIODIC_TABLE_JS.read_text(encoding="utf-8")
+
+    assert re.search(
+        r"function init\(\)\s*\{[^}]*initNavegacionTeclado\(\)[^}]*initEntradaAnimada\(\)",
+        fuente,
+        flags=re.S,
+    )
+
+
+def test_css_define_la_entrada_escalonada_de_la_grilla():
+    """La animación existe como keyframes y se aplica solo bajo .pt-animando."""
+    css = PERIODIC_TABLE_CSS.read_text(encoding="utf-8")
+    sin_comentarios = re.sub(r"/\*.*?\*/", "", css, flags=re.S)
+
+    assert "@keyframes pt-entrada" in sin_comentarios
+    bloque = re.search(r"\.pt-animando\s+\.pt-celda\s*\{([^}]*)\}", sin_comentarios)
+    assert bloque, "sin regla .pt-animando .pt-celda"
+    cuerpo = bloque.group(1)
+    # El relleno hacia atrás mantiene la celda oculta durante su delay y la
+    # deja visible si la animación nunca corre.
+    assert "animation-fill-mode: backwards" in cuerpo
+    # Retardo proporcional a Z: H (Z=1) entra primero, Og (Z=118) al final.
+    assert re.search(r"calc\(\(var\(--pt-z[^)]*\)\s*-\s*1\)\s*\*\s*12ms\)", cuerpo)
+
+
+def test_css_de_la_entrada_escalonada_respeta_el_movimiento_reducido():
+    """Dentro del bloque reduce, las celdas animadas quedan sin animación."""
+    css = PERIODIC_TABLE_CSS.read_text(encoding="utf-8")
+    sin_comentarios = re.sub(r"/\*.*?\*/", "", css, flags=re.S)
+
+    bloques = re.findall(
+        r"@media\s*\(\s*prefers-reduced-motion:\s*reduce\s*\)\s*"
+        r"\{(?:[^{}]|\{[^{}]*\})*\}",
+        sin_comentarios,
+        flags=re.S,
+    )
+    animados = [bloque for bloque in bloques if ".pt-animando" in bloque]
+    assert animados, "sin bloque reduce para la entrada escalonada"
+    assert re.search(
+        r"\.pt-animando\s+\.pt-celda\s*\{[^}]*animation:\s*none", animados[0]
+    )
