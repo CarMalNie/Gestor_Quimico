@@ -430,10 +430,186 @@
         window.addEventListener("scroll", ocultar, { passive: true, capture: true });
     }
 
+    // Navegación por teclado de la grilla (T4 de la entrega 2): roving
+    // tabindex con flechas. Una sola celda es alcanzable con Tab; las flechas
+    // mueven el foco (y la posición roving) ±1 columna o ±1 fila según la
+    // coordenada inline de cada celda. No depende del tipo de puntero: hay
+    // teclados en dispositivos táctiles y punteros en dispositivos sin hover.
+    function initNavegacionTeclado() {
+        var tabla = document.getElementById("pt-tabla");
+        // La grilla solo existe en la vista tabla.
+        if (!tabla) {
+            return;
+        }
+        // Guard idempotente: un doble include no duplica listeners.
+        if (window.gestorQuimicoPtTeclado) {
+            return;
+        }
+        window.gestorQuimicoPtTeclado = true;
+
+        // La posición vive en el style inline de la plantilla
+        // ("grid-column: 4; grid-row: 9;"), no en data-*.
+        var RE_COLUMNA = /grid-column:\s*(\d+)/;
+        var RE_FILA = /grid-row:\s*(\d+)/;
+        var COLUMNAS = 18;
+        var FILAS = 10;
+
+        var celdas = Array.prototype.slice.call(
+            tabla.querySelectorAll(".pt-celda")
+        );
+        if (celdas.length === 0) {
+            return;
+        }
+
+        // Registro: celda + coordenada de grilla (null si no es parseable).
+        var registro = celdas.map(function (celda) {
+            var estilo = celda.getAttribute("style") || "";
+            var columna = RE_COLUMNA.exec(estilo);
+            var fila = RE_FILA.exec(estilo);
+            return {
+                el: celda,
+                columna: columna ? parseInt(columna[1], 10) : null,
+                fila: fila ? parseInt(fila[1], 10) : null,
+            };
+        });
+
+        // Ocupación por coordenada: los huecos de la grilla (p. ej. el período
+        // 1 salvo H y He, o la fila 8) no tienen celda.
+        var ocupadas = {};
+        registro.forEach(function (nodo) {
+            if (nodo.fila !== null && nodo.columna !== null) {
+                ocupadas[nodo.fila + ":" + nodo.columna] = nodo.el;
+            }
+        });
+
+        // Única fuente del estado roving: la celda con tabindex="0".
+        var roving = registro[0].el;
+
+        function setRoving(celda) {
+            if (!celda || celda === roving) {
+                return;
+            }
+            roving.setAttribute("tabindex", "-1");
+            celda.setAttribute("tabindex", "0");
+            roving = celda;
+        }
+
+        // Arranque: la primera celda del DOM (H) es la posición roving.
+        registro.forEach(function (nodo) {
+            nodo.el.setAttribute(
+                "tabindex",
+                nodo.el === roving ? "0" : "-1"
+            );
+        });
+
+        // Posición exacta; si el hueco está vacío camina hacia el mismo lado
+        // hasta topar una celda real o el borde de la grilla (1..18 / 1..10).
+        function buscar(fila, columna, pasoFila, pasoColumna) {
+            var f = fila;
+            var c = columna;
+            while (f >= 1 && f <= FILAS && c >= 1 && c <= COLUMNAS) {
+                var celda = ocupadas[f + ":" + c];
+                if (celda) {
+                    return celda;
+                }
+                f += pasoFila;
+                c += pasoColumna;
+            }
+            return null;
+        }
+
+        // Sin coordenada parseable se cae al orden del DOM (lista plana).
+        function porOrden(celda, paso) {
+            var posicion = celdas.indexOf(celda);
+            if (posicion === -1) {
+                return null;
+            }
+            return celdas[posicion + paso] || null;
+        }
+
+        function mover(celda) {
+            if (!celda) {
+                return false;
+            }
+            setRoving(celda);
+            celda.focus();
+            return true;
+        }
+
+        function destinoDe(celda, tecla) {
+            var indice = celdas.indexOf(celda);
+            var nodo = indice === -1 ? null : registro[indice];
+            if (!nodo || nodo.fila === null || nodo.columna === null) {
+                return porOrden(
+                    celda,
+                    tecla === "ArrowLeft" || tecla === "ArrowUp" ? -1 : 1
+                );
+            }
+            if (tecla === "ArrowRight") {
+                return buscar(nodo.fila, nodo.columna + 1, 0, 1);
+            }
+            if (tecla === "ArrowLeft") {
+                return buscar(nodo.fila, nodo.columna - 1, 0, -1);
+            }
+            if (tecla === "ArrowDown") {
+                return buscar(nodo.fila + 1, nodo.columna, 1, 0);
+            }
+            return buscar(nodo.fila - 1, nodo.columna, -1, 0);
+        }
+
+        // Delegación en el contenedor: las celdas son <a> y pueden regenerarse.
+        tabla.addEventListener("keydown", function (event) {
+            var objetivo = event.target;
+            if (!objetivo || !objetivo.closest) {
+                return;
+            }
+            var celda = objetivo.closest(".pt-celda");
+            if (!celda || !tabla.contains(celda)) {
+                return;
+            }
+            var tecla = event.key;
+            if (tecla === "Home" || tecla === "End") {
+                // Extremos en el orden del DOM (menor/mayor Z de la grilla).
+                event.preventDefault();
+                mover(
+                    tecla === "Home"
+                        ? registro[0].el
+                        : registro[registro.length - 1].el
+                );
+                return;
+            }
+            if (
+                tecla !== "ArrowRight" &&
+                tecla !== "ArrowLeft" &&
+                tecla !== "ArrowUp" &&
+                tecla !== "ArrowDown"
+            ) {
+                return;
+            }
+            // Las flechas mueven el foco: no deben scrollear la página.
+            event.preventDefault();
+            mover(destinoDe(celda, tecla));
+        });
+
+        // Foco por Tab o click: la celda enfocada pasa a ser la roving. Es
+        // independiente del focusin de la card (solo muestran y marcan).
+        tabla.addEventListener("focusin", function (event) {
+            var objetivo = event.target;
+            if (!objetivo || !objetivo.closest) {
+                return;
+            }
+            var celda = objetivo.closest(".pt-celda");
+            if (celda && tabla.contains(celda)) {
+                setRoving(celda);
+            }
+        });
+    }
+
     function init() {
         initPreferenciaVista();
         initTabla();
         initDetailCard();
+        initNavegacionTeclado();
     }
 
     if (document.readyState === "loading") {

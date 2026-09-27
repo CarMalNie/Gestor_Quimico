@@ -8,7 +8,7 @@
 {# base.html no expone un bloque extra_css: la hoja de la tabla periódica se carga acá (link en body es HTML5 válido). #}
 <link rel="stylesheet" href="{% static 'css/periodic_table.css' %}?v=5">
 {# Los filtros del cliente de la tabla periódica; defer lo hace no bloqueante. #}
-<script src="{% static 'js/periodic_table.js' %}?v=5" defer></script>
+<script src="{% static 'js/periodic_table.js' %}?v=6" defer></script>
 <div class="row">
     <div class="col-12 d-flex justify-content-between align-items-center mb-4">
         <h1>⚛️ Tabla Periódica</h1>
@@ -82,7 +82,7 @@
 
 <div class="row">
     <div class="col-12">
-        <div id="pt-tabla" class="pt-grid">
+        <div id="pt-tabla" class="pt-grid" aria-label="Tabla periódica interactiva: 118 elementos químicos">
             {% for simbolo, celda in posiciones_tabla.items %}
             <a href="{% url 'elemento_detalle' pk=celda.elemento.pk %}"
                class="pt-celda pt-celda-{{ celda.elemento.detalleelemento.categoria_elemento|slugify }}{% if celda.elemento.numero_atomico_elemento >= 104 %} pt-sintetico{% endif %}{% if celda.fila > 7 %} pt-fila-f{% endif %}"
@@ -95,7 +95,8 @@
                data-peso="{{ celda.elemento.peso_atomico_elemento|stringformat:'s' }}"
                {% if celda.elemento.detalleelemento %}data-grupo="{{ celda.elemento.detalleelemento.grupo_elemento }}" data-periodo="{{ celda.elemento.detalleelemento.periodo_elemento }}"{% endif %}
                data-peso-mostrar="{% if celda.elemento.peso_atomico_es_masico %}{{ celda.elemento.peso_atomico_para_mostrar|stringformat:'s' }}{% else %}{{ celda.elemento.peso_atomico_para_mostrar }}{% endif %}"
-               data-peso-masico="{{ celda.elemento.peso_atomico_es_masico|yesno:'1,0' }}">
+               data-peso-masico="{{ celda.elemento.peso_atomico_es_masico|yesno:'1,0' }}"
+               aria-label="{{ simbolo }} — {{ celda.elemento.nombre_elemento }}, número atómico {{ celda.elemento.numero_atomico_elemento }}{% if celda.elemento.detalleelemento %}, {{ celda.elemento.detalleelemento.categoria_elemento }}{% endif %}">
                 <span class="pt-z">{{ celda.elemento.numero_atomico_elemento }}</span>
                 <span class="pt-simbolo">{{ simbolo }}</span>
                 <span class="pt-nombre">{{ celda.elemento.nombre_elemento }}</span>

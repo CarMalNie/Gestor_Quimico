@@ -515,10 +515,10 @@ def test_ningun_celda_lleva_slug_de_familia(client, elementos_cargados):
 
 
 def test_periodic_table_js_cache_bust_was_bumped():
-    """El JS sumó la card de detalle: el ?v sube para invalidar caché."""
+    """El JS sumó la navegación por teclado: el ?v sube para invalidar caché."""
     source = PERIODIC_TABLE_TEMPLATE.read_text(encoding="utf-8")
 
-    assert "js/periodic_table.js' %}?v=5" in source
+    assert "js/periodic_table.js' %}?v=6" in source
 
 
 def test_js_de_la_tabla_persiste_la_vista_del_selector():
@@ -534,8 +534,10 @@ def test_js_de_la_tabla_persiste_la_vista_del_selector():
     assert "localStorage.setItem" in source
     assert 'addEventListener("click"' in source
     assert '"tarjetas"' in source and '"tabla"' in source
-    # La navegación del enlace sigue su curso: no se cancela el evento.
-    assert ".preventDefault(" not in source
+    # La navegación del enlace sigue su curso: el handler del selector no
+    # cancela el evento. La aserción se acota a esa función porque la
+    # navegación por flechas de T4 sí usa preventDefault (evita el scroll).
+    assert ".preventDefault(" not in _cuerpo_de_funcion(source, "initPreferenciaVista")
 
 
 def test_selector_de_vista_mantiene_enlaces_explicitos(client, elementos_cargados):
@@ -750,3 +752,122 @@ def test_js_de_la_card_usa_rotulos_neutrales_y_honestos():
     assert "Grupo/Período" in source
     assert "Peso atómico" in source
     assert "Número másico" in source
+
+
+# ========================================================================= #
+# Navegación por teclado y ARIA (T4 de p1-periodic-table-e2)
+# ========================================================================= #
+
+
+def _cuerpo_de_funcion(fuente, nombre):
+    """Cuerpo de `function <nombre>(...) { ... }` con llaves balanceadas."""
+    inicio = fuente.index(f"function {nombre}(")
+    llave = fuente.index("{", inicio)
+    profundidad = 0
+    for indice in range(llave, len(fuente)):
+        if fuente[indice] == "{":
+            profundidad += 1
+        elif fuente[indice] == "}":
+            profundidad -= 1
+            if profundidad == 0:
+                return fuente[llave : indice + 1]
+    raise AssertionError(f"función sin cierre: {nombre}")
+
+
+def _contenedor_pt_tabla(html):
+    """Etiqueta de apertura del contenedor de la grilla."""
+    coincidencia = re.search(r'<div\b[^>]*id="pt-tabla"[^>]*>', html)
+    if not coincidencia:
+        raise AssertionError("contenedor #pt-tabla no encontrado")
+    return coincidencia.group(0)
+
+
+def test_celdas_llevan_aria_label_descriptivo(client, elementos_cargados):
+    """Cada celda describe símbolo, nombre, Z y categoría para lectores de pantalla."""
+    html = client.get(reverse("elemento_lista"), {"vista": "tabla"}).content.decode()
+
+    lantano = _celda_de_simbolo(html, "La")
+    assert 'aria-label="La — Lantano, número atómico 57, Lantánidos"' in lantano
+    # Sin peso: el nombre accesible es corto y el detalle completo vive en su
+    # página (el peso ya está en la card). Casing canónico IUPAC en el label,
+    # no el minúsculo que usan los data-* para el filtro del cliente.
+    etiqueta = re.search(r'aria-label="([^"]*)"', lantano).group(1)
+    assert "g/mol" not in etiqueta
+    assert "Lantano" in etiqueta and "lantano" not in etiqueta
+
+    # La grilla completa lo lleva: no es una celda de muestra.
+    assert "aria-label=" in _celda_de_simbolo(html, "H")
+    assert "número atómico 84" in _celda_de_simbolo(html, "Po")
+
+
+def test_aria_label_empieza_con_el_simbolo_visible(client, elementos_cargados):
+    """WCAG 2.5.3: el texto visible (símbolo canónico) encabeza el nombre accesible."""
+    html = client.get(reverse("elemento_lista"), {"vista": "tabla"}).content.decode()
+
+    for simbolo in ("H", "La", "Po"):
+        celda = _celda_de_simbolo(html, simbolo)
+        assert f'aria-label="{simbolo} — ' in celda
+
+
+def test_celda_sin_detalle_no_incluye_categoria_en_el_aria_label(client):
+    """Sin DetalleElemento el nombre accesible omite el tramo de categoría."""
+    ElementoQuimico.objects.create(
+        numero_atomico_elemento=999,
+        simbolo_elemento="Xx",
+        nombre_elemento="Elemento sin detalle",
+        peso_atomico_elemento=1,
+    )
+    html = client.get(reverse("elemento_lista"), {"vista": "tabla"}).content.decode()
+
+    celda = _celda_de_simbolo(html, "Xx")
+    assert 'aria-label="Xx — Elemento sin detalle, número atómico 999"' in celda
+    assert "None" not in celda
+
+
+def test_tabla_declara_su_proposito_en_el_contenedor(client, elementos_cargados):
+    """El contenedor anuncia qué es la grilla; las celdas siguen siendo <a>."""
+    html = client.get(reverse("elemento_lista"), {"vista": "tabla"}).content.decode()
+
+    contenedor = _contenedor_pt_tabla(html)
+    assert (
+        'aria-label="Tabla periódica interactiva: 118 elementos químicos"'
+        in contenedor
+    )
+    # Sin roles de widget: son 118 enlaces en orden de lectura.
+    assert 'role="grid"' not in html
+
+
+def test_js_de_la_navegacion_expone_la_roving_tabindex_y_las_flechas():
+    fuente = PERIODIC_TABLE_JS.read_text(encoding="utf-8")
+    cuerpo = _cuerpo_de_funcion(fuente, "initNavegacionTeclado")
+
+    assert "setRoving" in cuerpo
+    # Una sola celda alcanzable con Tab: 0 en la roving, -1 en el resto.
+    assert 'setAttribute("tabindex", "0")' in cuerpo
+    assert 'setAttribute("tabindex", "-1")' in cuerpo
+    for tecla in ("ArrowRight", "ArrowLeft", "ArrowUp", "ArrowDown", "Home", "End"):
+        assert f'"{tecla}"' in cuerpo, f"sin manejo de {tecla}"
+    # La coordenada sale del style inline de la plantilla.
+    assert "grid-column" in cuerpo and "grid-row" in cuerpo
+    # Las flechas mueven el foco y no scrollean la grilla.
+    assert ".focus()" in cuerpo
+    assert ".preventDefault(" in cuerpo
+
+
+def test_js_de_la_navegacion_no_depende_del_media_hover():
+    """El teclado funciona con cualquier puntero: no se ata a (hover: none)."""
+    fuente = PERIODIC_TABLE_JS.read_text(encoding="utf-8")
+    navegacion = _cuerpo_de_funcion(fuente, "initNavegacionTeclado")
+
+    assert "(hover: none)" not in navegacion
+    assert "matchMedia" not in navegacion
+
+
+def test_js_de_la_navegacion_se_inicializa_despues_de_la_card():
+    fuente = PERIODIC_TABLE_JS.read_text(encoding="utf-8")
+
+    assert re.search(
+        r"function init\(\)\s*\{[^}]*initDetailCard\(\)[^}]*initNavegacionTeclado\(\)",
+        fuente,
+        flags=re.S,
+    )
