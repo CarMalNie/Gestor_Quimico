@@ -110,11 +110,24 @@ de período, librerías de terceros, hover zoom.
       ~/.virtualenvs/gestor) → validación en producción → cierre de notas
       con estados datados.
 
+## Operator feedback (validación T8, 2026-09-28)
+
+- [x] F1 fix resaltado pegado (T5): el guard de limpiarResaltado comparaba
+      textContent con el texto original; un <mark> que envuelve todo el
+      texto deja el textContent idéntico al original y nunca se limpiaba
+      (solo F5 lo sacaba). Reproducido en Node+jsdom con la secuencia
+      H -> borrar -> A -> borrar antes del fix. Detección por NODO
+      (querySelector('mark')). Commit 4315013; JS ?v=9; tests 74 -> 75.
+- [x] F2 opción (b) entrada escalonada (T6): recarga completa (F5,
+      type 'reload') re-anima ignorando el flag; navegación interna sigue
+      sin repetir. Mismo commit 4315013 (verificado en jsdom: primera
+      visita anima, vuelta interna no, F5 con flag anima).
+
 ## Decisions
 
 - Card flotante con datos básicos (NO con electronegatividad/radio): el
   hover es un peek, el detalle completo ya existe en su página.
-- Animación una vez por sesión (sessionStorage), no en cada recarga.
+- Animación: opción (b) del operador — recarga completa (F5) re-anima; navegación interna no (flag por pestaña).
 - localStorage solo como default; `?vista=` explícito siempre gana.
 
 ## Evidence
