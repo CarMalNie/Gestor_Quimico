@@ -84,10 +84,14 @@ de período, librerías de terceros, hover zoom.
       normalizarConMapa mapea índices normalizado→original: 'hidro'
       resalta 'Hidró' con acento; aria/data-* intactos; guard anti-rebuild
       en hover). Verify PASS 6/6. Commit 143e2ed; tests 57 → 66.
-- [ ] T6 Staggered entrance: @keyframes entrada + animation-delay por Z
+- [x] T6 Staggered entrance: @keyframes entrada + animation-delay por Z
       (inline en template), prefers-reduced-motion desactiva, sessionStorage
       "pt-animada" evita repetir en la misma sesión; CSS/JS ?v= bump;
       tests de CSS (keyframes, reduced-motion) y del flag.
+      Implementado por gentle-ai-worker (delay calc((var(--pt-z) - 1) *
+      12ms); sessionStorage ptEntradaAnimada una vez por tab; fail-safe en
+      read/write; fill-mode backwards; cleanup 1804ms). Verify PASS 6/6.
+      Commit c5f2593; tests 66 → 74.
 - [ ] T7 Suite completa verde + manage.py check + makemigrations --check
       (sin cambios de modelos: E2 es frontend-mostly) + cache-bust ?v=
       correcto en elemento_lista.html.
