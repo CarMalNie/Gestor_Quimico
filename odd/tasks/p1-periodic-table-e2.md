@@ -92,10 +92,20 @@ de período, librerías de terceros, hover zoom.
       12ms); sessionStorage ptEntradaAnimada una vez por tab; fail-safe en
       read/write; fill-mode backwards; cleanup 1804ms). Verify PASS 6/6.
       Commit c5f2593; tests 66 → 74.
-- [ ] T7 Suite completa verde + manage.py check + makemigrations --check
+- [x] T7 Suite completa verde + manage.py check + makemigrations --check
       (sin cambios de modelos: E2 es frontend-mostly) + cache-bust ?v=
       correcto en elemento_lista.html.
-- [ ] T8 Validación local del operador → decidir push (preguntar) → CI
+      Cerrada 2026-09-28: check limpio (0 issues) y makemigrations --check
+      'No changes detected'. Suite por módulos touched-adjacent: 94 passed
+      módulos elementos+detalle+cargar_elementos + 2 cache-bust tests
+      ajustados ?v=4 -> ?v=5 verdes (commit fdc517a). Full suite local
+      quedo en ruido transitorio MySQL por aborts (18F/289P/105E, patrón
+      obs #585, no del código) — decisión del operador: no exigir full
+      suite local, el CI de GitHub corre el full suite en el push. Working
+      tree limpio tras fdc517a.
+- [ ] T8
+2026-09-28: main local 16 commits ahead de origin/main (sin pushear,
+      push sale en T8 con decisión del operador). Pendientes: Validación local del operador → decidir push (preguntar) → CI
       verde → deploy PA (pull + collectstatic + Reload; venv
       ~/.virtualenvs/gestor) → validación en producción → cierre de notas
       con estados datados.
