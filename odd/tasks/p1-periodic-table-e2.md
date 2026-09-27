@@ -122,6 +122,9 @@ de período, librerías de terceros, hover zoom.
       type 'reload') re-anima ignorando el flag; navegación interna sigue
       sin repetir. Mismo commit 4315013 (verificado en jsdom: primera
       visita anima, vuelta interna no, F5 con flag anima).
+- [x] F3 revalidación del operador (2026-09-28): T5 (secuencia H -> A ->
+      limpiar sin residuos) y T6 (F5 re-anima) pasaron; validación local
+      10/10. Pendiente decisión de push (T8 continúa).
 
 ## Decisions
 
