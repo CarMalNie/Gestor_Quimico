@@ -103,12 +103,17 @@ de período, librerías de terceros, hover zoom.
       obs #585, no del código) — decisión del operador: no exigir full
       suite local, el CI de GitHub corre el full suite en el push. Working
       tree limpio tras fdc517a.
-- [ ] T8
-2026-09-28: main local 16 commits ahead de origin/main (sin pushear,
-      push sale en T8 con decisión del operador). Pendientes: Validación local del operador → decidir push (preguntar) → CI
-      verde → deploy PA (pull + collectstatic + Reload; venv
-      ~/.virtualenvs/gestor) → validación en producción → cierre de notas
-      con estados datados.
+- [x] T8
+      Cerrada 2026-09-28: revalidación del operador 10/10 en local (F1/F2,
+      ver F3 abajo) → push con su decisión (a04e28d..54eb934, 20 commits:
+      toda la Entrega 2 + fixes de feedback) → CI GitHub Actions VERDE en
+      full suite → deploy PA por el operador (cd ~/Gestor_Quimico; git
+      pull; ~/.virtualenvs/gestor/bin/python manage.py collectstatic
+      --noinput; Reload) → validación del operador EN PRODUCCIÓN OK
+      (T5 sin residuos, T6 re-anima en F5, toggle y card intactos).
+      FEATURE p1-periodic-table-e2 COMPLETA: T1-T8 cerradas. Sin cambios
+      de modelos; JS ?v=9; tests 74 -> 75; main == origin/main tras
+      54eb934.
 
 ## Operator feedback (validación T8, 2026-09-28)
 
@@ -124,7 +129,7 @@ de período, librerías de terceros, hover zoom.
       visita anima, vuelta interna no, F5 con flag anima).
 - [x] F3 revalidación del operador (2026-09-28): T5 (secuencia H -> A ->
       limpiar sin residuos) y T6 (F5 re-anima) pasaron; validación local
-      10/10. Pendiente decisión de push (T8 continúa).
+      10/10. Push y producción OK (ver T8) — T8 cerrada.
 
 ## Decisions
 
