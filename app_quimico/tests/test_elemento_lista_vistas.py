@@ -517,10 +517,10 @@ def test_ningun_celda_lleva_slug_de_familia(client, elementos_cargados):
 
 
 def test_periodic_table_js_cache_bust_was_bumped():
-    """El JS sumó la entrada escalonada: el ?v sube para invalidar caché."""
+    """El JS subió por el fix de limpieza de marks y la recarga re-animada."""
     source = PERIODIC_TABLE_TEMPLATE.read_text(encoding="utf-8")
 
-    assert "js/periodic_table.js' %}?v=8" in source
+    assert "js/periodic_table.js' %}?v=9" in source
 
 
 def test_js_de_la_tabla_persiste_la_vista_del_selector():
@@ -927,6 +927,24 @@ def test_js_restaura_el_texto_plano_al_limpiar_el_resaltado():
     assert "original" in cuerpo
 
 
+def test_js_limpia_el_mark_detectandolo_por_nodo_no_por_texto():
+    """Regresión del resaltado pegado (feedback del operador, T5).
+
+    El guard original comparaba textContent contra el texto original: un
+    <mark> que envuelve TODO el texto deja el textContent idéntico al
+    original, así que el resaltado nunca se limpiaba al vaciar la búsqueda
+    (solo un F5 lo sacaba). La detección correcta es por NODO (mark), no
+    por comparación de texto.
+    """
+    fuente = PERIODIC_TABLE_JS.read_text(encoding="utf-8")
+    cuerpo = _cuerpo_de_funcion(fuente, "limpiarResaltado")
+
+    # Detecta el resaltado vivo por su elemento, no por el texto resultante.
+    assert 'querySelector("mark")' in cuerpo
+    # El guard defectuoso (comparación de textContent) no debe volver.
+    assert "!== datos.original" not in cuerpo
+
+
 def test_js_resalta_solo_las_celdas_que_pasan_el_filtro():
     """El resaltado es una capa visual atada a la búsqueda activa y a `pasa`."""
     fuente = PERIODIC_TABLE_JS.read_text(encoding="utf-8")
@@ -1020,16 +1038,27 @@ def test_celda_sin_detalle_igual_expone_la_variable_de_entrada(client):
     assert "grid-column" not in celda and "grid-row" not in celda
 
 
-def test_js_de_la_entrada_escalonada_corre_una_vez_por_sesion():
-    """El flag de sessionStorage evita repetir la animación en la misma pestaña."""
+def test_js_de_la_entrada_escalonada_corre_en_recarga_y_en_primera_visita():
+    """Semántica de opción (b) del operador: recarga completa re-anima.
+
+    La primera visita anima y deja el flag; en navegación interna el flag
+    suprime la repetición; en recarga completa (F5/ctrl+R, type 'reload')
+    el flag se ignora y la animación corre de nuevo.
+    """
     fuente = PERIODIC_TABLE_JS.read_text(encoding="utf-8")
     cuerpo = _cuerpo_de_funcion(fuente, "initEntradaAnimada")
 
     assert "ptEntradaAnimada" in cuerpo
     assert "sessionStorage" in cuerpo
     # La lectura va protegida: si el storage no está disponible se asume ya
-    # animada (nunca se reanima en cada carga de un modo privado).
+    # animada en navegación interna (nunca se re-anima en cada link).
     assert "try" in cuerpo and "catch" in cuerpo
+    # El tipo de navegación viene de la Navigation Timing API: solo 'reload'
+    # (recarga completa) re-anima ignorando el flag.
+    assert "getEntriesByType" in cuerpo
+    assert '"navigation"' in cuerpo
+    assert '"reload"' in cuerpo
+    assert "removeItem" in cuerpo
 
 
 def test_js_de_la_entrada_escalonada_activa_y_limpia_la_clase():

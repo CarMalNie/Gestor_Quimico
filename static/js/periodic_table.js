@@ -90,11 +90,15 @@
 
     // Deja el span con el texto original completo y sin <mark> (T5): al limpiar
     // la búsqueda no debe quedar ningún nodo de resaltado en el DOM.
+    // La detección es por NODO, no por texto comparado: un <mark> que envuelve
+    // TODO el texto deja el textContent del span idéntico al original, así que
+    // una comparación de textContent nunca restauraría (el resaltado quedaba
+    // pegado al vaciar la búsqueda — feedback del operador, T5).
     function limpiarResaltado(datos) {
         if (!datos.span) {
             return;
         }
-        if (datos.span.textContent !== datos.original) {
+        if (datos.span.querySelector("mark")) {
             datos.span.textContent = datos.original;
         }
     }
@@ -721,9 +725,10 @@
     // Entrada escalonada de la grilla (T6 de p1-periodic-table-e2): cada celda
     // entra con un fundido corto cuyo retardo crece con el número atómico
     // (--pt-z, que emite la plantilla), así la tabla "se llena" de H a Og en
-    // ~1,5 s. Corre una sola vez por pestaña (sessionStorage): al volver a la
-    // vista en la misma sesión las celdas aparecen de inmediato. Con
-    // prefers-reduced-motion: reduce no se anima nunca y la grilla queda
+    // ~1,5 s. Semántica acordada con el operador (opción b): anima en la
+    // primera visita de la pestaña y en toda RECARGA completa (F5/ctrl+R);
+    // en navegación interna (links, back) sin flag nuevo queda sin animar.
+    // Con prefers-reduced-motion: reduce no se anima nunca y la grilla queda
     // visible desde el primer frame (mismo estado base que si el JS fallara).
     function initEntradaAnimada() {
         var tabla = document.getElementById("pt-tabla");
@@ -746,10 +751,28 @@
         }
 
         var STORAGE_KEY = "ptEntradaAnimada";
+        var recarga = false;
         try {
-            // Lectura protegida: sin storage se asume ya animada. Reintentar en
-            // cada carga repintaría la tabla una y otra vez en modos privados.
-            if (window.sessionStorage.getItem(STORAGE_KEY) === "1") {
+            // Recarga completa (F5/ctrl+R): el operador pidió revi ver la
+            // animación en cada refresh — el flag se ignora para ese caso.
+            var entradas = window.performance && window.performance.getEntriesByType
+                ? window.performance.getEntriesByType("navigation")
+                : [];
+            recarga =
+                entradas.length > 0 && entradas[0].type === "reload";
+            if (recarga) {
+                window.sessionStorage.removeItem(STORAGE_KEY);
+            }
+        } catch (error) {
+            // Sin navigation timing ni storage: se comporta como navegación
+            // interna (el flag decide), nunca se deja la grilla invisible.
+            recarga = false;
+        }
+        try {
+            // Lectura protegida: sin storage se asume ya animada en navegación
+            // interna. Reintentar en cada link repintaría la tabla una y otra
+            // vez al moverse por la app.
+            if (!recarga && window.sessionStorage.getItem(STORAGE_KEY) === "1") {
                 return;
             }
         } catch (error) {
