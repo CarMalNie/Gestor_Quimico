@@ -431,10 +431,10 @@ def test_grilla_periodica_mantiene_data_peso_numerico(client, elementos_cargados
 
 
 def test_periodic_table_css_cache_bust_was_bumped():
-    """La card de detalle cambió la hoja: el ?v del CSS sube para invalidar caché."""
+    """El resaltado agregó reglas a la hoja: el ?v del CSS sube para invalidar caché."""
     source = PERIODIC_TABLE_TEMPLATE.read_text(encoding="utf-8")
 
-    assert "css/periodic_table.css' %}?v=5" in source
+    assert "css/periodic_table.css' %}?v=6" in source
 
 
 def _paleta_declarada_para_chip(css, slug):
@@ -515,10 +515,10 @@ def test_ningun_celda_lleva_slug_de_familia(client, elementos_cargados):
 
 
 def test_periodic_table_js_cache_bust_was_bumped():
-    """El JS sumó la navegación por teclado: el ?v sube para invalidar caché."""
+    """El JS sumó el resaltado de la coincidencia: el ?v sube para invalidar caché."""
     source = PERIODIC_TABLE_TEMPLATE.read_text(encoding="utf-8")
 
-    assert "js/periodic_table.js' %}?v=6" in source
+    assert "js/periodic_table.js' %}?v=7" in source
 
 
 def test_js_de_la_tabla_persiste_la_vista_del_selector():
@@ -871,3 +871,108 @@ def test_js_de_la_navegacion_se_inicializa_despues_de_la_card():
         fuente,
         flags=re.S,
     )
+
+
+# ========================================================================= #
+# Resaltado de la coincidencia dentro de la celda (T5 de p1-periodic-table-e2)
+# ========================================================================= #
+
+
+def test_js_normaliza_con_mapa_de_indices_hacia_el_texto_original():
+    """El resaltado necesita trasladar el rango normalizado al texto original.
+
+    NFD desdobla la letra y su acento: 'Hidrógeno' normalizado ocupa menos
+    caracteres que el original. La normalización conserva un mapa
+    (índice normalizado -> índice fuente) por cada carácter retenido, así
+    'hidro' resalta 'Hidró' con el acento intacto.
+    """
+    fuente = PERIODIC_TABLE_JS.read_text(encoding="utf-8")
+    cuerpo = _cuerpo_de_funcion(fuente, "normalizarConMapa")
+
+    assert "NFD" in cuerpo
+    # Se registra el índice fuente de cada carácter retenido.
+    assert "mapa.push" in cuerpo
+    # Las marcas diacríticas del rango combining no aportan índice propio.
+    assert "\\u0300" in cuerpo and "\\u036f" in cuerpo
+
+
+def test_js_marca_la_coincidencia_con_mark_y_la_clase_resaltado():
+    """El pop visual es un <mark class="pt-resaltado"> dentro del span."""
+    fuente = PERIODIC_TABLE_JS.read_text(encoding="utf-8")
+
+    assert "pt-resaltado" in fuente
+    assert 'createElement("mark")' in fuente
+
+
+def test_js_resalta_simbolo_y_nombre_desde_su_texto_canonico():
+    """Ambos spans se registran con su texto visible para calcular el rango."""
+    fuente = PERIODIC_TABLE_JS.read_text(encoding="utf-8")
+    cuerpo = _cuerpo_de_funcion(fuente, "initTabla")
+
+    assert ".pt-simbolo" in cuerpo
+    assert ".pt-nombre" in cuerpo
+    assert "simboloOriginal" in cuerpo
+    assert "nombreOriginal" in cuerpo
+
+
+def test_js_restaura_el_texto_plano_al_limpiar_el_resaltado():
+    """Al limpiar la búsqueda no debe quedar ningún <mark> en el DOM."""
+    fuente = PERIODIC_TABLE_JS.read_text(encoding="utf-8")
+    cuerpo = _cuerpo_de_funcion(fuente, "limpiarResaltado")
+
+    # El texto original vuelve por textContent: los <mark> se descartan.
+    assert "textContent" in cuerpo
+    assert "original" in cuerpo
+
+
+def test_js_resalta_solo_las_celdas_que_pasan_el_filtro():
+    """El resaltado es una capa visual atada a la búsqueda activa y a `pasa`."""
+    fuente = PERIODIC_TABLE_JS.read_text(encoding="utf-8")
+    cuerpo = _cuerpo_de_funcion(fuente, "aplicar")
+
+    assert "hayBusqueda" in cuerpo
+    assert "resaltarSpan" in cuerpo
+    assert "limpiarResaltado" in cuerpo
+
+
+def test_js_reutiliza_el_resaltado_cuando_la_busqueda_no_cambia():
+    """El hover re-aplica filtros: sin término nuevo no se reconstruyen los marks."""
+    fuente = PERIODIC_TABLE_JS.read_text(encoding="utf-8")
+    cuerpo = _cuerpo_de_funcion(fuente, "aplicar")
+
+    # Guard por término buscado: evita reconstruir los <mark> en cada repintado.
+    assert "busquedaResaltada" in cuerpo
+
+
+def test_js_del_resaltado_no_modifica_atributos_accesibles():
+    """El resaltado es puramente visual: no toca aria-label ni data-*."""
+    fuente = PERIODIC_TABLE_JS.read_text(encoding="utf-8")
+    cuerpo = _cuerpo_de_funcion(fuente, "resaltarSpan")
+
+    assert "setAttribute" not in cuerpo
+    assert "aria" not in cuerpo
+
+
+def test_css_define_el_resaltado_de_la_coincidencia():
+    """La banda del resultado visible existe como regla propia."""
+    css = PERIODIC_TABLE_CSS.read_text(encoding="utf-8")
+    sin_comentarios = re.sub(r"/\*.*?\*/", "", css, flags=re.S)
+
+    bloque = re.search(r"\.pt-resaltado\s*\{([^}]*)\}", sin_comentarios)
+    assert bloque, "sin regla .pt-resaltado"
+    cuerpo = bloque.group(1)
+    # Color heredado del tema: el <mark> no impone su propio color de texto.
+    assert "color: inherit" in cuerpo
+    assert "padding: 0" in cuerpo
+
+
+def test_css_del_resaltado_es_visible_en_ambos_temas():
+    """El fondo del resaltado sale de una variable declarada por tema."""
+    css = PERIODIC_TABLE_CSS.read_text(encoding="utf-8")
+    sin_comentarios = re.sub(r"/\*.*?\*/", "", css, flags=re.S)
+
+    bloque = re.search(r"\.pt-resaltado\s*\{([^}]*)\}", sin_comentarios)
+    assert bloque, "sin regla .pt-resaltado"
+    assert "var(--pt-resaltado" in bloque.group(1)
+    # La variable se declara una vez por tema (claro/oscuro).
+    assert sin_comentarios.count("--pt-resaltado:") == 2

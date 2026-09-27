@@ -62,6 +62,75 @@
             .replace(/[\u0300-\u036f]/g, "");
     }
 
+    // Clase del <mark> que resalta la parte coincidente dentro de la celda.
+    var CLASE_RESALTADO = "pt-resaltado";
+
+    // Normaliza conservando el mapa normalizado -> original (T5 de la entrega
+    // 2). NFD desdobla un carácter con acento en letra + combining mark, así
+    // que por cada carácter retenido se guarda su índice en el texto fuente.
+    // 'hidro' encuentra 'Hidrógeno' y el rango vuelve al original sin perder
+    // el acento al pintar.
+    function normalizarConMapa(texto) {
+        var normalizado = "";
+        var mapa = [];
+        for (var i = 0; i < texto.length; i++) {
+            var descompuesto = texto.charAt(i).toLowerCase().normalize("NFD");
+            for (var j = 0; j < descompuesto.length; j++) {
+                var caracter = descompuesto.charAt(j);
+                // El acento se descarta, pero apunta al carácter fuente.
+                if (caracter >= "\u0300" && caracter <= "\u036f") {
+                    continue;
+                }
+                normalizado += caracter;
+                mapa.push(i);
+            }
+        }
+        return { normalizado: normalizado, mapa: mapa };
+    }
+
+    // Deja el span con el texto original completo y sin <mark> (T5): al limpiar
+    // la búsqueda no debe quedar ningún nodo de resaltado en el DOM.
+    function limpiarResaltado(datos) {
+        if (!datos.span) {
+            return;
+        }
+        if (datos.span.textContent !== datos.original) {
+            datos.span.textContent = datos.original;
+        }
+    }
+
+    // Envuelve la PRIMERA coincidencia del span en un <mark> con la clase
+    // pt-resaltado (T5). Es solo capa visual: no toca aria-label ni data-*.
+    // Sin coincidencia, con término vacío o sin span queda el texto plano.
+    function resaltarSpan(datos, buscando) {
+        if (!datos.span) {
+            return;
+        }
+        var indice = datos.normalizado.indexOf(buscando);
+        if (buscando === "" || indice === -1) {
+            limpiarResaltado(datos);
+            return;
+        }
+        // El mapa traslada el rango normalizado al rango del texto original.
+        var inicio = datos.mapa[indice];
+        var fin = datos.mapa[indice + buscando.length - 1] + 1;
+        datos.span.textContent = "";
+        if (inicio > 0) {
+            datos.span.appendChild(
+                document.createTextNode(datos.original.slice(0, inicio))
+            );
+        }
+        var marca = document.createElement("mark");
+        marca.className = CLASE_RESALTADO;
+        marca.textContent = datos.original.slice(inicio, fin);
+        datos.span.appendChild(marca);
+        if (fin < datos.original.length) {
+            datos.span.appendChild(
+                document.createTextNode(datos.original.slice(fin))
+            );
+        }
+    }
+
     function initTabla() {
         var tabla = document.getElementById("pt-tabla");
         // La grilla solo existe en la vista tabla: en tarjetas y en otras
@@ -70,16 +139,41 @@
             return;
         }
 
-        // Celdas con sus data-* leídos una sola vez.
+        // Celdas con sus data-* leídos una sola vez y, para el resaltado (T5),
+        // los spans de símbolo/nombre con su texto canónico y el mapa de
+        // normalización. El mapa se arma una vez por celda y se reutiliza.
         var celdas = Array.prototype.slice
             .call(tabla.querySelectorAll(".pt-celda"))
             .map(function (celda) {
+                var spanSimbolo = celda.querySelector(".pt-simbolo");
+                var spanNombre = celda.querySelector(".pt-nombre");
+                var simboloOriginal = spanSimbolo ? spanSimbolo.textContent : "";
+                var nombreOriginal = spanNombre ? spanNombre.textContent : "";
+                var mapaSimbolo = normalizarConMapa(simboloOriginal);
+                var mapaNombre = normalizarConMapa(nombreOriginal);
                 return {
                     el: celda,
                     categoria: celda.getAttribute("data-categoria") || "",
                     simbolo: normalizar(celda.getAttribute("data-simbolo") || ""),
                     nombre: normalizar(celda.getAttribute("data-nombre") || ""),
                     peso: parseFloat(celda.getAttribute("data-peso")),
+                    // Datos del resaltado: span, texto canónico y mapa de índices.
+                    simboloOriginal: simboloOriginal,
+                    nombreOriginal: nombreOriginal,
+                    datosSimbolo: {
+                        span: spanSimbolo,
+                        original: simboloOriginal,
+                        normalizado: mapaSimbolo.normalizado,
+                        mapa: mapaSimbolo.mapa,
+                    },
+                    datosNombre: {
+                        span: spanNombre,
+                        original: nombreOriginal,
+                        normalizado: mapaNombre.normalizado,
+                        mapa: mapaNombre.mapa,
+                    },
+                    resaltado: false,
+                    busquedaResaltada: "",
                 };
             });
 
@@ -178,6 +272,25 @@
                 celda.el.classList.remove("pt-dim", "pt-destacada");
                 if (hayFiltro) {
                     celda.el.classList.add(pasa ? "pt-destacada" : "pt-dim");
+                }
+
+                // Resaltado (T5): capa adicional solo para las celdas que pasan
+                // con búsqueda activa. El guard por término evita reconstruir
+                // los <mark> cuando el hover re-aplica el mismo filtro.
+                var debeResaltar = pasa && hayBusqueda;
+                if (debeResaltar) {
+                    if (!celda.resaltado || celda.busquedaResaltada !== buscando) {
+                        resaltarSpan(celda.datosSimbolo, buscando);
+                        resaltarSpan(celda.datosNombre, buscando);
+                        celda.resaltado = true;
+                        celda.busquedaResaltada = buscando;
+                    }
+                } else if (celda.resaltado) {
+                    // Sin búsqueda (o sin coincidencia) se restaura el texto plano.
+                    limpiarResaltado(celda.datosSimbolo);
+                    limpiarResaltado(celda.datosNombre);
+                    celda.resaltado = false;
+                    celda.busquedaResaltada = "";
                 }
             });
         }

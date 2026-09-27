@@ -20,6 +20,7 @@
 [data-bs-theme="light"] {
     --pt-borde: rgba(2, 48, 71, .22); /* deep-space-blue tenue */
     --pt-anillo: rgba(2, 48, 71, .55);
+    --pt-resaltado: rgba(255, 214, 0, .55); /* banda de coincidencia (T5) */
 
     --pt-c-metales: #c5d3ef;
     --pt-t-metales: #1a2a52;
@@ -50,6 +51,7 @@
 [data-bs-theme="dark"] {
     --pt-borde: rgba(255, 255, 255, .20);
     --pt-anillo: rgba(255, 255, 255, .70);
+    --pt-resaltado: rgba(255, 214, 0, .38); /* banda de coincidencia (T5) */
 
     --pt-c-metales: #2b3f6b;
     --pt-t-metales: #d6e2ff;
@@ -436,4 +438,18 @@
     .pt-card {
         transition: none;
     }
+}
+
+/* ==========================================================================
+   11. RESALTADO DE LA COINCIDENCIA (búsqueda del cliente, T5 de p1-periodic-table-e2)
+   El <mark> que el JS envuelve sobre la parte coincidente del símbolo o del
+   nombre. Es una capa puramente visual: no altera el aria-label ni los data-*.
+   El fondo sale de --pt-resaltado, declarada por tema, así que se ve tanto en
+   claro como en oscuro; el texto hereda el color de la celda para no perder
+   contraste sobre la paleta de categoría.
+   ========================================================================== */
+.pt-resaltado {
+    padding: 0;
+    background-color: var(--pt-resaltado, rgba(255, 214, 0, .5));
+    color: inherit;
 }
