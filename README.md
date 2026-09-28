@@ -177,5 +177,5 @@ pytest app_quimico -q
 - [x] Códigos de respaldo MFA de un solo uso (`otp_static`) — **prerrequisito de la API REST**
 - [ ] API REST con Django REST Framework (mismas reglas de propiedad por rol)
 - [x] Soporte de hidratos en el motor de cálculo
-- [ ] Pulido de navbar en ancho móvil (360–414 px, ambos temas)
+- [x] Pulido de navbar en ancho móvil (360–414 px, ambos temas) — commit d38e03f, deployado y validado 2026-09-22
 - [ ] Integración de flujos completos en tests + contenedor de despliegue
