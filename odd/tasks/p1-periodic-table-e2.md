@@ -39,7 +39,10 @@ de período, librerías de terceros, hover zoom.
 
 ## Tasks
 
-- [ ] T1 Feature doc + todo projection + Engram mirror (este doc)
+- [x] T1 Feature doc + todo projection + Engram mirror (este doc)
+      (cierre tardío 2026-09: queda huérfano del housekeeping 68b6a45;
+      feature completa y cerrada evidenciada en commit 5666e6b en
+      origin/main, verificado con git merge-base --is-ancestor)
 - [x] T2 View preference: localStorage "gestorQuimicoVistaElementos" +
       fallback en template cuando GET no trae vista; JS en los botones de
       toggle; URL explícita intacta; tests (GET ?vista gana; sin GET cae al
