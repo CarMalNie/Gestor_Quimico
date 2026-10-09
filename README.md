@@ -15,11 +15,19 @@ compuestos con sus usos industriales, con control de propiedad por usuario y rol
   multiplicadores de grupo) que calcula el PM y descompone la composición atómica de cada compuesto.
 - **Compuestos por usuario**: cada usuario gestiona su catálogo privado de compuestos, con su
   aplicación industrial, concentración mínima y composición elemental derivada de la fórmula.
+- **Estructura química 2D de compuestos**: diagrama de estructura en 2D para compuestos con
+  campo SMILES (render client-side con SmilesDrawer autoalojado; validación server-side con
+  `pysmiles`), búsqueda de estructura por nombre (Cactus resolver) y selector de isómeros
+  por fórmula molecular (PubChem), con modal de zoom ampliado para moléculas grandes.
+- **Tabla periódica con detalle y familias**: card flotante de detalle por elemento
+  (hover/teclado, IUPAC), datos validados contra fuentes oficiales y leyenda de familias
+  (metales/no metales) con filtros en la vista tabular y en las tarjetas.
 - **Roles separados por propósito**: usuarios de producto (químicos), curadores de datos maestros
   y gobernanza de plataforma (ver matriz de roles).
 - **Ciclo de credenciales completo**: registro, login protegido con rate limiting,
   recuperación de contraseña por email real, cambio de contraseña para el usuario
-  autenticado y MFA TOTP opcional (Google Authenticator compatible).
+  autenticado y MFA TOTP (obligatorio para Administradores, opcional para el resto;
+  Google Authenticator compatible).
 
 ## Arquitectura
 
@@ -32,7 +40,8 @@ compuestos con sus usos industriales, con control de propiedad por usuario y rol
 | Frontend | Templates DTL, Bootstrap 5.3 local-friendly, CSS de diseño propio, tema claro/oscuro persistente |
 | Base de datos | MySQL (modo `STRICT_TRANS_TABLES`) |
 | Envío de email | Transporte dual por entorno: SMTP (Brevo) en desarrollo, API HTTP de Brevo en PythonAnywhere (selección automática por variables de entorno) |
-| Tests | pytest + pytest-django: 136 ejecuciones (131 tests, algunos parametrizados) — permisos/ownership, parser (sin BD), formularios, flujos de autenticación, MFA y backend de email |
+| Estructura 2D | Campo `smiles` en `CompuestoQuimico` validado con `pysmiles`; render client-side con SmilesDrawer autoalojado; lookup por nombre (Cactus) e isómeros por fórmula (PubChem) con timeouts y fallbacks manuales |
+| Tests | pytest + pytest-django: 410 ejecuciones (suite completa verde: 410 passed) — permisos/ownership, parser (sin BD), formularios, flujos de autenticación (incl. MFA, códigos de respaldo y self-rebind), estructura 2D/lookups y backend de email |
 
 ### Matriz de roles
 
@@ -165,9 +174,9 @@ pytest app_quimico -q
   usuario e IP, con cool-off de 1 hora.
 - Ownership estricto: los compuestos web son privados de su dueño para todos los
   roles, verificado por tests de permisos.
-- Suite de **136 ejecuciones de tests** (131 tests, algunos parametrizados) cubre permisos,
-  parser, servicios, forms, paginación, seguridad, flujos de autenticación, MFA y el
-  backend de email.
+- Suite de **410 tests** (verde completa: 410 passed) cubre permisos, parser, servicios,
+  forms, paginación, seguridad, flujos de autenticación (MFA, códigos de respaldo,
+  self-rebind), estructura 2D/lookups y el backend de email.
 
 ## Roadmap
 
@@ -175,7 +184,11 @@ pytest app_quimico -q
 - [x] Recuperación y cambio de contraseña, MFA TOTP, envío de email real (Brevo SMTP/API)
 - [x] Tema claro/oscuro persistente; paginación en listados
 - [x] Códigos de respaldo MFA de un solo uso (`otp_static`) — **prerrequisito de la API REST**
-- [ ] API REST con Django REST Framework (mismas reglas de propiedad por rol)
+- [x] Re-configuración propia del autenticador sin admin (self-rebind) — commit 463d2ea, en producción
+- [x] MFA obligatorio para Administradores al login + seed del grupo en migración — commits d5e3b61, a1f91b9
+- [x] Estructura 2D de compuestos (entregas 1–4): SMILES + render, búsqueda por nombre (Cactus), isómeros por fórmula (PubChem) y modal de zoom — cerradas 2026-09-27, deployadas y validadas
+- [x] Datos IUPAC confiables + leyenda de familias en tabla y filtros — p1-categoria-filtros T1–T11
 - [x] Soporte de hidratos en el motor de cálculo
 - [x] Pulido de navbar en ancho móvil (360–414 px, ambos temas) — commit d38e03f, deployado y validado 2026-09-22
+- [ ] API REST con Django REST Framework (mismas reglas de propiedad por rol)
 - [ ] Integración de flujos completos en tests + contenedor de despliegue
